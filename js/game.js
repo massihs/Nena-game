@@ -132,7 +132,7 @@
       best: { brush: 0, fetch: 0, walk: 0 },
       achievements: [],
       tutorialDone: false,
-      settings: { sound: true, music: true, haptics: true, three: true },
+      settings: { sound: true, music: true, haptics: true, three: true, fx: true },
       story: { base: 0, seen: [], flags: {}, rel: { fariba: 0, mohsen: 0, negin: 0, nasim: 0, mia: 0, lee: 0, sam: 0 }, ended: false, tmp: 0 },
       family: { out: false, back: 0 },
       pet: { tricks: { sit: 0, paw: 0, down: 0, spin: 0, playdead: 0 }, weight: 23, sick: false, meds: 0, age: 1, stubborn: 60, plays: 0, cuddles: 0 },
@@ -1260,6 +1260,7 @@
         <button type="button" class="menu-row" data-set="music" role="switch" aria-checked="${S.settings.music}"><span>Lo-fi music</span>${sw(S.settings.music)}</button>
         <button type="button" class="menu-row" data-set="haptics" role="switch" aria-checked="${S.settings.haptics}"><span>Vibration</span>${sw(S.settings.haptics)}</button>
         ${window.World3D && window.World3D.ok ? `<button type="button" class="menu-row" data-set="three" role="switch" aria-checked="${S.settings.three !== false}"><span>3D graphics<small>Turn off on older phones to save battery</small></span>${sw(S.settings.three !== false)}</button>` : ''}
+        ${window.World3D && window.World3D.cinematic ? `<button type="button" class="menu-row" data-set="fx" role="switch" aria-checked="${S.settings.fx !== false}"><span>Cinematic effects<small>Glow, color grading and film grain</small></span>${sw(S.settings.fx !== false)}</button>` : ''}
         ${installPrompt ? '<button type="button" class="menu-row" data-cmd="install"><span>Install the app<small>Add Nena &amp; Simba to your home screen</small></span><span>⤓</span></button>'
           : '<div class="menu-row"><span>Install on iPhone<small>In Safari: Share button, then “Add to Home Screen”.</small></span></div>'}
         <button type="button" class="menu-row" data-cmd="tutorial"><span>Replay the tutorial</span><span>›</span></button>
@@ -1279,7 +1280,7 @@
     }
     if (t.dataset.item) { buyOrEquip(t.dataset.item); return; }
     if (t.dataset.set) {
-      const k = t.dataset.set; S.settings[k] = S.settings[k] === false ? true : !S.settings[k]; applySettings(); snd('click'); save(); renderSheet(); if (k === 'three') renderScene(); return;
+      const k = t.dataset.set; S.settings[k] = S.settings[k] === false ? true : !S.settings[k]; applySettings(); snd('click'); save(); renderSheet(); if (k === 'three' || k === 'fx') renderScene(); return;
     }
     const cmd = t.dataset.cmd;
     if (cmd === 'install') doInstall();

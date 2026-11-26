@@ -8,6 +8,35 @@ window.World3D = (function () {
   let ok = false, renderer, scene, camera, container, clock;
   let rooms = {}, cur = null, S = null;
   let hemi, sun, lamp, lamp2;
+  let envNight = null, envOutNight = null, ceilMats = [];
+  let composer = null, finalPass = null, bloomPass = null, envIn = null, envOut = null, skyDome = null, hq = true;
+  const blobs = {}, beams = [], clouds = [];
+  const fxOn = () => !!(composer && hq && (!S || !S.settings || S.settings.fx !== false));
+
+  /* Final cinematic pass: ACES tone mapping, warm grade, vignette, film grain, sRGB output. */
+  const FinalShader = {
+    uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uExposure: { value: 1.0 }, uVignette: { value: 0.45 }, uWarm: { value: 1.0 }, uNight: { value: 0 } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: [
+      'uniform sampler2D tDiffuse; uniform float uTime, uExposure, uVignette, uWarm, uNight; varying vec2 vUv;',
+      'vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14), 0.0, 1.0); }',
+      'void main(){',
+      '  vec3 c = texture2D(tDiffuse, vUv).rgb * uExposure;',
+      '  c = aces(c);',
+      '  c = c * c * (3.0 - 2.0 * c) * 0.35 + c * 0.65;',
+      '  vec3 warm = c * vec3(1.05, 1.0, 0.92);',
+      '  vec3 cool = c * vec3(0.92, 0.96, 1.08);',
+      '  c = mix(c, mix(warm, cool, uNight), uWarm * 0.6);',
+      '  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));',
+      '  c = mix(vec3(l), c, 1.1);',
+      '  c = pow(max(c, 0.0), vec3(1.0 / 2.2));',
+      '  vec2 d = vUv - 0.5; c *= 1.0 - uVignette * dot(d, d) * 1.5;',
+      '  float n = fract(sin(dot(vUv * 1000.0 + uTime, vec2(12.9898, 78.233))) * 43758.5453);',
+      '  c += (n - 0.5) * 0.022;',
+      '  gl_FragColor = vec4(c, 1.0);',
+      '}',
+    ].join('\n'),
+  };
   const chars = {};
   let visW = 7, groundTarget = -0.86, camBase = null;
   const tmpV = new (T ? T.Vector3 : Object)();
@@ -28,6 +57,7 @@ window.World3D = (function () {
       transparent: o.o != null && o.o < 1, opacity: o.o != null ? o.o : 1, map: o.map || null,
       side: o.side || T.FrontSide,
     });
+    m.envMapIntensity = (o.m || 0) > 0.5 ? 1.0 : 0.4;
     if (!o.unique) matCache[key] = m;
     return m;
   }
@@ -174,7 +204,8 @@ window.World3D = (function () {
     box(g, W + 6, 0.28, 0.12, '#f4ead9', 0, 0.14, BACK + 0.06);
     if (o.wainscot) { box(g, W + 6, 0.08, 0.1, o.wainscot, 0, 1.5, BACK + 0.05); }
     box(g, W + 6, 0.3, 0.3, '#fbf5ec', 0, 7.0, BACK + 0.15);
-    plane(g, W + 6, 12, mat('#fbf5ec', { e: '#f4e6d0', ei: 0.35 }), 0, 7.15, 2.4, { rx: Math.PI / 2, cast: false });
+    const cm = mat('#fbf5ec', { e: '#f4e6d0', ei: 0.35, unique: true }); ceilMats.push(cm);
+    plane(g, W + 6, 12, cm, 0, 7.15, 2.4, { rx: Math.PI / 2, cast: false });
   }
   const windows = [];
   function windowOn(g, x, y, w, h, curtain) {
@@ -192,6 +223,30 @@ window.World3D = (function () {
       });
       cyl(g, 0.04, 0.04, w + 1.8, '#8a6044', x, y + h / 2 + 0.3, BACK + 0.25, { rz: Math.PI / 2 });
     }
+    lightShaft(g, x, y, w, h);
+  }
+  let beamTex = null;
+  function lightShaft(g, x, y, w, h) {
+    if (!beamTex) beamTex = canvasTex(64, 256, (c, W, H) => { const gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, 'rgba(255,240,205,0.9)'); gr.addColorStop(0.6, 'rgba(255,236,200,0.35)'); gr.addColorStop(1, 'rgba(255,236,200,0)'); c.fillStyle = gr; c.fillRect(0, 0, W, H); const s = c.createLinearGradient(0, 0, W, 0); s.addColorStop(0, 'rgba(0,0,0,1)'); s.addColorStop(0.2, 'rgba(0,0,0,0)'); s.addColorStop(0.8, 'rgba(0,0,0,0)'); s.addColorStop(1, 'rgba(0,0,0,1)'); c.globalCompositeOperation = 'destination-out'; c.fillStyle = s; c.fillRect(0, 0, W, H); });
+    const geo = new T.BufferGeometry();
+    const z0 = BACK + 0.12, dz = 5.2, dx = 1.6;
+    const v = new Float32Array([x - w / 2, y + h / 2, z0, x + w / 2, y + h / 2, z0, x + w / 2 + dx, 0.03, z0 + dz, x - w / 2 + dx, 0.03, z0 + dz]);
+    geo.setAttribute('position', new T.BufferAttribute(v, 3));
+    geo.setAttribute('uv', new T.BufferAttribute(new Float32Array([0, 1, 1, 1, 1, 0, 0, 0]), 2));
+    geo.setIndex([0, 2, 1, 0, 3, 2]);
+    geo.computeVertexNormals();
+    const m = new T.MeshBasicMaterial({ map: beamTex, transparent: true, opacity: 0.0, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide });
+    const beam = new T.Mesh(geo, m);
+    beam.renderOrder = 5;
+    g.add(beam);
+    // dust motes floating in the light
+    const n = 70, pos = new Float32Array(n * 3), seed = new Float32Array(n);
+    for (let i = 0; i < n; i++) { const t = Math.random(); pos[i * 3] = x - w / 2 + Math.random() * w + dx * t; pos[i * 3 + 1] = (y + h / 2) * (1 - t) + Math.random() * 0.4; pos[i * 3 + 2] = z0 + dz * t; seed[i] = Math.random() * 10; }
+    const pg = new T.BufferGeometry(); pg.setAttribute('position', new T.BufferAttribute(pos, 3));
+    const pm = new T.PointsMaterial({ color: '#fff3d6', size: 0.045, transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false });
+    const motes = new T.Points(pg, pm);
+    g.add(motes);
+    beams.push({ beam, motes, base: pos.slice(), seed });
   }
   let coverTex = null;
   function photo(g, x, y, s) {
@@ -312,7 +367,7 @@ window.World3D = (function () {
       cyl(g, 0.22, 0.32, 1.6, '#f2ede6', 0.5, 0.8, BACK + 0.5);
       box(g, 1.6, 0.3, 1.0, '#fffdf9', 0.5, 1.7, BACK + 0.6, { r: 0.2 });
       box(g, 0.1, 0.35, 0.1, '#c4ccd2', 0.5, 2.0, BACK + 0.25, { m: 0.8, r: 0.3 });
-      const mirror = add(g, new T.CircleGeometry(0.9, 40), mat('#d9e8ee', { m: 0.05, r: 0.12 }), 0.5, 3.3, BACK + 0.04, { cast: false });
+      const mirror = add(g, new T.CircleGeometry(0.9, 40), mat('#e6f0f4', { m: 0.95, r: 0.04 }), 0.5, 3.3, BACK + 0.04, { cast: false });
       mirror.scale.set(0.85, 1.15, 1);
       torus(g, 0.9, 0.06, '#d8c2a8', 0.5, 3.3, BACK + 0.06, { s: [0.85, 1.15, 1] });
       // washing machine & basket
@@ -455,13 +510,35 @@ window.World3D = (function () {
       cyl(milad, 0.25, 0.4, 9, mm, 0, 34.5, 0, { seg: 8 });
       r.miladLight = sph(milad, 0.4, '#ff6b6b', 0, 39.2, 0, { e: '#ff3b3b', ei: 0, unique: true, seg: 8 });
       // Alborz mountains with snow
-      const mtn = mat('#9aa6c0', { r: 1 }), snowM = mat('#ffffff', { r: 0.9 });
-      [[-70, 58, 34], [-35, 72, 38], [0, 62, 36], [35, 80, 42], [70, 60, 34], [100, 68, 36]].forEach(([x, h, rr]) => {
-        const c = add(g, new T.ConeGeometry(rr, h, 7), mtn, x, h / 2 - 2, -120, { cast: false, recv: false });
-        c.rotation.y = x;
-        add(g, new T.ConeGeometry(rr * 0.32, h * 0.32, 7), snowM, x, h - h * 0.16 - 2 + 0.2, -119.6, { cast: false, recv: false }).rotation.y = x;
-      });
+      const mgeo = new T.PlaneGeometry(420, 120, 140, 40);
+      const mp = mgeo.attributes.position, cols = new Float32Array(mp.count * 3);
+      const rock = lin('#7d88a6'), rock2 = lin('#9aa4bf'), snowC = lin('#f4f7fb');
+      for (let i = 0; i < mp.count; i++) {
+        const x = mp.getX(i), yy = mp.getY(i);
+        const ridge = 38 + Math.sin(x * 0.021) * 18 + Math.sin(x * 0.057 + 1.3) * 9 + Math.sin(x * 0.13 + 0.4) * 4 + Math.sin(x * 0.31) * 1.6;
+        const tt = (yy + 60) / 120;
+        const hgt = Math.max(0, ridge * Math.pow(tt, 1.4) + (Math.random() - 0.5) * 1.6 * tt);
+        mp.setZ(i, hgt);
+        const sn = hgt > ridge * 0.7 && tt > 0.5;
+        const c = sn ? snowC : (i % 3 ? rock : rock2);
+        cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
+      }
+      mgeo.setAttribute('color', new T.BufferAttribute(cols, 3));
+      mgeo.computeVertexNormals();
+      const mtn = new T.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 });
+      const mtnMesh = new T.Mesh(mgeo, mtn);
+      mtnMesh.rotation.x = -Math.PI / 2; mtnMesh.position.set(10, -2, -150);
+      mtnMesh.scale.set(1, 1, 1.25);
+      g.add(mtnMesh);
       r.mtnMat = mtn;
+      // soft clouds
+      const cloudTex = canvasTex(256, 128, (c, W, H) => { for (let i = 0; i < 14; i++) { const x = 30 + Math.random() * (W - 60), y = 50 + Math.random() * 40, rr = 18 + Math.random() * 26; const gr = c.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.beginPath(); c.arc(x, y, rr, 0, Math.PI * 2); c.fill(); } });
+      r.clouds = [];
+      for (let i = 0; i < 6; i++) {
+        const sm = new T.SpriteMaterial({ map: cloudTex, transparent: true, depthWrite: false, fog: false, opacity: 0.85 });
+        const sp = new T.Sprite(sm); sp.scale.set(40 + i * 6, 18, 1); sp.position.set(-90 + i * 36, 48 + (i % 3) * 8, -130 - (i % 2) * 20);
+        g.add(sp); r.clouds.push(sp);
+      }
       // plane trees (chenar) along the jub
       r.leaves = [];
       [-11, -4.5, 3.5, 10].forEach((x, i) => {
@@ -540,12 +617,14 @@ window.World3D = (function () {
     head.position.set(0, 2.25, 0);
     sph(head, 0.52, skin, 0, 0, 0, { s: [1, 1.04, 0.96], seg: 28 });
     // hair
-    const H1 = mat(spec.hair, { r: 0.9 }), H2 = mat(spec.hair2, { r: 0.9 });
+    const H1 = mat(spec.hair, { r: 0.55 }), H2 = mat(spec.hair2, { r: 0.5 });
+    const HL = mat(new T.Color(spec.hair2).lerp(new T.Color('#ffffff'), 0.25).getStyle(), { r: 0.45 });
     if (spec.style === 'curly') {
       for (let i = 0; i < 14; i++) { const a = (i / 14) * Math.PI * 2; sph(head, 0.26, i % 2 ? H1 : H2, Math.cos(a) * 0.5, 0.05 + Math.sin(a) * 0.42, -0.18 - Math.abs(Math.sin(a)) * 0.05, { seg: 12 }); }
       for (let i = 0; i < 6; i++) sph(head, 0.24, i % 2 ? H1 : H2, -0.42 + i * 0.17, 0.42 + Math.sin(i) * 0.04, 0.1, { seg: 12 });
       [-1, 1].forEach((sg) => { for (let k = 0; k < 4; k++) sph(head, 0.24 - k * 0.02, k % 2 ? H1 : H2, sg * (0.52 + k * 0.03), -0.25 - k * 0.3, -0.1, { seg: 12 }); });
       sph(head, 0.55, H1, 0, 0.12, -0.12, { s: [1.08, 1.02, 1] });
+      for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; sph(head, 0.09, HL, Math.cos(a) * 0.6, 0.2 + Math.sin(a) * 0.48, -0.05, { seg: 8 }); }
     } else if (spec.style === 'ponytail') {
       sph(head, 0.55, H1, 0, 0.1, -0.06, { s: [1.04, 1, 1] });
       sph(head, 0.2, '#ef5f7f', 0, 0.42, -0.42, { seg: 10 });
@@ -559,10 +638,17 @@ window.World3D = (function () {
     }
     // face
     const eyes = new T.Group(); head.add(eyes);
+    const iris = spec.iris || '#6e3a22';
     [-0.19, 0.19].forEach((x) => {
-      sph(eyes, 0.085, '#2a130b', x, -0.02, 0.47, { s: [1, 1.2, 0.6], seg: 14 });
-      sph(eyes, 0.028, '#ffffff', x + 0.03, 0.03, 0.52, { seg: 8, cast: false });
+      sph(eyes, 0.105, '#fbfaf6', x, -0.02, 0.43, { s: [1, 1.15, 0.55], seg: 18, cast: false, r: 0.3 });
+      sph(eyes, 0.075, iris, x, -0.03, 0.47, { s: [1, 1.15, 0.5], seg: 16, cast: false, r: 0.25 });
+      sph(eyes, 0.042, '#120806', x, -0.03, 0.495, { s: [1, 1.15, 0.5], seg: 12, cast: false });
+      sph(eyes, 0.026, '#ffffff', x + 0.03, 0.025, 0.515, { seg: 8, cast: false, e: '#ffffff', ei: 0.6 });
+      sph(eyes, 0.012, '#ffffff', x - 0.025, -0.06, 0.515, { seg: 6, cast: false, e: '#ffffff', ei: 0.6 });
+      torus(eyes, 0.1, 0.014, '#2a130b', x, -0.01, 0.47, { arc: Math.PI * 0.9, rz: 0.15, s: [1, 1.1, 1], cast: false });
+      if (!spec.belly) box(eyes, 0.06, 0.012, 0.012, '#2a130b', x + (x < 0 ? -0.1 : 0.1), 0.07, 0.48, { rz: x < 0 ? 0.6 : -0.6, cast: false });
     });
+    [-0.46, 0.46].forEach((x) => sph(head, 0.1, skin, x, -0.04, 0.0, { s: [0.6, 1, 0.8], seg: 10 }));
     const browM = mat(spec.style === 'bald' ? '#8f8a96' : spec.hair);
     const brows = [-0.19, 0.19].map((x) => box(head, 0.18, 0.035, 0.03, browM, x, 0.17, 0.49, { rz: spec.angry ? (x < 0 ? -0.35 : 0.35) : (x < 0 ? 0.08 : -0.08) }));
     [-0.3, 0.3].forEach((x) => add(head, new T.CircleGeometry(0.09, 16), mat('#f38fae', { o: 0.5 }), x, -0.14, 0.47, { cast: false, ry: x < 0 ? -0.35 : 0.35 }));
@@ -596,7 +682,18 @@ window.World3D = (function () {
     sph(head, 0.09, dark, 0, -0.02, 0.55, { s: [1.3, 0.9, 0.9], seg: 14 });
     sph(head, 0.025, '#7a7184', -0.03, 0.01, 0.62, { seg: 8, cast: false });
     const eyes = new T.Group(); head.add(eyes);
-    [-0.17, 0.17].forEach((x) => { sph(eyes, 0.06, dark, x, 0.12, 0.42, { s: [1.2, 1, 0.6], seg: 12 }); sph(eyes, 0.02, '#ffffff', x + 0.02, 0.15, 0.46, { seg: 6, cast: false }); });
+    [-0.17, 0.17].forEach((x) => { sph(eyes, 0.07, '#3a2418', x, 0.12, 0.41, { s: [1.2, 1, 0.6], seg: 14, r: 0.2 }); sph(eyes, 0.045, '#0d0808', x, 0.12, 0.44, { s: [1.2, 1, 0.5], seg: 10 }); sph(eyes, 0.022, '#ffffff', x + 0.025, 0.155, 0.46, { seg: 6, cast: false, e: '#ffffff', ei: 0.7 }); });
+    const tuftGeo = new T.ConeGeometry(0.11, 0.34, 6);
+    const tuftMats = ['#e8952f', '#f0a54a', '#d97f24', '#f5b45c'].map((c) => mat(c, { r: 1 }));
+    const tuft = (parent, x, y, z, nx, ny, nz, sc, i) => {
+      const m = new T.Mesh(tuftGeo, tuftMats[i % 4]);
+      m.position.set(x, y, z); m.castShadow = true;
+      m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), new T.Vector3(nx, ny, nz).normalize());
+      m.scale.setScalar(sc); parent.add(m);
+    };
+    for (let i = 0; i < 34; i++) { const a = (i / 34) * Math.PI * 2; tuft(head, Math.cos(a) * 0.72, Math.sin(a) * 0.68 - 0.05, -0.18, Math.cos(a), Math.sin(a), -0.15, 0.9 + (i % 3) * 0.2, i); }
+    for (let i = 0; i < 26; i++) { const a = (i / 26) * Math.PI * 2, b = (i % 5) / 5; tuft(body, Math.cos(a) * 0.55, 0.8 + Math.sin(a) * 0.48, -0.25 - b * 0.9, Math.cos(a), Math.sin(a), 0, 0.75 + (i % 2) * 0.2, i); }
+    for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; tuft(tail, Math.cos(a) * 0.36, 0.25 + Math.sin(a) * 0.3, 0.05, Math.cos(a), Math.sin(a), 0.2, 0.8, i); }
     const tongue = sph(head, 0.07, '#3c3a6b', 0, -0.3, 0.42, { s: [1, 1.4, 0.5], seg: 10 });
     const collar = torus(head, 0.42, 0.05, '#d4513f', 0, -0.42, -0.05, { rx: Math.PI / 2 - 0.3, unique: true });
     collar.material = mat('#d4513f', { unique: true });
@@ -630,6 +727,7 @@ window.World3D = (function () {
       const test = document.createElement('canvas');
       if (!(test.getContext('webgl2') || test.getContext('webgl'))) return false;
       container = el;
+      hq = ((window.devicePixelRatio || 1) >= 2 || window.innerWidth > 700) && (navigator.hardwareConcurrency || 4) >= 4;
       renderer = new T.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
       renderer.outputEncoding = T.sRGBEncoding;
@@ -644,7 +742,7 @@ window.World3D = (function () {
       hemi = new T.HemisphereLight('#fff4e6', '#8a6a52', 0.65); scene.add(hemi);
       sun = new T.DirectionalLight('#fff1d6', 1.4);
       sun.castShadow = true;
-      sun.shadow.mapSize.set(1024, 1024);
+      sun.shadow.mapSize.set(hq ? 2048 : 1024, hq ? 2048 : 1024);
       Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -6, near: 0.5, far: 60 });
       sun.shadow.bias = -0.0008;
       sun.shadow.radius = 4;
@@ -655,6 +753,39 @@ window.World3D = (function () {
       chars.simba = makeSimba(); scene.add(chars.simba.root);
       chars.nena.root.visible = true;
       makePrecip();
+      // image-based lighting: soft reflections on metal, glass and skin
+      envIn = envCube('#fff2df', '#d8bfa4', '#5a4030', '#fff8e8');
+      envOut = envCube('#9ec9f0', '#e8eef4', '#7a7468', '#ffffff');
+      envNight = envCube('#3a2c3a', '#2a2030', '#120c14', '#ffb860');
+      envOutNight = envCube('#141836', '#1d2040', '#0c0c16', '#ffcf73');
+      scene.environment = envIn;
+      // sky dome for the street
+      skyDome = new T.Mesh(new T.SphereGeometry(320, 32, 16), new T.ShaderMaterial({
+        side: T.BackSide, depthWrite: false, fog: false,
+        uniforms: { uTop: { value: new T.Color('#4f8fd6') }, uHorizon: { value: new T.Color('#cfe6f7') }, uSunDir: { value: new T.Vector3(0.3, 0.3, -1).normalize() }, uSun: { value: 1 } },
+        vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: 'uniform vec3 uTop, uHorizon, uSunDir; uniform float uSun; varying vec3 vDir; void main(){ float h = clamp(vDir.y * 1.6, 0.0, 1.0); vec3 c = mix(uHorizon, uTop, pow(h, 0.7)); float s = max(dot(normalize(vDir), uSunDir), 0.0); c += vec3(1.0, 0.85, 0.6) * (pow(s, 600.0) * 4.0 + pow(s, 12.0) * 0.35) * uSun; gl_FragColor = vec4(c, 1.0); }',
+      }));
+      skyDome.visible = false;
+      scene.add(skyDome);
+      // contact shadows under characters
+      const blobTex = canvasTex(128, 128, (c, W, H) => { const gr = c.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W / 2); gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(0.6, 'rgba(0,0,0,.2)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = gr; c.fillRect(0, 0, W, H); });
+      ['nena', 'simba', 'npc'].forEach((k) => {
+        const b = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false }));
+        b.rotation.x = -Math.PI / 2; b.renderOrder = 2; scene.add(b); blobs[k] = b;
+      });
+      // cinematic post-processing on capable devices
+      if (hq && T.EffectComposer && T.UnrealBloomPass) {
+        const rtOpts = { minFilter: T.LinearFilter, magFilter: T.LinearFilter, format: T.RGBAFormat, type: renderer.capabilities.isWebGL2 ? T.HalfFloatType : T.UnsignedByteType };
+        const rt = renderer.capabilities.isWebGL2 && T.WebGLMultisampleRenderTarget ? new T.WebGLMultisampleRenderTarget(2, 2, rtOpts) : new T.WebGLRenderTarget(2, 2, rtOpts);
+        if (rt.samples !== undefined) rt.samples = 4;
+        composer = new T.EffectComposer(renderer, rt);
+        composer.addPass(new T.RenderPass(scene, camera));
+        bloomPass = new T.UnrealBloomPass(new T.Vector2(256, 256), 0.22, 0.45, 0.97);
+        composer.addPass(bloomPass);
+        finalPass = new T.ShaderPass(FinalShader);
+        composer.addPass(finalPass);
+      }
       clock = new T.Clock();
       window.addEventListener('resize', resize);
       if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(el);
@@ -668,11 +799,40 @@ window.World3D = (function () {
       return false;
     }
   }
+  function envCube(top, mid, bottom, light) {
+    const face = (kind) => {
+      const c = document.createElement('canvas'); c.width = c.height = 64;
+      const g = c.getContext('2d');
+      if (kind === 'top') { g.fillStyle = top; g.fillRect(0, 0, 64, 64); g.fillStyle = light; g.fillRect(16, 16, 32, 32); }
+      else if (kind === 'bottom') { g.fillStyle = bottom; g.fillRect(0, 0, 64, 64); }
+      else { const gr = g.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, top); gr.addColorStop(0.5, mid); gr.addColorStop(1, bottom); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); if (kind === 'window') { g.fillStyle = light; g.fillRect(14, 12, 36, 22); } }
+      return c;
+    };
+    const tex = new T.CubeTexture([face('side'), face('window'), face('top'), face('bottom'), face('side'), face('window')]);
+    tex.encoding = T.sRGBEncoding;
+    tex.needsUpdate = true;
+    return tex;
+  }
+  function envScene(top, mid, bottom, indoor) {
+    const es = new T.Scene();
+    const sphMat = new T.ShaderMaterial({
+      side: T.BackSide,
+      uniforms: { a: { value: lin(top) }, b: { value: lin(mid) }, c: { value: lin(bottom) } },
+      vertexShader: 'varying vec3 p; void main(){ p = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'uniform vec3 a, b, c; varying vec3 p; void main(){ vec3 col = p.y > 0.0 ? mix(b, a, p.y) : mix(b, c, -p.y); gl_FragColor = vec4(col, 1.0); }',
+    });
+    es.add(new T.Mesh(new T.SphereGeometry(40, 32, 16), sphMat));
+    const panel = new T.MeshBasicMaterial({ color: indoor ? lin('#fff6e0').multiplyScalar(3) : lin('#ffffff').multiplyScalar(4) });
+    const p1 = new T.Mesh(new T.PlaneGeometry(14, 10), panel); p1.position.set(6, 10, -30); p1.lookAt(0, 0, 0); es.add(p1);
+    const p2 = new T.Mesh(new T.PlaneGeometry(10, 8), panel); p2.position.set(-20, 14, 18); p2.lookAt(0, 0, 0); es.add(p2);
+    return es;
+  }
   function resize() {
     if (!renderer) return;
     const w = container.clientWidth, h = container.clientHeight;
     if (!w || !h) return;
     renderer.setSize(w, h, false);
+    if (composer) composer.setSize(w, h);
     // size the HTML tap zones from the scene height so characters keep a natural scale
     container.style.setProperty('--nena-w', Math.round(h * 0.4 / 1.75) + 'px');
     container.style.setProperty('--simba-w', Math.round(h * 0.27 / 0.794) + 'px');
@@ -724,14 +884,33 @@ window.World3D = (function () {
     windows.forEach((m) => { m.color.copy(sky); m.emissive.copy(sky); m.emissiveIntensity = 0.55 + (1 - night) * 0.5; });
     const lampOn = night > 0.3;
     if (cur.shade) cur.shade.material.emissiveIntensity = lampOn ? 1.2 : 0;
-    lamp.intensity = cur.lampPos && lampOn ? 2.2 * Math.min(1, night * 1.4) : 0;
+    lamp.intensity = cur.lampPos && lampOn ? (cur.outdoor ? 2.2 : 2.6) * Math.min(1, night * 1.4) : 0;
+    lamp.distance = cur.outdoor ? 16 : 9;
+    lamp.decay = cur.outdoor ? 1.6 : 2;
     if (cur.lampPos) lamp.position.copy(cur.lampPos);
+    scene.environment = cur.outdoor ? (night > 0.5 ? envOutNight : envOut) : (night > 0.4 ? envNight : envIn);
+    ceilMats.forEach((m) => { m.emissiveIntensity = 0.35 * (1 - night); });
+    if (finalPass) finalPass.uniforms.uExposure.value = 1.0 - night * 0.12;
+    if (finalPass) finalPass.uniforms.uNight.value = night;
+    renderer.toneMapping = fxOn() ? T.NoToneMapping : T.ACESFilmicToneMapping;
     if (cur.outdoor) {
       scene.background = sky.clone();
+      if (skyDome) {
+        skyDome.visible = true;
+        const h = (S.time / 60) % 24;
+        const top = lin(S.today.weather === 'pluie' ? '#7e8a9c' : '#4f8fd6').lerp(lin('#0b0e2a'), night);
+        const hor = sky.clone().lerp(lin('#ffffff'), 0.25 * (1 - night));
+        skyDome.material.uniforms.uTop.value.copy(top);
+        skyDome.material.uniforms.uHorizon.value.copy(hor);
+        const sa = ((h - 6) / 12) * Math.PI;
+        skyDome.material.uniforms.uSunDir.value.set(Math.cos(sa) * 0.8, Math.max(-0.2, Math.sin(sa)) * 0.6 + 0.08, -0.6).normalize();
+        skyDome.material.uniforms.uSun.value = S.today.weather === 'soleil' || S.today.weather === 'nuages' ? (1 - night) : 0.2 * (1 - night);
+        scene.background = null;
+      }
       scene.fog = new T.Fog(sky.clone(), 30, S.today.weather === 'pluie' ? 90 : 160);
       hemi.color.set('#dfefff').lerp(new T.Color('#3a3f6e'), night);
       hemi.groundColor.set('#8a8070').lerp(new T.Color('#1d1b2a'), night);
-      hemi.intensity = 0.75 - night * 0.35;
+      hemi.intensity = 0.45 - night * 0.2;
       sun.intensity = (S.today.weather === 'soleil' ? 1.8 : 1.0) * (1 - night) + 0.08;
       sun.color.set(night > 0.2 ? '#ffb07a' : '#fff1d6');
       sun.position.set(10, 18, 12);
@@ -740,22 +919,23 @@ window.World3D = (function () {
       cur.famMat.emissiveIntensity = lit * 1.2; cur.blockMats.forEach((m) => { m.emissiveIntensity = lit * 1.2; });
       cur.streetBulb.material.emissiveIntensity = lampOn ? 1.5 : 0;
       cur.miladLight.material.emissiveIntensity = lampOn ? 2 : 0;
-      setLin(cur.mtnMat.color, '#9aa6c0').lerp(lin('#2c2d52'), night);
+      cur.mtnMat.color.setRGB(1, 1, 1).lerp(lin('#3a3d6a'), night);
+      cur.clouds.forEach((c) => { c.material.opacity = (S.today.weather === 'pluie' ? 1 : 0.85) * (1 - night * 0.7); c.material.color.set(night > 0.5 ? '#6c6f9a' : S.today.weather === 'pluie' ? '#c7ccd6' : '#ffffff'); });
       lamp.distance = 16;
       precip.visible = S.today.weather === 'pluie' || S.today.weather === 'neige';
       precip.material.size = S.today.weather === 'neige' ? 0.14 : 0.06;
       precip.material.color.set(S.today.weather === 'neige' ? '#ffffff' : '#cfe1f5');
     } else {
       scene.background = lin('#2a2236');
+      if (skyDome) skyDome.visible = false;
       scene.fog = null;
       hemi.color.set('#fff4e6').lerp(new T.Color('#5a4f7a'), night);
       hemi.groundColor.set('#8a6a52').lerp(new T.Color('#2a2036'), night);
-      hemi.intensity = 0.7 - night * 0.38;
-      sun.intensity = (1 - night) * (S.today.weather === 'soleil' ? 1.25 : 0.8) + 0.05;
+      hemi.intensity = 0.32 - night * 0.3;
+      sun.intensity = (1 - night) * (S.today.weather === 'soleil' ? 1.6 : 1.05) + 0.02;
       sun.color.set(night > 0.2 ? '#ffb48a' : '#fff1d6');
       sun.position.set(2, 9, 10);
       sun.target.position.set(0, 0, -1);
-      lamp.distance = 14;
       precip.visible = false;
     }
     lamp2.intensity = 0;
@@ -879,11 +1059,30 @@ window.World3D = (function () {
       }
       a.needsUpdate = true;
     }
-    renderer.render(scene, camera);
+    // light shafts and dust motes follow the daylight
+    const day = Math.max(0, 1 - nightLevel(S.time) / 0.5) * (S.today.weather === 'soleil' ? 1 : S.today.weather === 'nuages' ? 0.55 : 0.3);
+    beams.forEach((b) => {
+      if (!b.beam.parent.visible) return;
+      b.beam.material.opacity = 0.085 * day;
+      b.motes.material.opacity = 0.9 * day;
+      const a = b.motes.geometry.attributes.position.array;
+      for (let i = 0; i < b.seed.length; i++) { const s = b.seed[i]; a[i * 3] = b.base[i * 3] + Math.sin(t * 0.3 + s) * 0.15; a[i * 3 + 1] = b.base[i * 3 + 1] + Math.sin(t * 0.21 + s * 2) * 0.2; }
+      b.motes.geometry.attributes.position.needsUpdate = true;
+    });
+    if (cur.clouds) cur.clouds.forEach((c, i) => { c.position.x += dt * (0.6 + i * 0.1); if (c.position.x > 140) c.position.x = -140; });
+    // contact shadows
+    const place = (b, obj, sx, sz) => { b.visible = obj.root.visible; if (!b.visible) return; const s = obj.root.scale.x; b.position.set(obj.root.position.x, 0.02, obj.root.position.z + (sz || 0) * s); b.scale.set(sx * s, sx * s * 0.6, 1); };
+    place(blobs.nena, n, 1.3);
+    place(blobs.simba, sm, 2.2, -0.35);
+    const np = npcEl && !npcEl.hidden ? chars[npcEl.dataset.who] : null;
+    if (np) place(blobs.npc, np, 1.4); else blobs.npc.visible = false;
+    if (fxOn()) { finalPass.uniforms.uTime.value = t % 100; composer.render(); }
+    else renderer.render(scene, camera);
   }
 
   return {
     init, sync, resize,
     get ok() { return ok; },
+    get cinematic() { return !!composer; },
   };
 })();
