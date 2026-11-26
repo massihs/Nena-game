@@ -34,6 +34,9 @@
     </div>
     <div class="tb-buttons">
       <button type="button" class="icon-btn" id="btn-speed" aria-label="Time speed">▶</button>
+      <button type="button" class="icon-btn puzzle-btn" id="btn-puzzle" aria-label="Paw Path puzzles">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M7 3h4v2a2 2 0 1 0 4 0V3h4v6h-2a2 2 0 1 0 0 4h2v8h-6v-2a2 2 0 1 0-4 0v2H5v-6h2a2 2 0 1 0 0-4H5V3z" fill="currentColor"/></svg>
+      </button>
       <button type="button" class="icon-btn" id="btn-menu" aria-label="Menu">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
         <span class="badge" id="menu-badge" hidden></span>
@@ -113,6 +116,40 @@
     <p class="dlg-card-sub" id="dlg-card-sub"></p>
     <p class="dlg-card-tap">Tap to continue</p>
   </div>
+</div>
+
+<!-- Paw Path puzzles -->
+<div class="pz" id="pz" hidden>
+  <header class="pz-head">
+    <button type="button" class="icon-btn pz-back" id="pz-close" aria-label="Back">‹</button>
+    <div><h2 id="pz-title">Paw Path</h2><p id="pz-sub"></p></div>
+  </header>
+  <div class="pz-map" id="pz-map">
+    <div class="pz-path" id="pz-path"></div>
+    <section class="pz-abs"><h3>Abilities</h3><div id="pz-abilities"></div></section>
+  </div>
+  <div class="pz-level" id="pz-level" hidden>
+    <div class="pz-jars" id="pz-jars"></div>
+    <div class="pz-tools">
+      <button type="button" class="pz-tool" id="pz-undo">Undo (3)</button>
+      <button type="button" class="pz-tool" id="pz-extra">+1 jar</button>
+      <button type="button" class="pz-tool" id="pz-restart">Restart</button>
+    </div>
+    <p class="pz-help">Tap a jar to pick up the top treats, then tap another jar with the same flavor on top, or an empty one. Fill every jar with a single flavor.</p>
+    <div class="pz-win" id="pz-win" hidden>
+      <div class="pz-win-card">
+        <div class="stars" id="pz-win-stars"></div>
+        <p class="pz-win-t" id="pz-win-t">Purr-fect!</p>
+        <p class="pz-win-reward" id="pz-win-reward"></p>
+        <div class="pz-win-ability" id="pz-win-ability" hidden></div>
+        <div class="title-buttons">
+          <button type="button" class="btn btn-primary" id="pz-next">Next level</button>
+          <button type="button" class="btn" id="pz-tomap">Map</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="pz-confetti" id="pz-confetti" aria-hidden="true"></div>
 </div>
 
 <!-- Mini-games -->
@@ -204,6 +241,7 @@
 <script src="js/audio.js"></script>
 <script src="js/minigames.js"></script>
 <script src="js/story.js"></script>
+<script src="js/puzzle.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

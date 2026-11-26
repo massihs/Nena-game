@@ -135,6 +135,7 @@
       story: { base: 0, seen: [], flags: {}, rel: { mia: 0, grandma: 0, lee: 0, sam: 0 }, ended: false, tmp: 0 },
       pet: { tricks: { sit: 0, paw: 0, down: 0, spin: 0, playdead: 0 }, weight: 23, sick: false, meds: 0, age: 1, stubborn: 60, plays: 0, cuddles: 0 },
       album: [],
+      puzzle: { level: 1, stars: {}, perks: [] },
     };
   }
 
@@ -142,6 +143,8 @@
   let busy = false;
   let modalOpen = true;
   const has = (id) => S.owned.includes(id);
+  const perk = (id) => !!(S.puzzle && S.puzzle.perks.includes(id));
+  const durOf = (a) => (typeof a.dur === 'function' ? a.dur(S) : a.dur);
 
   /* ------------------------------------------------------------------ */
   /* Time                                                                */
@@ -193,9 +196,9 @@
     const n = S.nena, d = S.simba, m = S.maison, w = S.today.weather;
     S.time += 1;
     n.faim -= 0.085; n.energie -= 0.055; n.hygiene -= 0.045;
-    d.ventre -= 0.1; d.eau -= w === 'soleil' ? 0.2 : 0.14; d.pipi -= 0.13; d.pelage -= 0.035;
-    d.bonheur -= (0.06 + (d.ventre < 20 ? 0.05 : 0) + (d.eau < 20 ? 0.05 : 0)) * (has('panier') ? 0.7 : 1) * (S.pet.sick ? 1.5 : 1) * (S.pet.weight > 26 ? 1.1 : 1);
-    m.proprete -= (0.03 + (d.pelage < 40 ? 0.05 : 0)) * (has('robot') ? 0.5 : 1);
+    d.ventre -= 0.1; d.eau -= w === 'soleil' ? 0.2 : 0.14; d.pipi -= 0.13; d.pelage -= 0.035 * (perk('furshield') ? 0.6 : 1);
+    d.bonheur -= (0.06 + (d.ventre < 20 ? 0.05 : 0) + (d.eau < 20 ? 0.05 : 0)) * (has('panier') ? 0.7 : 1) * (S.pet.sick ? 1.5 : 1) * (perk('bestie') ? 0.75 : 1) * (S.pet.weight > 26 ? 1.1 : 1);
+    m.proprete -= (0.03 + (d.pelage < 40 ? 0.05 : 0)) * (has('robot') ? 0.5 : 1) * (perk('zen') ? 0.7 : 1);
     let mood = -0.015 + (d.bonheur > 60 ? 0.025 : -0.02);
     if (n.faim < 20) mood -= 0.05;
     if (m.proprete < 35) mood -= 0.03;
@@ -286,12 +289,12 @@
         s.nena.hygiene += 6;
         if (s.time < 12 * 60) credit('dents_matin'); else if (s.time >= 19 * 60) credit('dents_soir');
       } },
-    { room: 'sdb', id: 'brosser', name: 'Brush Simba', desc: 'His double coat needs it every day.', tag: 'simba', dur: 20, mini: 'brush',
+    { room: 'sdb', id: 'brosser', name: 'Brush Simba', desc: 'His double coat needs it every day.', tag: 'simba', dur: () => (perk('groomer') ? 10 : 20), mini: 'brush',
       verb: 'Nena untangles his mane…', task: 'brosser',
       avail: (s) => (s.simba.pelage < 95 ? true : 'His coat is already perfect.'),
       run: (s, r) => {
         const sc = r ? r.score : 0.6;
-        s.simba.pelage = clamp(55 + 45 * sc); s.simba.bonheur += 4 + 10 * sc; s.maison.proprete -= 6;
+        s.simba.pelage = clamp(55 + 45 * sc + (perk('groomer') ? 10 : 0)); s.simba.bonheur += 4 + 10 * sc; s.maison.proprete -= 6;
         s.counters.brushes++; s.best.brush = Math.max(s.best.brush, sc);
         credit('brosser'); burstAt('fur', posOf('simba')[0], 40, 12);
       } },
@@ -326,7 +329,7 @@
     { room: 'cuisine', id: 'friandise', name: 'Give a treat', desc: '3 per day max.', tag: 'simba', dur: 1,
       verb: 'Sit… paw… good boy!', sfx: 'happy',
       avail: (s) => (s.today.treats < 3 ? true : 'Enough treats for today.'),
-      run: (s) => { s.today.treats++; s.simba.bonheur += 10; s.simba.ventre += 5; weigh(s, 0.06); burstAt('heart', posOf('simba')[0], 45, 5); } },
+      run: (s) => { s.today.treats++; s.simba.bonheur += perk('treats') ? 15 : 10; s.simba.ventre += 5; if (!perk('treats')) weigh(s, 0.06); burstAt('heart', posOf('simba')[0], 45, 5); } },
     { room: 'cuisine', id: 'cafe', name: 'Have a coffee', desc: '+15 energy · 2 per day.', tag: 'nena', dur: 5, needs: 'cafe',
       verb: 'The smell of coffee fills the kitchen…', sfx: 'pop',
       avail: (s) => (s.today.coffee < 2 ? true : 'Enough coffee for today.'),
@@ -358,7 +361,7 @@
       run: (s) => { s.nena.moral += 14; s.nena.energie += 5; s.simba.bonheur += 8; } },
 
     // Dehors
-    { room: 'dehors', id: 'promenade', name: 'Walk Simba', desc: 'Pee, sniffing and fresh air.', tag: 'simba', dur: 30, mini: 'walk',
+    { room: 'dehors', id: 'promenade', name: 'Walk Simba', desc: 'Pee, sniffing and fresh air.', tag: 'simba', dur: () => (perk('quickwalk') ? 20 : 30), mini: 'walk',
       verb: 'A walk around the block…', task: 'promenade', walk: true,
       avail: (s) => outside(s),
       run: (s, r) => {
@@ -368,11 +371,12 @@
         s.counters.walks++; if (s.today.weather === 'neige') s.counters.snowWalks++; weigh(s, -0.05);
         if (r && !r.skipped) s.best.walk = Math.max(s.best.walk, r.hits ? Math.min(sc, 0.89) : sc);
         credit('promenade'); rainCheck(s); storyEvent('walk');
+        if (perk('sniffer') && rnd() < 0.25) { const c = 5 + Math.floor(rnd() * 11); s.money += c; moneyFx(c); note(`Super Sniffer! Simba found $${c} in the grass.`, 'good'); }
         if (r && r.muddy) { s.muddy = true; addTask('bain'); note('Simba jumped into a mud puddle! Bath time.', 'bad'); }
         else if (r && r.skipped) walkEvent(s);
         else if (rnd() < 0.3) friendEvent(s);
       } },
-    { room: 'dehors', id: 'parc', name: 'Dog park (1 h)', desc: 'Counts as a walk.', tag: 'simba', dur: 60,
+    { room: 'dehors', id: 'parc', name: 'Dog park', desc: 'Counts as a walk.', tag: 'simba', dur: () => (perk('quickwalk') ? 45 : 60),
       verb: 'Simba runs with his buddies…', task: 'parc', walk: true, sfx: 'bark',
       avail: (s) => outside(s),
       run: (s) => {
@@ -384,7 +388,7 @@
     { room: 'dehors', id: 'courses', name: 'Groceries for Nena', desc: '−$24 · +4 meals in the fridge.', tag: 'maison', dur: 40,
       verb: 'Nena fills her basket…', task: 'courses', sfx: 'coin',
       avail: (s) => outside(s, (x) => (x.money < 24 ? 'Not enough money ($24).' : true)),
-      run: (s) => { s.money -= 24; s.food += 4; s.simba.bonheur -= 6; credit('courses'); rainCheck(s); } },
+      run: (s) => { s.money -= 24; s.food += perk('chef') ? 6 : 4; s.simba.bonheur -= 6; credit('courses'); rainCheck(s); } },
     { room: 'dehors', id: 'croquettes', name: 'Bag of kibble', desc: '−$20 · +8 portions.', tag: 'simba', dur: 25,
       verb: 'Off to the pet store…', task: 'courses', sfx: 'coin',
       avail: (s) => outside(s, (x) => (x.money < 20 ? 'Not enough money ($20).' : true)),
@@ -409,7 +413,7 @@
         const t = nextTrick(s); if (!t) return;
         const sc = r ? r.score : 0.6;
         const before = s.pet.tricks[t];
-        s.pet.tricks[t] = Math.min(100, before + (20 + 30 * sc) * (1.1 - s.pet.stubborn / 200));
+        s.pet.tricks[t] = Math.min(100, before + (20 + 30 * sc) * (1.1 - s.pet.stubborn / 200) * (perk('master') ? 1.5 : 1));
         s.pet.stubborn = Math.max(10, s.pet.stubborn - 4);
         s.today.trains++; s.simba.bonheur += 6; weigh(s, 0.03);
         if (s.pet.tricks[t] >= 100) {
@@ -428,7 +432,7 @@
       verb: 'Squeezing every toy in the store…', sfx: 'coin', show: (s) => chapterN(s) === 2 && !storyFlag(s, 'gift'),
       avail: (s) => outside(s, (x) => (x.money < 30 ? 'Not enough money ($30).' : true)),
       run: (s) => { s.money -= 30; s.story.flags.gift = true; note('Gift wrapped and hidden in the closet.', 'good'); } },
-    { room: 'dehors', id: 'miawalk', name: 'Walk with Mia', desc: '5 to 8 PM · Simba and Biscuit play together.', tag: 'simba', dur: 40,
+    { room: 'dehors', id: 'miawalk', name: 'Walk with Mia', desc: '5 to 8 PM · Simba and Biscuit play together.', tag: 'simba', dur: () => (perk('quickwalk') ? 30 : 40),
       verb: 'Chatting with Mia while the dogs play…', task: 'promenade', walk: true, sfx: 'bark',
       show: (s) => storyFlag(s, 'met_mia'),
       avail: (s) => outside(s, (x) => (x.today.miaWalk ? 'You already walked with Mia today.' : x.time < 17 * 60 || x.time > 20 * 60 ? 'Mia walks between 5 and 8 PM.' : x.pet.sick ? 'Simba needs rest today.' : true)),
@@ -482,158 +486,276 @@
   };
   const posOf = (who) => ROOMS[S.room][who];
 
+  /* Illustrated scenes (800×450, floor line at y=330). Lighting follows the clock. */
   function fluff(s) {
     const count = Math.round((100 - s.maison.proprete) / 14);
-    const spots = [[200, 420], [300, 400], [520, 430], [610, 395], [430, 438], [250, 440], [580, 440]];
+    const spots = [[210, 420], [300, 398], [520, 432], [610, 400], [430, 440], [250, 440], [580, 444]];
     let out = '';
     for (let i = 0; i < Math.min(count, spots.length); i++) {
       const [x, y] = spots[i];
-      out += `<g opacity=".85"><circle cx="${x}" cy="${y}" r="9" fill="#d9944c"/><circle cx="${x + 8}" cy="${y - 4}" r="7" fill="#e6a65e"/><circle cx="${x - 7}" cy="${y - 3}" r="6" fill="#c98540"/></g>`;
+      out += `<g opacity=".9"><ellipse cx="${x}" cy="${y + 6}" rx="14" ry="3" fill="rgba(0,0,0,.12)"/><circle cx="${x}" cy="${y}" r="8" fill="#d98f45"/><circle cx="${x + 8}" cy="${y - 3}" r="6.5" fill="#eaa75c"/><circle cx="${x - 7}" cy="${y - 2}" r="5.5" fill="#c97f3a"/><path d="M${x - 10} ${y - 6} l-4 -3 M${x + 12} ${y - 8} l4 -3" stroke="#d98f45" stroke-width="1.5"/></g>`;
     }
     return out;
   }
-  function windowSvg(x, y, w, h, s) {
+  const dayLight = (s) => 1 - Math.min(1, nightLevel(s.time) / 0.6);
+  function sceneDefs(s, wall1, wall2, floor1, floor2) {
+    return `<defs>
+      <linearGradient id="sc-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${wall1}"/><stop offset="1" stop-color="${wall2}"/></linearGradient>
+      <linearGradient id="sc-floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${floor1}"/><stop offset="1" stop-color="${floor2}"/></linearGradient>
+      <linearGradient id="sc-beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity=".55"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient>
+      <radialGradient id="sc-glow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".75"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient>
+      <radialGradient id="sc-vig" cx=".5" cy=".45" r=".75"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#2a1608" stop-opacity=".28"/></radialGradient>
+      <linearGradient id="sc-gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <clipPath id="sc-photo"><rect x="0" y="0" width="1" height="1"/></clipPath>
+    </defs>`;
+  }
+  function wallpaper(stripe) {
+    let o = '<rect width="800" height="330" fill="url(#sc-wall)"/>';
+    for (let x = 0; x < 800; x += 36) o += `<rect x="${x}" y="0" width="14" height="330" fill="${stripe}"/>`;
+    for (let x = 18; x < 800; x += 72) for (let y = 30; y < 300; y += 60) o += `<circle cx="${x + ((y / 60) % 2) * 36}" cy="${y}" r="2.2" fill="${stripe}" opacity="1.6"/>`;
+    return o;
+  }
+  function woodFloor() {
+    let o = '<rect x="0" y="330" width="800" height="120" fill="url(#sc-floor)"/>';
+    const rows = [330, 352, 378, 410, 450];
+    for (let i = 0; i < rows.length - 1; i++) {
+      o += `<path d="M0 ${rows[i + 1]} H800" stroke="rgba(60,30,10,.18)" stroke-width="1.5"/>`;
+      for (let x = (i * 97) % 160; x < 800; x += 160 + i * 12) o += `<path d="M${x} ${rows[i]} V${rows[i + 1]}" stroke="rgba(60,30,10,.14)" stroke-width="1.5"/>`;
+    }
+    o += '<rect x="0" y="322" width="800" height="12" fill="#f4ead9"/><rect x="0" y="332" width="800" height="3" fill="rgba(0,0,0,.12)"/>';
+    return o;
+  }
+  function windowSvg(x, y, w, h, s, curtain) {
     const [a, b] = skyColor(s.time);
-    const night = nightLevel(s.time) > 0.4;
+    const night = nightLevel(s.time) > 0.4, wx = s.today.weather;
     let extra = '';
-    if (night) for (let i = 0; i < 9; i++) extra += `<circle cx="${x + 12 + ((i * 37) % (w - 20))}" cy="${y + h - 18 - ((i * 23) % 30)}" r="3" fill="#ffc96b" opacity=".9"/>`;
-    if (s.today.weather === 'pluie') for (let i = 0; i < 14; i++) extra += `<path d="M${x + ((i * 29) % w)} ${y + ((i * 41) % h)} l-4 12" stroke="#e6eef7" stroke-width="2" opacity=".7"/>`;
-    if (s.today.weather === 'neige') for (let i = 0; i < 14; i++) extra += `<circle cx="${x + ((i * 29) % w)}" cy="${y + ((i * 41) % h)}" r="2.6" fill="#fff"/>`;
-    return `<defs><linearGradient id="sky${x}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>
-      <rect x="${x - 8}" y="${y - 8}" width="${w + 16}" height="${h + 16}" rx="6" fill="#5b3a2c"/>
-      <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#sky${x})"/>
-      <path d="M${x} ${y + h} v-28 h${w * 0.18} v-16 h${w * 0.16} v22 h${w * 0.2} v-34 h${w * 0.2} v20 h${w * 0.26} v36z" fill="${night ? '#2a2a4a' : '#9cb4c8'}" opacity=".85"/>
+    extra += `<path d="M${x} ${y + h} v-30 h${w * 0.16} v-18 h${w * 0.14} v26 h${w * 0.2} v-40 h${w * 0.18} v22 h${w * 0.32} v40z" fill="${night ? '#24233f' : '#a9bccd'}"/>`;
+    for (let i = 0; i < 10; i++) extra += `<rect x="${x + 6 + ((i * 31) % (w - 14))}" y="${y + h - 24 - ((i * 13) % 26)}" width="4" height="5" fill="${night ? '#ffcf73' : '#dfe8f0'}" opacity="${night ? (i % 3 ? 0.95 : 0.3) : 0.8}"/>`;
+    if (!night && wx !== 'pluie') extra += `<g fill="#fff" opacity=".85"><ellipse cx="${x + w * 0.3}" cy="${y + h * 0.25}" rx="18" ry="6"/><ellipse cx="${x + w * 0.38}" cy="${y + h * 0.22}" rx="12" ry="6"/></g>`;
+    if (night) extra += `<circle cx="${x + w * 0.75}" cy="${y + h * 0.22}" r="9" fill="#fff3c9"/><circle cx="${x + w * 0.78}" cy="${y + h * 0.2}" r="8" fill="${a}"/>`;
+    if (wx === 'pluie') for (let i = 0; i < 16; i++) extra += `<path d="M${x + ((i * 29) % w)} ${y + ((i * 41) % h)} l-4 12" stroke="#e6eef7" stroke-width="1.6" opacity=".7"/>`;
+    if (wx === 'neige') for (let i = 0; i < 16; i++) extra += `<circle cx="${x + ((i * 29) % w)}" cy="${y + ((i * 41) % h)}" r="2.4" fill="#fff"/>`;
+    const id = 'sky' + x;
+    const beam = !night && dayLight(s) > 0.2 ? `<polygon points="${x},${y + h} ${x + w},${y + h} ${x + w + 120},450 ${x - 60},450" fill="url(#sc-beam)" opacity="${(dayLight(s) * (wx === 'soleil' ? 1 : 0.55)).toFixed(2)}"/>` : '';
+    const curt = curtain ? `<path d="M${x - 30} ${y - 22} h${w * 0.32} q-8 ${h * 0.5} 6 ${h + 30} q-24 6 -${w * 0.36} 0 z" fill="${curtain}"/>
+      <path d="M${x + w + 30} ${y - 22} h-${w * 0.32} q8 ${h * 0.5} -6 ${h + 30} q24 6 ${w * 0.36} 0 z" fill="${curtain}"/>
+      <path d="M${x - 18} ${y - 18} v${h + 24} M${x - 4} ${y - 18} v${h + 20} M${x + w + 18} ${y - 18} v${h + 24} M${x + w + 4} ${y - 18} v${h + 20}" stroke="rgba(0,0,0,.08)" stroke-width="3"/>
+      <rect x="${x - 40}" y="${y - 28}" width="${w + 80}" height="7" rx="3.5" fill="#8a6044"/>` : '';
+    return `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>
+      <rect x="${x - 10}" y="${y - 10}" width="${w + 20}" height="${h + 20}" rx="6" fill="#6b4632"/>
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#${id})"/>
       ${extra}
-      <rect x="${x + w / 2 - 3}" y="${y}" width="6" height="${h}" fill="#5b3a2c"/>
-      <rect x="${x}" y="${y + h / 2 - 3}" width="${w}" height="6" fill="#5b3a2c"/>`;
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#sc-gloss)" opacity=".18"/>
+      <rect x="${x + w / 2 - 3}" y="${y}" width="6" height="${h}" fill="#6b4632"/>
+      <rect x="${x}" y="${y + h / 2 - 3}" width="${w}" height="6" fill="#6b4632"/>
+      <rect x="${x - 16}" y="${y + h + 8}" width="${w + 32}" height="9" rx="3" fill="#7d553d"/>
+      ${curt}${beam}`;
   }
-  function floor(color, rug) {
-    return `<rect x="0" y="330" width="800" height="120" fill="${color}"/>
-      <rect x="0" y="326" width="800" height="8" fill="rgba(0,0,0,.12)"/>
-      ${rug ? `<ellipse cx="400" cy="405" rx="240" ry="32" fill="${rug}"/>` : ''}`;
-  }
-  const plant = (x, y, sc = 1) => `<g transform="translate(${x} ${y}) scale(${sc})"><g fill="#6f9a52"><ellipse cx="0" cy="-30" rx="18" ry="34"/><ellipse cx="22" cy="-40" rx="14" ry="28" transform="rotate(25 22 -40)"/><ellipse cx="-22" cy="-40" rx="14" ry="28" transform="rotate(-25 -22 -40)"/></g><rect x="-22" y="-6" width="44" height="40" rx="6" fill="#c97b52"/></g>`;
-  const dogBed = (x, y) => `<g><ellipse cx="${x}" cy="${y}" rx="70" ry="22" fill="#b5476d"/><ellipse cx="${x}" cy="${y - 6}" rx="56" ry="14" fill="#f3c6d5"/></g>`;
+  const photo = (x, y, w, h) => `<g><rect x="${x - 7}" y="${y - 7}" width="${w + 14}" height="${h + 14}" rx="3" fill="#8a5a3c"/><rect x="${x - 3}" y="${y - 3}" width="${w + 6}" height="${h + 6}" fill="#fff8ee"/>
+    <svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><image href="assets/nena-simba.jpg" x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid slice"/></svg>
+    <rect x="${x}" y="${y}" width="${w}" height="${h * 0.4}" fill="url(#sc-gloss)" opacity=".25"/></g>`;
+  const frame = (x, y, w, h, inner) => `<g><rect x="${x - 5}" y="${y - 5}" width="${w + 10}" height="${h + 10}" rx="2" fill="#c99a6a"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff8ee"/>${inner}</g>`;
+  const plant = (x, y, sc = 1) => `<g transform="translate(${x} ${y}) scale(${sc})">
+    <g fill="#5f8f45"><ellipse cx="0" cy="-34" rx="16" ry="32"/><ellipse cx="22" cy="-42" rx="12" ry="28" transform="rotate(28 22 -42)"/><ellipse cx="-22" cy="-42" rx="12" ry="28" transform="rotate(-28 -22 -42)"/></g>
+    <g fill="#77ab58"><ellipse cx="6" cy="-40" rx="8" ry="22" transform="rotate(10 6 -40)"/><ellipse cx="-12" cy="-30" rx="7" ry="18" transform="rotate(-20 -12 -30)"/></g>
+    <path d="M0 -60 V-4 M0 -30 L18 -50 M0 -24 L-18 -46" stroke="#4a7537" stroke-width="2" fill="none"/>
+    <path d="M-22 -6 h44 l-5 40 h-34z" fill="#c97b52"/><rect x="-24" y="-8" width="48" height="8" rx="3" fill="#b06a44"/><path d="M-16 4 l4 26" stroke="rgba(255,255,255,.2)" stroke-width="4"/></g>`;
+  const pothos = (x, y) => {
+    let leaves = '';
+    const pts = [[0, 0], [-14, 18], [-6, 38], [-18, 58], [-8, 80], [10, 16], [16, 40], [8, 62]];
+    pts.forEach(([dx, dy], i) => { leaves += `<path d="M${x + dx} ${y + dy} q8 -8 14 0 q-6 10 -14 0z" fill="${i % 2 ? '#6aa04c' : '#7fbb5e'}" transform="rotate(${i % 2 ? -30 : 25} ${x + dx} ${y + dy})"/>`; });
+    return `<path d="M${x} ${y} q-16 30 -8 80 M${x} ${y} q16 26 8 62" stroke="#4f7d39" stroke-width="2" fill="none"/>${leaves}`;
+  };
+  const lampGlow = (s, x, y, r) => (nightLevel(s.time) > 0.25 ? `<circle cx="${x}" cy="${y}" r="${r}" fill="url(#sc-glow)"/>` : '');
+  const dogBed = (x, y) => `<g><ellipse cx="${x}" cy="${y + 8}" rx="76" ry="14" fill="rgba(0,0,0,.14)"/><ellipse cx="${x}" cy="${y}" rx="72" ry="24" fill="#b5476d"/><ellipse cx="${x}" cy="${y - 6}" rx="58" ry="15" fill="#f3c6d5"/><path d="M${x - 50} ${y - 4} q50 14 100 0" stroke="#e7a8bf" stroke-width="3" fill="none"/></g>`;
+  const rug = (cx, cy, rx, ry, c1, c2) => `<ellipse cx="${cx}" cy="${cy + 4}" rx="${rx + 4}" ry="${ry + 3}" fill="rgba(0,0,0,.1)"/><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c1}"/><ellipse cx="${cx}" cy="${cy}" rx="${rx * 0.78}" ry="${ry * 0.7}" fill="none" stroke="${c2}" stroke-width="4" stroke-dasharray="2 8" stroke-linecap="round"/><ellipse cx="${cx}" cy="${cy}" rx="${rx * 0.5}" ry="${ry * 0.42}" fill="${c2}" opacity=".5"/>`;
+  const vignette = '<rect width="800" height="450" fill="url(#sc-vig)"/>';
 
   const DRAW = {
     chambre(s) {
-      const made = s.maison.lit;
-      return `<rect width="800" height="450" fill="#ecd6c3"/>
-        <rect y="0" width="800" height="18" fill="#dcbfa8"/>
-        ${windowSvg(520, 70, 150, 140, s)}
-        <path d="M502 52 h36 v200 q-18 -40 -36 -10z" fill="#e8d2bb"/><path d="M688 52 h-36 v200 q18 -40 36 -10z" fill="#e8d2bb"/>
-        ${floor('#b9875f', '#f0b6c8')}
-        <rect x="110" y="190" width="300" height="110" rx="18" fill="#a77450"/>
-        <rect x="102" y="268" width="316" height="82" rx="24" fill="#f4e7d4"/>
+      const made = s.maison.lit, lamp = nightLevel(s.time) > 0.3;
+      return `${sceneDefs(s, '#f1ddcb', '#e5c9b2', '#c08d63', '#9c6a44')}
+        ${wallpaper('rgba(255,255,255,.18)')}
+        ${woodFloor()}
+        ${windowSvg(530, 74, 140, 130, s, '#efe0cc')}
+        ${photo(250, 70, 76, 76)}
+        ${frame(350, 92, 46, 56, '<circle cx="373" cy="114" r="12" fill="#f2a94e"/><path d="M356 140 q17 -16 34 0" fill="#ef8fb0"/>')}
+        <g fill="#7d553d"><rect x="120" y="120" width="96" height="8" rx="3"/></g>
+        <g><rect x="128" y="96" width="12" height="24" fill="#c9496f"/><rect x="141" y="100" width="10" height="20" fill="#5f8f45"/><rect x="152" y="94" width="14" height="26" fill="#e8b73a"/><rect x="167" y="104" width="9" height="16" fill="#4a7bd0" transform="rotate(12 171 112)"/></g>
+        ${pothos(196, 120)}
+        ${rug(400, 404, 230, 30, '#f0b6c8', '#fff3f7')}
+        <rect x="102" y="186" width="320" height="22" rx="11" fill="#8f5f3f"/>
+        <rect x="110" y="200" width="304" height="100" rx="16" fill="#a77450"/>
+        <g fill="#b9875f">${[0, 1, 2, 3].map((i) => `<circle cx="${150 + i * 76}" cy="236" r="5"/>`).join('')}${[0, 1, 2].map((i) => `<circle cx="${188 + i * 76}" cy="264" r="5"/>`).join('')}</g>
+        <rect x="96" y="264" width="332" height="88" rx="26" fill="#f6ebdb"/>
         ${made
-          ? `<rect x="102" y="282" width="316" height="68" rx="22" fill="#e7cfb1"/><path d="M110 300 h300" stroke="#d6b994" stroke-width="3"/>
-             <rect x="126" y="248" width="100" height="40" rx="18" fill="#fff8ee"/><rect x="240" y="248" width="100" height="40" rx="18" fill="#fff8ee"/>`
-          : `<path d="M102 300 q40 -40 90 -6 q50 -30 90 6 q50 -40 90 0 q30 -20 46 4 v46 h-316z" fill="#e7cfb1"/>
-             <rect x="120" y="240" width="100" height="40" rx="18" fill="#fff8ee" transform="rotate(-10 170 260)"/>`}
-        <rect x="428" y="262" width="76" height="80" rx="8" fill="#8a5a3c"/>
-        <rect x="444" y="226" width="12" height="38" fill="#6d4630"/>
-        <path d="M422 230 l28 -54 l28 54z" fill="${nightLevel(s.time) > 0.3 ? '#ffd98a' : '#f4e2c4'}"/>
-        ${nightLevel(s.time) > 0.3 ? '<circle cx="450" cy="215" r="70" fill="#ffd98a" opacity=".18"/>' : ''}
-        <rect x="470" y="244" width="22" height="18" rx="4" fill="#fff"/>
-        ${has('panier') ? dogBed(610, 400) : ''}
-        ${has('plante') ? plant(700, 312, 0.9) : ''}
-        ${fluff(s)}`;
+          ? `<rect x="124" y="236" width="104" height="42" rx="18" fill="#fffaf2"/><rect x="242" y="236" width="104" height="42" rx="18" fill="#fffaf2"/>
+             <path d="M132 250 q46 -10 88 0 M250 250 q46 -10 88 0" stroke="#ecdcc6" stroke-width="3" fill="none"/>
+             <path d="M96 290 h332 v40 q0 22 -26 22 h-280 q-26 0 -26 -22z" fill="#e9d2b3"/>
+             <path d="M96 292 h332" stroke="#fff6e8" stroke-width="5"/><path d="M130 312 q40 8 90 0 q50 -8 100 0 q40 6 90 0" stroke="#d8bd98" stroke-width="3" fill="none"/>`
+          : `<rect x="118" y="232" width="104" height="42" rx="18" fill="#fffaf2" transform="rotate(-12 170 254)"/>
+             <path d="M96 300 q40 -46 96 -10 q46 -36 92 4 q50 -44 94 -2 q28 -18 50 8 v32 q0 22 -26 22 h-280 q-26 0 -26 -22z" fill="#e9d2b3"/>
+             <path d="M140 300 q20 -18 46 -4 M240 298 q26 -20 50 0 M330 296 q22 -16 44 2" stroke="#d8bd98" stroke-width="3" fill="none"/>`}
+        <ellipse cx="262" cy="356" rx="170" ry="8" fill="rgba(0,0,0,.12)"/>
+        <rect x="438" y="258" width="78" height="86" rx="8" fill="#8a5a3c"/><rect x="438" y="258" width="78" height="10" rx="5" fill="#a06d4a"/>
+        <rect x="448" y="292" width="58" height="4" rx="2" fill="#6d4630"/><circle cx="477" cy="314" r="3.4" fill="#e8c38f"/>
+        ${lampGlow(s, 466, 196, 110)}
+        <rect x="460" y="218" width="10" height="40" fill="#6d4630"/><ellipse cx="465" cy="258" rx="16" ry="4" fill="#5a3a28"/>
+        <path d="M436 222 l20 -52 h20 l20 52z" fill="${lamp ? '#ffe3a3' : '#f4e2c4'}"/><path d="M436 222 h60" stroke="${lamp ? '#ffd27a' : '#e2ccaa'}" stroke-width="3"/>
+        <g><rect x="482" y="240" width="22" height="18" rx="4" fill="#fffaf2"/><path d="M504 244 q8 0 8 6 q0 6 -8 6" stroke="#fffaf2" stroke-width="3" fill="none"/><path d="M489 247 q4 -3 8 0 q-4 6 -8 0z" fill="#e05b7b"/>
+          <path d="M488 236 q4 -8 0 -14 M496 236 q4 -8 0 -14" stroke="rgba(255,255,255,.7)" stroke-width="2" fill="none"/></g>
+        ${has('panier') ? dogBed(616, 404) : ''}
+        ${has('plante') ? plant(706, 312, 0.95) : plant(712, 318, 0.75)}
+        ${fluff(s)}${vignette}`;
     },
     sdb(s) {
       let tiles = '';
-      for (let y = 0; y < 330; y += 40) for (let x = 0; x < 800; x += 40) tiles += `<rect x="${x + 1}" y="${y + 1}" width="38" height="38" fill="#d4e6e8"/>`;
+      for (let y = 0; y < 322; y += 32) for (let x = (y / 32) % 2 ? -16 : 0; x < 800; x += 32) tiles += `<rect x="${x + 1}" y="${y + 1}" width="30" height="30" rx="3" fill="rgba(255,255,255,.35)"/>`;
       const linge = Math.min(3, s.maison.linge);
       let basket = '';
-      for (let i = 0; i < linge; i++) basket += `<ellipse cx="${630 + i * 8}" cy="${300 - i * 10}" rx="22" ry="9" fill="${['#f19bb8', '#9cc2d9', '#f6d9b8'][i]}"/>`;
-      return `<rect width="800" height="450" fill="#c3dadd"/>${tiles}
-        ${floor('#e9e2d8', '#9cc2d9')}
-        <rect x="110" y="230" width="270" height="110" rx="48" fill="#fffdf9"/>
-        <rect x="126" y="244" width="238" height="40" rx="20" fill="#bfe1ee"/>
-        <circle cx="180" cy="246" r="10" fill="#fff"/><circle cx="200" cy="240" r="7" fill="#fff"/><circle cx="220" cy="248" r="9" fill="#fff"/>
-        <rect x="140" y="150" width="8" height="90" fill="#b8c1c6"/><path d="M130 150 h40 l-10 14 h-20z" fill="#b8c1c6"/>
-        <rect x="400" y="90" width="110" height="130" rx="55" fill="#f6efe6" stroke="#b6a089" stroke-width="6"/>
-        <rect x="405" y="232" width="100" height="22" rx="8" fill="#fffdf9"/><rect x="435" y="254" width="40" height="76" fill="#f1ebe2"/>
-        <rect x="530" y="200" width="100" height="135" rx="12" fill="#f8f6f3" stroke="#d8d2ca" stroke-width="3"/>
-        <circle cx="580" cy="275" r="34" fill="#9db7c2" stroke="#ccc4ba" stroke-width="6"/>
-        <circle cx="550" cy="216" r="5" fill="#e98aab"/><circle cx="566" cy="216" r="5" fill="#8fcf8f"/>
-        <rect x="606" y="290" width="66" height="46" rx="10" fill="#c9a67a"/>${basket}
-        ${fluff(s)}`;
+      for (let i = 0; i < linge; i++) basket += `<ellipse cx="${640 + i * 8}" cy="${296 - i * 9}" rx="22" ry="9" fill="${['#f19bb8', '#9cc2d9', '#f6d9b8'][i]}"/>`;
+      let floorTiles = '<rect x="0" y="330" width="800" height="120" fill="url(#sc-floor)"/>';
+      for (let x = 0; x < 800; x += 56) floorTiles += `<path d="M${x} 330 L${x - 40 + (x - 400) * 0.25} 450" stroke="rgba(0,0,0,.08)" stroke-width="2"/>`;
+      for (const y of [356, 388, 428]) floorTiles += `<path d="M0 ${y} H800" stroke="rgba(0,0,0,.08)" stroke-width="2"/>`;
+      return `${sceneDefs(s, '#cfe3e6', '#b6d2d6', '#efe8de', '#d9cfc2')}
+        <rect width="800" height="330" fill="url(#sc-wall)"/>${tiles}
+        <rect x="0" y="180" width="800" height="8" fill="#9cc2c8"/>
+        ${floorTiles}<rect x="0" y="322" width="800" height="10" fill="#e9f2f3"/>
+        ${rug(470, 400, 120, 24, '#9cc2d9', '#d7ecf5')}
+        <path d="M104 70 h8 v170 h-8z" fill="#c4ccd2"/><path d="M100 66 h250 v8 h-250z" fill="#c4ccd2"/>
+        <path d="M112 74 q20 80 4 170 h70 q-24 -90 -10 -170z" fill="#f3c6d5" opacity=".9"/><path d="M130 80 q10 80 0 160 M152 80 q12 80 2 160" stroke="#e7a8bf" stroke-width="3" fill="none"/>
+        <ellipse cx="248" cy="346" rx="150" ry="10" fill="rgba(0,0,0,.12)"/>
+        <path d="M110 238 h276 v40 q0 64 -70 64 h-136 q-70 0 -70 -64z" fill="#fffdf9"/>
+        <path d="M120 248 h256 v18 q-128 14 -256 0z" fill="#bfe1ee"/>
+        <path d="M118 250 q60 40 130 40" stroke="url(#sc-gloss)" stroke-width="10" fill="none" opacity=".6"/>
+        <g fill="#fff"><circle cx="190" cy="246" r="12"/><circle cx="212" cy="238" r="9"/><circle cx="232" cy="248" r="11"/><circle cx="300" cy="244" r="8"/><circle cx="318" cy="238" r="6"/></g>
+        <g fill="#c4ccd2"><rect x="128" y="342" width="12" height="10" rx="3"/><rect x="356" y="342" width="12" height="10" rx="3"/></g>
+        <path d="M352 238 v-34 q0 -10 10 -10 h10" stroke="#c4ccd2" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <g><ellipse cx="458" cy="150" rx="54" ry="70" fill="#d8c2a8"/><ellipse cx="458" cy="150" rx="46" ry="62" fill="#e8f3f6"/>
+          <path d="M424 112 q20 -30 50 -26" stroke="#fff" stroke-width="8" stroke-linecap="round" fill="none" opacity=".8"/>
+          <path d="M430 196 q28 14 56 0" stroke="#cfe3e6" stroke-width="4" fill="none"/></g>
+        <rect x="404" y="232" width="108" height="22" rx="9" fill="#fffdf9"/><rect x="434" y="254" width="48" height="76" rx="6" fill="#f2ede6"/>
+        <path d="M458 232 v-12 h12" stroke="#c4ccd2" stroke-width="4" fill="none"/>
+        <g><rect x="420" y="214" width="12" height="18" rx="3" fill="#ef8fb0"/><rect x="490" y="208" width="10" height="24" rx="3" fill="#7fc9a7"/></g>
+        <rect x="540" y="196" width="104" height="138" rx="12" fill="#f8f6f3"/><rect x="540" y="196" width="104" height="26" rx="12" fill="#ece8e2"/>
+        <circle cx="592" cy="276" r="36" fill="#cfd8dd"/><circle cx="592" cy="276" r="28" fill="#8fb3c4"/><path d="M572 262 q14 -12 32 -4" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".7"/>
+        <circle cx="560" cy="209" r="5" fill="#e98aab"/><circle cx="576" cy="209" r="5" fill="#8fcf8f"/><rect x="600" y="204" width="34" height="10" rx="3" fill="#cfd8dd"/>
+        <path d="M652 290 h72 l-6 46 h-60z" fill="#c9a67a"/><path d="M656 302 h64 M658 316 h60 M660 328 h56" stroke="#b08c60" stroke-width="2"/>${basket}
+        <rect x="690" y="120" width="40" height="70" rx="6" fill="#f6d9b8"/><rect x="684" y="114" width="52" height="8" rx="4" fill="#c4ccd2"/><path d="M690 170 h40" stroke="#ef8fb0" stroke-width="4"/>
+        ${fluff(s)}${vignette}`;
     },
     cuisine(s) {
       let tiles = '';
-      for (let x = 110; x < 420; x += 30) tiles += `<rect x="${x}" y="180" width="28" height="68" fill="#f7efe2"/>`;
+      for (let y = 168; y < 240; y += 18) for (let x = 100 + ((y / 18) % 2) * 15; x < 430; x += 30) tiles += `<rect x="${x}" y="${y}" width="28" height="16" rx="2" fill="rgba(255,255,255,.6)"/>`;
       let dishes = '';
-      for (let i = 0; i < Math.min(5, s.maison.vaisselle); i++) dishes += `<ellipse cx="${200 + (i % 2) * 6}" cy="${244 - i * 8}" rx="32" ry="6" fill="#fffaf2" stroke="#c9b8a4" stroke-width="2"/>`;
-      const foodLvl = s.simba.ventre > 70 ? 0 : 12;
+      for (let i = 0; i < Math.min(5, s.maison.vaisselle); i++) dishes += `<ellipse cx="${348 + (i % 2) * 5}" cy="${236 - i * 7}" rx="26" ry="5" fill="#fffaf2" stroke="#c9b8a4" stroke-width="1.6"/>`;
+      const foodLvl = s.simba.ventre > 70 ? 0 : 1;
       const water = Math.round(s.simba.eau / 100 * 10);
-      return `<rect width="800" height="450" fill="#f1dfc5"/>${tiles}
-        ${windowSvg(240, 50, 140, 110, s)}
-        ${floor('#c8a27a')}
-        <rect x="100" y="248" width="330" height="92" fill="#a8744d"/>
-        <rect x="94" y="240" width="342" height="14" rx="4" fill="#e9dcc6"/>
-        <g fill="#8e5f3e"><rect x="114" y="268" width="96" height="60" rx="6"/><rect x="220" y="268" width="96" height="60" rx="6"/><rect x="326" y="268" width="96" height="60" rx="6"/></g>
-        <rect x="330" y="220" width="64" height="22" rx="10" fill="#c9cfd3"/>
-        ${dishes}
-        ${has('cafe') ? '<rect x="120" y="206" width="34" height="36" rx="6" fill="#3a3550"/><rect x="128" y="226" width="16" height="12" rx="3" fill="#fff"/>' : ''}
-        <rect x="446" y="110" width="110" height="230" rx="16" fill="#f7f4ef" stroke="#ddd5ca" stroke-width="3"/>
-        <path d="M446 190 h110" stroke="#ddd5ca" stroke-width="3"/><rect x="538" y="140" width="6" height="34" rx="3" fill="#b8b0a6"/>
-        <rect x="538" y="210" width="6" height="40" rx="3" fill="#b8b0a6"/>
-        <text x="501" y="300" text-anchor="middle" font-family="Nunito, sans-serif" font-size="16" font-weight="800" fill="#b8b0a6">${s.food} meals</text>
-        <path d="M560 400 h56 l-8 22 h-40z" fill="#e98aab"/>
-        <ellipse cx="588" cy="400" rx="28" ry="6" fill="${foodLvl ? '#9a6232' : '#c95f84'}"/>
-        <path d="M624 400 h56 l-8 22 h-40z" fill="#7aa6c2"/>
-        <ellipse cx="652" cy="400" rx="${16 + water}" ry="5" fill="${water > 2 ? '#bfe6f5' : '#5d88a3'}"/>
-        <text x="620" y="442" text-anchor="middle" font-family="Baloo 2, sans-serif" font-size="15" font-weight="700" fill="#7a5c4e">SIMBA</text>
-        ${fluff(s)}`;
+      return `${sceneDefs(s, '#f6e6cd', '#ecd5b4', '#d2ae86', '#ad8660')}
+        <rect width="800" height="330" fill="url(#sc-wall)"/>
+        ${woodFloor()}
+        <rect x="96" y="164" width="340" height="80" fill="#e6f0ea"/>${tiles}
+        ${windowSvg(470, 64, 120, 100, s, null)}
+        <g>${[0, 1, 2].map((i) => `<path d="M${484 + i * 34} 168 h22 l-3 16 h-16z" fill="#c97b52"/><g fill="#6aa04c"><ellipse cx="${495 + i * 34}" cy="160" rx="7" ry="10"/><ellipse cx="${489 + i * 34}" cy="164" rx="5" ry="7" transform="rotate(-30 ${489 + i * 34} 164)"/><ellipse cx="${501 + i * 34}" cy="164" rx="5" ry="7" transform="rotate(30 ${501 + i * 34} 164)"/></g>`).join('')}</g>
+        <rect x="96" y="48" width="340" height="104" rx="6" fill="#f2e3cc"/>
+        ${[0, 1, 2].map((i) => `<rect x="${104 + i * 112}" y="56" width="104" height="88" rx="6" fill="#fffaf2"/><rect x="${150 + i * 112}" y="124" width="12" height="4" rx="2" fill="#c9a27a"/>`).join('')}
+        <path d="M240 20 v18" stroke="#3a3550" stroke-width="2"/><path d="M220 38 h40 l-6 14 h-28z" fill="#3a3550"/>${lampGlow(s, 240, 60, 90)}
+        <ellipse cx="270" cy="346" rx="190" ry="9" fill="rgba(0,0,0,.12)"/>
+        <rect x="92" y="250" width="348" height="92" fill="#a8744d"/>
+        <rect x="86" y="238" width="360" height="16" rx="5" fill="#efe3cf"/><rect x="86" y="238" width="360" height="5" rx="2.5" fill="#fff7ea"/>
+        ${[0, 1, 2].map((i) => `<rect x="${104 + i * 112}" y="264" width="100" height="70" rx="6" fill="#b98157"/><rect x="${146 + i * 112}" y="272" width="16" height="4" rx="2" fill="#e8c38f"/>`).join('')}
+        <rect x="320" y="224" width="70" height="16" rx="6" fill="#c9cfd3"/>${dishes}
+        <g><path d="M128 214 h40 q4 0 4 4 v20 h-48 v-20 q0 -4 4 -4z" fill="#e05b7b"/><path d="M172 222 q12 0 12 8" stroke="#e05b7b" stroke-width="4" fill="none"/><rect x="142" y="206" width="12" height="8" rx="2" fill="#c9496f"/></g>
+        ${has('cafe') ? '<rect x="196" y="200" width="36" height="40" rx="6" fill="#3a3550"/><rect x="204" y="222" width="18" height="14" rx="3" fill="#fff"/><circle cx="214" cy="210" r="3" fill="#7ee08a"/>' : ''}
+        <rect x="462" y="190" width="120" height="152" rx="16" fill="#f7f4ef"/><rect x="462" y="190" width="120" height="152" rx="16" fill="url(#sc-gloss)" opacity=".25"/>
+        <path d="M462 248 h120" stroke="#ddd5ca" stroke-width="3"/><rect x="564" y="206" width="6" height="30" rx="3" fill="#b8b0a6"/><rect x="564" y="258" width="6" height="40" rx="3" fill="#b8b0a6"/>
+        <rect x="478" y="204" width="30" height="34" rx="2" fill="#fff" transform="rotate(-4 493 221)"/><circle cx="490" cy="216" r="6" fill="#f2a94e"/><path d="M482 232 q10 -8 20 0" stroke="#ef8fb0" stroke-width="3" fill="none"/>
+        <circle cx="530" cy="212" r="6" fill="#ef8fb0"/><circle cx="546" cy="226" r="5" fill="#7fc9a7"/>
+        <text x="522" y="290" text-anchor="middle" font-family="Nunito, sans-serif" font-size="15" font-weight="800" fill="#b8b0a6">${s.food} meals</text>
+        <ellipse cx="634" cy="424" rx="74" ry="8" fill="rgba(0,0,0,.12)"/>
+        <path d="M576 400 h56 l-8 22 h-40z" fill="#e98aab"/><ellipse cx="604" cy="400" rx="28" ry="6" fill="${foodLvl ? '#9a6232' : '#c95f84'}"/>
+        ${foodLvl ? '<g fill="#7a4a22"><circle cx="596" cy="398" r="3"/><circle cx="606" cy="397" r="3"/><circle cx="614" cy="399" r="2.6"/></g>' : ''}
+        <path d="M640 400 h56 l-8 22 h-40z" fill="#7aa6c2"/><ellipse cx="668" cy="400" rx="${16 + water}" ry="5" fill="${water > 2 ? '#bfe6f5' : '#5d88a3'}"/>
+        <text x="636" y="444" text-anchor="middle" font-family="Baloo 2, sans-serif" font-size="15" font-weight="800" fill="#7a5c4e">SIMBA</text>
+        ${fluff(s)}${vignette}`;
     },
     salon(s) {
       const tv = s.time >= 8 * 60 && s.time <= 19 * 60 && !isWeekend(s.day);
-      return `<rect width="800" height="450" fill="#ead4d8"/>
-        <rect y="200" width="800" height="130" fill="#e0c3c8"/>
-        ${windowSvg(340, 50, 140, 120, s)}
-        ${floor('#a8774f', '#e6c38d')}
-        <rect x="500" y="210" width="180" height="10" rx="4" fill="#7c533a"/>
-        <rect x="515" y="220" width="10" height="110" fill="#7c533a"/><rect x="655" y="220" width="10" height="110" fill="#7c533a"/>
-        <rect x="546" y="150" width="96" height="62" rx="6" fill="#3a3550"/>
-        <rect x="552" y="156" width="84" height="50" rx="3" fill="${tv ? '#9fd0e8' : '#4b4766'}"/>
-        <rect x="586" y="210" width="16" height="6" fill="#3a3550"/>
-        <rect x="110" y="230" width="290" height="100" rx="30" fill="#d07f9b"/>
-        <rect x="130" y="196" width="250" height="70" rx="26" fill="#df95ae"/>
-        <rect x="92" y="250" width="50" height="80" rx="20" fill="#c06b89"/><rect x="368" y="250" width="50" height="80" rx="20" fill="#c06b89"/>
-        <rect x="160" y="214" width="60" height="44" rx="14" fill="#f6d9b8"/>
-        <circle cx="470" cy="410" r="12" fill="#d8e650"/><path d="M460 404 q10 8 20 0" stroke="#fff" stroke-width="2" fill="none"/>
-        ${has('corde') ? '<path d="M520 420 q20 -16 40 0 q20 16 40 0" stroke="#4a7bd0" stroke-width="8" fill="none" stroke-linecap="round"/>' : ''}
-        ${has('robot') ? '<g><ellipse cx="640" cy="425" rx="34" ry="11" fill="#3a3550"/><ellipse cx="640" cy="420" rx="28" ry="8" fill="#6f6a92"/><circle cx="640" cy="418" r="3" fill="#7ee08a"/></g>' : ''}
-        ${plant(90, 176, 1)}
-        ${fluff(s)}`;
+      const lamp = nightLevel(s.time) > 0.3;
+      let books = '';
+      const bc = ['#c9496f', '#5f8f45', '#e8b73a', '#4a7bd0', '#8a5bc9', '#e57f22'];
+      for (let r = 0; r < 3; r++) { let x = 614; for (let i = 0; i < 6; i++) { const h = 22 + ((i * 7 + r * 3) % 9); books += `<rect x="${x}" y="${132 + r * 46 - h}" width="11" height="${h}" fill="${bc[(i + r) % 6]}"/>`; x += 13; } }
+      return `${sceneDefs(s, '#efd8dc', '#e2c3c9', '#b58257', '#8c5f3b')}
+        ${wallpaper('rgba(255,255,255,.16)')}
+        <rect x="0" y="210" width="800" height="112" fill="rgba(160,90,110,.12)"/><rect x="0" y="206" width="800" height="6" fill="#d9b8bf"/>
+        ${woodFloor()}
+        ${windowSvg(330, 56, 136, 116, s, '#e7c3cc')}
+        ${photo(150, 90, 64, 64)}${frame(232, 104, 40, 40, '<path d="M236 140 l12 -18 l8 10 l6 -6 l6 14z" fill="#7fbb5e"/><circle cx="262" cy="114" r="5" fill="#ffd36b"/>')}
+        <rect x="600" y="40" width="96" height="290" rx="4" fill="#8f5f3f"/><rect x="606" y="46" width="84" height="278" fill="#6d4630"/>
+        ${[0, 1, 2, 3].map((r) => `<rect x="606" y="${132 + r * 46}" width="84" height="6" fill="#8f5f3f"/>`).join('')}${books}
+        <g><rect x="634" y="250" width="30" height="20" rx="4" fill="#fffaf2"/><path d="M640 256 q9 -8 18 0" stroke="#e05b7b" stroke-width="3" fill="none"/></g>
+        ${rug(380, 404, 250, 32, '#e6c38d', '#fff2d9')}
+        <rect x="470" y="226" width="110" height="8" rx="3" fill="#7c533a"/><rect x="478" y="234" width="8" height="96" fill="#7c533a"/><rect x="564" y="234" width="8" height="96" fill="#7c533a"/><rect x="478" y="290" width="94" height="6" fill="#7c533a"/>
+        <rect x="478" y="160" width="94" height="62" rx="6" fill="#2f2b46"/><rect x="484" y="166" width="82" height="50" rx="3" fill="${tv ? '#9fd0e8' : '#3d3a5c'}"/>
+        ${tv ? '<path d="M490 206 l14 -16 l10 10 l8 -8 l18 14z" fill="#7fbb5e"/><circle cx="550" cy="180" r="6" fill="#ffd36b"/>' : '<path d="M488 170 l30 20" stroke="rgba(255,255,255,.12)" stroke-width="6"/>'}
+        <rect x="518" y="220" width="14" height="6" fill="#2f2b46"/>
+        <ellipse cx="250" cy="348" rx="180" ry="9" fill="rgba(0,0,0,.14)"/>
+        <rect x="92" y="196" width="316" height="84" rx="34" fill="#d98aa5"/>
+        <rect x="80" y="246" width="340" height="88" rx="30" fill="#cf7c99"/>
+        <rect x="104" y="240" width="140" height="44" rx="18" fill="#e29ab3"/><rect x="256" y="240" width="140" height="44" rx="18" fill="#e29ab3"/>
+        <rect x="64" y="236" width="54" height="98" rx="24" fill="#bd6886"/><rect x="384" y="236" width="54" height="98" rx="24" fill="#bd6886"/>
+        <path d="M112 214 q40 -10 80 0 M260 214 q40 -10 80 0" stroke="rgba(255,255,255,.25)" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <rect x="132" y="206" width="58" height="46" rx="16" fill="#f6d9b8" transform="rotate(-8 161 229)"/><rect x="300" y="208" width="54" height="44" rx="16" fill="#fff3c4" transform="rotate(6 327 230)"/>
+        <path d="M330 250 q30 30 60 20 l10 50 q-40 6 -70 -10z" fill="#9cc2d9"/><path d="M340 262 l50 50 M354 256 l40 40" stroke="#fff" stroke-width="3" opacity=".6"/>
+        <rect x="86" y="332" width="12" height="12" rx="3" fill="#7c533a"/><rect x="404" y="332" width="12" height="12" rx="3" fill="#7c533a"/>
+        ${lampGlow(s, 40, 120, 120)}<rect x="36" y="140" width="6" height="190" fill="#3a3550"/><path d="M14 146 l12 -46 h30 l12 46z" fill="${lamp ? '#ffe3a3' : '#f4e2c4'}"/><ellipse cx="39" cy="330" rx="18" ry="5" fill="#3a3550"/>
+        <circle cx="460" cy="414" r="12" fill="#d8e650"/><path d="M450 408 q10 8 20 0" stroke="#fff" stroke-width="2" fill="none"/>
+        ${has('corde') ? '<path d="M510 426 q20 -16 40 0 q20 16 40 0" stroke="#4a7bd0" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M510 426 q20 -16 40 0 q20 16 40 0" stroke="#fff" stroke-width="2" stroke-dasharray="4 6" fill="none"/>' : ''}
+        ${has('robot') ? '<g><ellipse cx="660" cy="432" rx="36" ry="11" fill="#2f2b46"/><ellipse cx="660" cy="426" rx="30" ry="9" fill="#6f6a92"/><circle cx="660" cy="424" r="3" fill="#7ee08a"/></g>' : ''}
+        ${has('plante') ? plant(730, 318, 1.05) : ''}
+        ${fluff(s)}${vignette}`;
     },
     dehors(s) {
       const [a, b] = skyColor(s.time);
       const night = nightLevel(s.time) > 0.4, w = s.today.weather, snow = w === 'neige';
-      let bld = '';
-      const xs = [[60, 150, 90], [140, 110, 70], [210, 180, 100], [320, 130, 80], [400, 200, 90], [500, 140, 110], [610, 170, 80], [690, 120, 90]];
+      let far = '', mid = '';
+      const xs = [[40, 120, 80], [110, 160, 70], [176, 100, 60], [230, 190, 90], [316, 130, 70], [380, 210, 84], [458, 150, 100], [552, 180, 70], [616, 120, 90], [700, 160, 80]];
       xs.forEach(([x, h, wd], i) => {
-        bld += `<rect x="${x}" y="${270 - h}" width="${wd}" height="${h}" fill="${night ? '#2c2b4a' : ['#b9c4d3', '#a9b6c8', '#c6cfdb'][i % 3]}"/>`;
-        if (snow) bld += `<rect x="${x}" y="${270 - h - 5}" width="${wd}" height="8" rx="4" fill="#fff"/>`;
-        for (let wy = 270 - h + 14; wy < 256; wy += 22) for (let wx = x + 10; wx < x + wd - 10; wx += 20)
-          bld += `<rect x="${wx}" y="${wy}" width="9" height="11" fill="${night ? ((wx + wy) % 3 ? '#ffcf73' : '#3b3a5c') : '#e8eef5'}"/>`;
+        far += `<rect x="${x}" y="${250 - h}" width="${wd}" height="${h}" fill="${night ? '#24233f' : ['#b9c6d6', '#a9b8cb', '#c3cedb'][i % 3]}"/>`;
+        if (snow) far += `<rect x="${x}" y="${246 - h}" width="${wd}" height="7" rx="3" fill="#fff"/>`;
+        for (let wy = 256 - h; wy < 240; wy += 18) for (let wx = x + 8; wx < x + wd - 8; wx += 16)
+          far += `<rect x="${wx}" y="${wy}" width="7" height="9" fill="${night ? ((wx + wy) % 3 ? '#ffcf73' : '#33324f') : 'rgba(255,255,255,.55)'}"/>`;
       });
-      const grass = snow ? '#f2f5f8' : night ? '#3f5a3a' : w === 'pluie' ? '#6f9a52' : '#8fbf6a';
-      const leaves = snow ? '#e9eef3' : night ? '#2f4a2c' : '#5f9a4c';
-      return `<defs><linearGradient id="skyOut" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>
+      const leaves = snow ? '#eef3f6' : night ? '#2c4a2e' : '#5f9a4c', leaves2 = snow ? '#ffffff' : night ? '#355a35' : '#77b25c';
+      const tree = (x, y, r) => `<g><ellipse cx="${x}" cy="${y + r * 2.2}" rx="${r * 0.9}" ry="${r * 0.18}" fill="rgba(0,0,0,.15)"/><rect x="${x - 7}" y="${y}" width="14" height="${r * 2.2}" fill="#7a5233"/>
+        <circle cx="${x}" cy="${y - 4}" r="${r}" fill="${leaves}"/><circle cx="${x - r * 0.6}" cy="${y + r * 0.3}" r="${r * 0.65}" fill="${leaves}"/><circle cx="${x + r * 0.6}" cy="${y + r * 0.25}" r="${r * 0.6}" fill="${leaves}"/>
+        <circle cx="${x - r * 0.25}" cy="${y - r * 0.3}" r="${r * 0.45}" fill="${leaves2}"/></g>`;
+      let tufts = '';
+      if (!snow) for (let i = 0; i < 26; i++) { const x = (i * 61) % 800, y = 300 + ((i * 37) % 140); if (y > 340 && y < 400) continue; tufts += `<path d="M${x} ${y} l-3 -9 M${x} ${y} l0 -11 M${x} ${y} l3 -9" stroke="${night ? '#2f4a2c' : '#5f9a4c'}" stroke-width="2" stroke-linecap="round"/>`; }
+      let flowers = '';
+      if (!snow && !night) for (let i = 0; i < 9; i++) { const x = 60 + i * 86, y = 420 + (i % 3) * 8; flowers += `<circle cx="${x}" cy="${y}" r="4" fill="${['#ef8fb0', '#ffd36b', '#fff'][i % 3]}"/><circle cx="${x}" cy="${y}" r="1.6" fill="#e8b73a"/>`; }
+      return `<defs><linearGradient id="skyOut" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient>
+          <linearGradient id="grassG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${snow ? '#f4f7fa' : night ? '#3d5a39' : w === 'pluie' ? '#79a85a' : '#9ccb72'}"/><stop offset="1" stop-color="${snow ? '#dfe6ec' : night ? '#2c4229' : w === 'pluie' ? '#5f8c45' : '#77ad55'}"/></linearGradient>
+          <radialGradient id="sc-glow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".7"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient>
+          <radialGradient id="sunG"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#ffe08a" stop-opacity=".6"/><stop offset="1" stop-color="#ffe08a" stop-opacity="0"/></radialGradient></defs>
         <rect width="800" height="450" fill="url(#skyOut)"/>
-        ${night ? '<circle cx="600" cy="70" r="26" fill="#fff3c9"/><circle cx="612" cy="62" r="24" fill="' + a + '"/>' : w === 'soleil' ? '<circle cx="600" cy="70" r="30" fill="#ffe08a"/><circle cx="600" cy="70" r="50" fill="#ffe08a" opacity=".25"/>' : ''}
-        ${w === 'pluie' || w === 'nuages' ? '<g fill="#fff" opacity=".7"><ellipse cx="250" cy="70" rx="70" ry="22"/><ellipse cx="290" cy="58" rx="44" ry="22"/><ellipse cx="520" cy="100" rx="60" ry="18"/></g>' : ''}
-        ${bld}
-        <rect y="270" width="800" height="180" fill="${grass}"/>
-        <path d="M0 360 q400 -60 800 0 v40 q-400 -60 -800 0z" fill="${night ? '#6b5d4d' : snow ? '#dfe5ea' : '#e3cfa6'}"/>
-        <g><rect x="146" y="210" width="16" height="90" fill="#7a5233"/><circle cx="154" cy="200" r="46" fill="${leaves}"/><circle cx="128" cy="220" r="30" fill="${leaves}"/></g>
-        <g><rect x="640" y="220" width="14" height="80" fill="#7a5233"/><circle cx="647" cy="208" r="40" fill="${leaves}"/></g>
-        <rect x="520" y="300" width="100" height="10" rx="4" fill="#9a6b44"/><rect x="520" y="284" width="100" height="8" rx="4" fill="#9a6b44"/>
-        <rect x="528" y="310" width="6" height="22" fill="#6d4a2e"/><rect x="606" y="310" width="6" height="22" fill="#6d4a2e"/>
-        <rect x="330" y="200" width="6" height="140" fill="#4a4a5a"/><circle cx="333" cy="196" r="12" fill="${night ? '#ffd98a' : '#d9d9e0'}"/>
-        ${night ? '<circle cx="333" cy="196" r="44" fill="#ffd98a" opacity=".25"/>' : ''}
-        ${w === 'pluie' ? `<ellipse cx="250" cy="420" rx="34" ry="9" fill="#7d9fb3" opacity=".8"/><ellipse cx="560" cy="430" rx="26" ry="7" fill="#7d9fb3" opacity=".8"/>` : ''}`;
+        ${night ? Array.from({ length: 22 }, (_, i) => `<circle cx="${(i * 97) % 800}" cy="${(i * 53) % 150}" r="${i % 4 ? 1.2 : 2}" fill="#fff" opacity=".8"/>`).join('') + '<circle cx="600" cy="70" r="26" fill="#fff3c9"/><circle cx="612" cy="62" r="24" fill="' + a + '"/>'
+          : w === 'soleil' ? '<circle cx="600" cy="72" r="80" fill="url(#sunG)"/><circle cx="600" cy="72" r="28" fill="#ffe9a0"/>' : ''}
+        ${!night ? `<g fill="#fff" opacity="${w === 'pluie' ? 0.75 : 0.9}"><ellipse cx="220" cy="74" rx="66" ry="20"/><ellipse cx="258" cy="60" rx="42" ry="22"/><ellipse cx="190" cy="64" rx="30" ry="16"/><ellipse cx="470" cy="106" rx="52" ry="14"/><ellipse cx="498" cy="96" rx="30" ry="14"/></g>` : ''}
+        ${w === 'pluie' ? '<rect width="800" height="260" fill="#6b7a8e" opacity=".25"/>' : ''}
+        ${far}
+        <rect y="248" width="800" height="202" fill="url(#grassG)"/>
+        <g opacity=".9">${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((i) => `<rect x="${i * 60}" y="256" width="5" height="34" fill="#fff8ee"/>`).join('')}<rect x="0" y="262" width="800" height="5" fill="#fff8ee"/><rect x="0" y="278" width="800" height="5" fill="#fff8ee"/></g>
+        ${tree(150, 196, 46)}${tree(660, 210, 40)}${tree(470, 230, 26)}
+        <path d="M0 362 q400 -64 800 0 v44 q-400 -64 -800 0z" fill="${night ? '#6b5d4d' : snow ? '#e6ebef' : '#e8d4ab'}"/>
+        <path d="M0 362 q400 -64 800 0" stroke="${night ? '#5a4d3f' : '#cdb588'}" stroke-width="3" fill="none"/>
+        ${tufts}${flowers}
+        <g><ellipse cx="572" cy="336" rx="60" ry="6" fill="rgba(0,0,0,.14)"/><rect x="520" y="298" width="104" height="10" rx="4" fill="#9a6b44"/><rect x="520" y="280" width="104" height="8" rx="4" fill="#9a6b44"/><rect x="520" y="268" width="104" height="8" rx="4" fill="#9a6b44"/>
+          <rect x="528" y="308" width="7" height="26" fill="#5a3d27"/><rect x="608" y="308" width="7" height="26" fill="#5a3d27"/></g>
+        ${night ? '<circle cx="333" cy="196" r="70" fill="url(#sc-glow)"/>' : ''}
+        <rect x="330" y="200" width="6" height="150" fill="#3a3a4c"/><rect x="322" y="186" width="22" height="16" rx="4" fill="#3a3a4c"/><rect x="326" y="190" width="14" height="10" rx="2" fill="${night ? '#ffe3a3' : '#d9d9e0'}"/>
+        ${w === 'pluie' ? '<ellipse cx="250" cy="420" rx="38" ry="9" fill="#7d9fb3" opacity=".75"/><ellipse cx="560" cy="434" rx="28" ry="7" fill="#7d9fb3" opacity=".75"/>' : ''}
+        ${snow ? '<g><circle cx="720" cy="392" r="22" fill="#fff"/><circle cx="720" cy="360" r="15" fill="#fff"/><circle cx="715" cy="356" r="2" fill="#333"/><circle cx="725" cy="356" r="2" fill="#333"/><path d="M720 361 l10 2 l-10 2z" fill="#e57f22"/></g>' : ''}`;
     },
   };
 
@@ -833,7 +955,7 @@
       const todo = isTodo(a) && ok === true;
       const tagTxt = { nena: 'Nena', simba: 'Simba', maison: 'Home' }[a.tag];
       return `<button type="button" class="action${ok !== true ? ' locked' : ''}${todo ? ' todo' : ''}" data-action="${a.id}" ${busy ? 'disabled' : ''}>
-        <span class="a-top"><span class="a-name">${val(a.name, S)}</span><span class="a-dur">${a.dur ? durTxt(a.dur) : ''}</span></span>
+        <span class="a-top"><span class="a-name">${val(a.name, S)}</span><span class="a-dur">${durOf(a) ? durTxt(durOf(a)) : ''}</span></span>
         <span class="a-desc">${ok === true ? val(a.desc, S) : ok}</span>
         <span class="a-tags"><span class="a-tag ${a.tag}">${tagTxt}</span>${a.mini ? '<span class="a-tag play">Mini-game</span>' : ''}${todo ? '<span class="a-tag todo">To do</span>' : ''}</span>
       </button>`;
@@ -1022,13 +1144,13 @@
   /* Running an action                                                */
   /* ------------------------------------------------------------------ */
   function doAction(id) {
-    if (busy || modalOpen || storyActive()) return;
+    if (busy || modalOpen || storyActive() || pzOpen()) return;
     const a = ACTIONS.find((x) => x.id === id);
     if (!a) return;
     const ok = availOf(a);
     if (ok !== true) { toast(ok, 'bad'); snd('fail'); buzz(30); return; }
     snd('click'); buzz(8);
-    if (!a.dur) { a.run(S); after(); return; }
+    if (!durOf(a)) { a.run(S); after(); return; }
 
     if (a.mini && window.MiniGames) {
       busy = true;
@@ -1037,7 +1159,7 @@
         rain: S.today.weather === 'pluie', snow: S.today.weather === 'neige',
         onEnd: (res) => {
           busy = false;
-          const alive = advance(a.dur);
+          const alive = advance(durOf(a));
           if (alive) a.run(S, res);
           after();
         },
@@ -1055,7 +1177,7 @@
     $('busy').hidden = false;
     renderRooms(); renderActions(); renderScene();
 
-    const start = S.time, total = a.dur;
+    const start = S.time, total = durOf(a);
     const ms = Math.min(2000, 650 + total * 11);
     const t0 = performance.now();
     const fill = $('busy-fill');
@@ -1077,6 +1199,7 @@
     }
     requestAnimationFrame(frame);
   }
+  const pzOpen = () => !!(window.Puzzle && window.Puzzle.open);
   function after() { clampAll(); checkAchievements(); render(); save(); if (!busy && !modalOpen) storyCheck(); }
   const storyActive = () => !!(window.Story && window.Story.active());
   const storyCheck = () => window.Story && window.Story.check();
@@ -1177,7 +1300,7 @@
     const sleptH = (24 * 60 + DAY_START - bedtime) / 60;
     S.day += 1;
     S.time = collapsed ? 9 * 60 : DAY_START;
-    S.nena.energie = collapsed ? 55 : clamp(25 + sleptH * 9);
+    S.nena.energie = clamp((collapsed ? 55 : 25 + sleptH * 9) + (perk('morning') ? 15 : 0));
     S.nena.faim = clamp(S.nena.faim - 30);
     S.nena.hygiene = clamp(S.nena.hygiene - 20);
     S.nena.moral = clamp(S.nena.moral + (sum && sum.stars >= 2 ? 8 : -4));
@@ -1253,6 +1376,7 @@
           : Object.assign(base.story, { base: data.day - 1 }),
         pet: data.pet ? Object.assign(base.pet, data.pet, { tricks: Object.assign(base.pet.tricks, data.pet.tricks) }) : base.pet,
         album: data.album || [],
+        puzzle: Object.assign({ level: 1, stars: {}, perks: [] }, data.puzzle),
         today: Object.assign({ trains: 0, medAM: false, medPM: false, miaWalk: false }, data.today),
       });
     } catch (e) { return null; }
@@ -1298,7 +1422,7 @@
     setTimeout(() => el.classList.remove('walking'), 900);
   }
   function simbaTick() {
-    if (busy || modalOpen || storyActive() || sheet.open || (window.MiniGames && window.MiniGames.active) || !$('coach').hidden || document.hidden) return;
+    if (busy || modalOpen || storyActive() || sheet.open || pzOpen() || (window.MiniGames && window.MiniGames.active) || !$('coach').hidden || document.hidden) return;
     const now = Date.now();
     if (beh.state && now > beh.until) endBeh();
     if (beh.state || now < beh.next) return;
@@ -1391,7 +1515,8 @@
     snd: (n, a) => snd(n, a),
     money: (n) => { S.money += n; moneyFx(n); },
     pauseFx: () => {},
-    blocked: () => busy || modalOpen || (window.MiniGames && window.MiniGames.active) || !$('coach').hidden,
+    save: () => save(),
+    blocked: () => busy || modalOpen || pzOpen() || (window.MiniGames && window.MiniGames.active) || !$('coach').hidden,
     trickName: (k) => TRICK_NAMES[k],
   };
 
@@ -1400,7 +1525,7 @@
   /* ------------------------------------------------------------------ */
   let lastFull = 0;
   setInterval(() => {
-    if (modalOpen || busy || !S.speed || sheet.open || !$('coach').hidden || document.hidden || storyActive()) return;
+    if (modalOpen || busy || !S.speed || sheet.open || !$('coach').hidden || document.hidden || storyActive() || pzOpen()) return;
     if (!advance(S.speed)) return;
     if (storyCheck()) return;
     clampAll();
@@ -1446,6 +1571,7 @@
   $('nena').addEventListener('click', talkNena);
   $('btn-speed').addEventListener('click', () => { S.speed = S.speed === 0 ? 1 : S.speed === 1 ? 3 : 0; snd('click'); renderHud(); save(); });
   $('btn-menu').addEventListener('click', () => openSheet('menu'));
+  $('btn-puzzle').addEventListener('click', () => { if (busy || modalOpen || storyActive()) return; window.Puzzle && window.Puzzle.show(); });
   $('quest').addEventListener('click', () => openSheet('story'));
   $('btn-tasks').addEventListener('click', () => openSheet('tasks'));
   $('btn-tasks-top').addEventListener('click', () => openSheet('tasks'));

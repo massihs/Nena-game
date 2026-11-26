@@ -9,6 +9,8 @@ Plain HTML/CSS/JS, no dependencies, no build step.
 - On a phone: "Add to Home Screen" (Android: in-game Settings → Install the app; iPhone: Safari → Share → Add to Home Screen).
 
 ## Features
+- Paw Path: an endless treat-sorting puzzle path (always-solvable seeded levels, hidden treats from level 12, undo / extra jar). Every 3 levels unlocks one of 10 abilities that change daily life (faster grooming, brisk walks, super sniffer…).
+- Illustrated scenes with light that follows the clock, wallpaper, wood floors, window light beams, and a framed photo of Nena & Simba.
 - Story mode: 4 chapters over 4 weeks (Grandma's visit, Simba's birthday, Simba gets sick, the dog show) with an ending, branching dialogue and goals.
 - Characters: Mia & Biscuit the shiba, Grandma Rose, Dr. Lee, Sam, with friendship hearts.
 - A living Simba: 5 tricks to teach (marker-training mini-game), personality, weight and health, spontaneous behaviors (naps, belly-up, stolen socks, zoomies…), memory album.
@@ -22,5 +24,5 @@ Plain HTML/CSS/JS, no dependencies, no build step.
 - Autosave in the browser.
 
 ## Files
-`index.html`, `style.css`, `js/art.js` (SVG characters), `js/audio.js`, `js/minigames.js`, `js/story.js` (chapters and dialogue), `js/game.js`,
+`index.html`, `style.css`, `js/art.js` (SVG characters), `js/audio.js`, `js/minigames.js`, `js/story.js` (chapters and dialogue), `js/puzzle.js` (Paw Path), `js/game.js`,
 `manifest.webmanifest`, `sw.js` (offline), `icons/`, `assets/`.
