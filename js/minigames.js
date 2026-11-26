@@ -1,4 +1,4 @@
-/* Mini-jeux tactiles : brossage, lancer de balle, balade. Rendu sur canvas. */
+/* Touch mini-games: brushing, fetch, walk. Rendered on canvas. */
 window.MiniGames = (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
@@ -45,11 +45,11 @@ window.MiniGames = (function () {
   }
 
   /* -------------------------------------------------------------- */
-  /* 1. Brossage : frotter les nœuds du pelage                       */
+  /* 1. Brushing: rub out the knots in the coat                      */
   /* -------------------------------------------------------------- */
   const brush = {
-    title: 'Brossage du pelage',
-    hint: 'Frotte les nœuds avec ton doigt pour démêler le double pelage de Simba.',
+    title: 'Coat brushing',
+    hint: 'Rub the knots with your finger to untangle Simba’s double coat.',
     duration: 20,
     init() {
       this.w = Math.min(W * 0.95, H * 1.05);
@@ -112,21 +112,21 @@ window.MiniGames = (function () {
         cx.fillStyle = '#c9496f'; for (let i = -24; i <= 24; i += 6) cx.fillRect(i, -18, 3, 16);
         cx.restore();
       }
-      text(`${this.cleared} / ${this.knots.length} nœuds`, W / 2, H - 18, 20, '#fff');
+      text(`${this.cleared} / ${this.knots.length} knots`, W / 2, H - 18, 20, '#fff');
     },
     finished() { return this.cleared === this.knots.length; },
     result() {
       const bonus = this.finished() ? clamp((this.duration - elapsed) / this.duration, 0, 1) * 0.15 : 0;
-      return { score: clamp(this.cleared / this.knots.length + bonus, 0, 1), label: `${this.cleared} nœuds démêlés sur ${this.knots.length}` };
+      return { score: clamp(this.cleared / this.knots.length + bonus, 0, 1), label: `${this.cleared} of ${this.knots.length} knots untangled` };
     },
   };
 
   /* -------------------------------------------------------------- */
-  /* 2. Rapporte ! : viser le coussin                                 */
+  /* 2. Fetch: aim for the cushion                                    */
   /* -------------------------------------------------------------- */
   const fetchGame = {
-    title: 'Rapporte !',
-    hint: 'La flèche se balade sur le sol : touche l’écran quand elle est sur le coussin.',
+    title: 'Fetch!',
+    hint: 'The arrow slides along the ground: tap when it is on the cushion.',
     duration: 0,
     init() {
       this.throws = 0; this.max = 5; this.points = 0; this.state = 'aim'; this.t = 0;
@@ -150,10 +150,10 @@ window.MiniGames = (function () {
         this.simX += (land - this.simX) * dt * 3.2;
         if (this.flyT >= 1) {
           const diff = Math.abs(this.power - this.target);
-          let pts = 0, msg = 'Raté… Simba fait le tour du jardin.';
-          if (diff < 0.035) { pts = 3; msg = 'PARFAIT ! Attrapée au vol !'; this.jump = 1; snd('fanfare'); buzz([20, 40, 20]); }
-          else if (diff < 0.08) { pts = 2; msg = 'Super lancer !'; snd('happy'); }
-          else if (diff < 0.14) { pts = 1; msg = 'Pas mal !'; snd('pop'); }
+          let pts = 0, msg = 'Missed… Simba runs laps around the yard.';
+          if (diff < 0.035) { pts = 3; msg = 'PERFECT! Caught mid-air!'; this.jump = 1; snd('fanfare'); buzz([20, 40, 20]); }
+          else if (diff < 0.08) { pts = 2; msg = 'Great throw!'; snd('happy'); }
+          else if (diff < 0.14) { pts = 1; msg = 'Not bad!'; snd('pop'); }
           else snd('fail');
           if (pts) snd('bark');
           this.points += pts; this.msg = msg; this.msgT = 1.4;
@@ -193,20 +193,20 @@ window.MiniGames = (function () {
         cx.fillStyle = '#d8e650'; cx.beginPath(); cx.arc(bx, by, 10, 0, Math.PI * 2); cx.fill();
         cx.strokeStyle = '#fff'; cx.lineWidth = 2; cx.beginPath(); cx.arc(bx, by, 7, 0.4, 2.6); cx.stroke();
       }
-      if (this.msgT > 0) text(this.msg, W / 2, H * 0.3, Math.min(30, W / 14), this.msg.startsWith('PARFAIT') ? '#ffd36b' : '#fff');
-      text(`Lancer ${Math.min(this.throws + 1, this.max)} / ${this.max} · ${this.points} pts`, W / 2, H - 16, 20, '#fff');
+      if (this.msgT > 0) text(this.msg, W / 2, H * 0.3, Math.min(30, W / 14), this.msg.startsWith('PERFECT') ? '#ffd36b' : '#fff');
+      text(`Throw ${Math.min(this.throws + 1, this.max)} / ${this.max} · ${this.points} pts`, W / 2, H - 16, 20, '#fff');
     },
     finished() { return this.state === 'done'; },
-    result() { return { score: clamp(this.points / (this.max * 3), 0, 1), label: `${this.points} points sur ${this.max * 3}` }; },
+    result() { return { score: clamp(this.points / (this.max * 3), 0, 1), label: `${this.points} of ${this.max * 3} points` }; },
     progress() { return `${Math.min(this.throws + 1, this.max)}/${this.max}`; },
   };
 
   /* -------------------------------------------------------------- */
-  /* 3. Balade : 3 voies, friandises et flaques                      */
+  /* 3. Walk: 3 lanes, treats and puddles                            */
   /* -------------------------------------------------------------- */
   const walk = {
-    title: 'Balade avec Simba',
-    hint: 'Glisse ou touche à gauche / à droite. Ramasse friandises et fleurs à renifler, évite flaques et vélos !',
+    title: 'Walk with Simba',
+    hint: 'Swipe or tap left / right. Grab treats and flowers to sniff, dodge puddles and bikes!',
     duration: 25,
     init() {
       this.lane = 1; this.x = this.laneX(1); this.items = []; this.spawn = 0.6; this.scroll = 0;
@@ -245,7 +245,7 @@ window.MiniGames = (function () {
         if (!it.done && Math.abs(it.y - sy) < 34 && it.lane === this.lane) {
           it.done = true;
           if (it.kind === 'treat' || it.kind === 'flower') { this.got++; snd('pop'); this.pops.push({ x: this.laneX(it.lane), y: sy - 60, t: 1, s: it.kind === 'treat' ? '+1 🦴' : '+1 🌼' }); }
-          else { this.hits++; this.shake = 0.4; buzz(60); if (it.kind === 'puddle') { this.muddy = true; snd('splash'); } else snd('fail'); this.pops.push({ x: this.laneX(it.lane), y: sy - 60, t: 1, s: it.kind === 'puddle' ? 'Splash !' : 'Ouille !' }); }
+          else { this.hits++; this.shake = 0.4; buzz(60); if (it.kind === 'puddle') { this.muddy = true; snd('splash'); } else snd('fail'); this.pops.push({ x: this.laneX(it.lane), y: sy - 60, t: 1, s: it.kind === 'puddle' ? 'Splash!' : 'Ouch!' }); }
         }
       }
       this.items = this.items.filter((it) => it.y < H + 60 && !(it.done && (it.kind === 'treat' || it.kind === 'flower')));
@@ -261,7 +261,7 @@ window.MiniGames = (function () {
       cx.fillStyle = this.rain ? '#b9ab90' : this.snow ? '#d9dde2' : '#e3cfa6'; cx.fillRect(pathL, 0, pathR - pathL, H);
       cx.fillStyle = 'rgba(0,0,0,.06)';
       for (let y = -80 + this.scroll; y < H; y += 80) { cx.fillRect(pathL, y, pathR - pathL, 3); }
-      // arbres sur les côtés
+      // trees along the sides
       for (let y = -120 + ((this.scroll * 1.5) % 160); y < H + 80; y += 160) {
         [[pathL * 0.4, y], [W - pathL * 0.4, y + 80]].forEach(([tx, ty]) => {
           cx.fillStyle = this.snow ? '#ffffff' : '#4f8a3e'; cx.beginPath(); cx.arc(tx, ty, Math.max(18, pathL * 0.9), 0, Math.PI * 2); cx.fill();
@@ -304,14 +304,14 @@ window.MiniGames = (function () {
     finished() { return false; },
     result() {
       const base = this.goods ? this.got / Math.max(4, this.goods * 0.85) : 0.5;
-      return { score: clamp(base - this.hits * 0.12, 0, 1), muddy: this.muddy, hits: this.hits, label: `${this.got} trouvailles · ${this.hits} obstacle(s)` };
+      return { score: clamp(base - this.hits * 0.12, 0, 1), muddy: this.muddy, hits: this.hits, label: `${this.got} finds · ${this.hits} bump(s)` };
     },
   };
 
   const GAMES = { brush, fetch: fetchGame, walk };
 
   /* -------------------------------------------------------------- */
-  /* Boucle et interface                                              */
+  /* Loop and UI                                                      */
   /* -------------------------------------------------------------- */
   function loop(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
@@ -320,7 +320,7 @@ window.MiniGames = (function () {
       countdown -= dt;
       game.draw();
       cx.fillStyle = 'rgba(38,35,64,.35)'; cx.fillRect(0, 0, W, H);
-      text(countdown > 0.5 ? String(Math.ceil(countdown - 0.5)) : 'C’est parti !', W / 2, H / 2, 64, '#ffd36b');
+      text(countdown > 0.5 ? String(Math.ceil(countdown - 0.5)) : 'Go!', W / 2, H / 2, 64, '#ffd36b');
       if (countdown <= 0) { phase = 'play'; snd('success'); }
     } else if (phase === 'play') {
       elapsed += dt;
@@ -359,8 +359,8 @@ window.MiniGames = (function () {
     cancelAnimationFrame(raf);
     pending = res;
     const pct = Math.round(res.score * 100);
-    $('mg-score').textContent = pct + ' %';
-    $('mg-verdict').textContent = res.skipped ? 'Version rapide' : pct >= 90 ? 'Incroyable !' : pct >= 65 ? 'Très bien !' : pct >= 35 ? 'Pas mal !' : 'On fera mieux la prochaine fois';
+    $('mg-score').textContent = pct + '%';
+    $('mg-verdict').textContent = res.skipped ? 'Quick version' : pct >= 90 ? 'Amazing!' : pct >= 65 ? 'Very good!' : pct >= 35 ? 'Not bad!' : 'You’ll do better next time';
     $('mg-detail').textContent = res.label || '';
     $('mg-result').hidden = false;
     snd(pct >= 65 ? 'fanfare' : 'pop');
@@ -392,7 +392,7 @@ window.MiniGames = (function () {
       if (e.key === ' ' && game === fetchGame) { e.preventDefault(); game.pointer('down'); }
     });
     window.addEventListener('resize', () => { if (phase !== 'off' && cv) resize(); });
-    $('mg-skip').addEventListener('click', () => { if (phase === 'off') return; finish({ score: 0.6, skipped: true, label: 'Nena s’en occupe sans mini-jeu.' }); });
+    $('mg-skip').addEventListener('click', () => { if (phase === 'off') return; finish({ score: 0.6, skipped: true, label: 'Nena handles it without the mini-game.' }); });
     $('mg-continue').addEventListener('click', close);
   }
   document.addEventListener('DOMContentLoaded', bind);

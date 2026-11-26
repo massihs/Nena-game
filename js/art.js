@@ -1,4 +1,4 @@
-/* Personnages dessinés en SVG : utilisés dans la scène (DOM) et dans les mini-jeux (canvas). */
+/* SVG characters: used in the scene (DOM) and in the mini-games (canvas). */
 window.Art = (function () {
   'use strict';
 
@@ -14,7 +14,7 @@ window.Art = (function () {
     noeud:   { color: '#4a7bd0', kind: 'bow' },
   };
 
-  /* eyes: 'both' (CSS choisit), 'open', 'closed' */
+  /* eyes: 'both' (CSS decides), 'open', 'closed' */
   function nena(opts) {
     const o = Object.assign({ dressed: false, outfit: 'basique', eyes: 'both', standalone: false }, opts || {});
     const c = OUTFITS[o.outfit] || OUTFITS.basique;

@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Nena &amp; Simba</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Nena vit avec Simba, son chow-chow. Une simulation de vie douce sur mobile.">
+<meta name="description" content="Nena lives with Simba, her chow chow. A cozy life sim for your phone.">
 <meta name="theme-color" content="#262340">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -23,17 +23,17 @@
 <div class="backdrop" aria-hidden="true"></div>
 
 <div class="app" id="app">
-  <!-- Barre du haut -->
+  <!-- Top bar -->
   <header class="topbar">
-    <button type="button" class="clock" id="btn-tasks-top" aria-label="Liste du jour">
-      <span class="clock-day" id="hud-weekday">Lundi · Jour 1</span>
-      <span class="clock-time"><b id="hud-time">07:00</b><span class="weather" id="hud-weather">☀️</span></span>
+    <button type="button" class="clock" id="btn-tasks-top" aria-label="Today’s list">
+      <span class="clock-day" id="hud-weekday">Monday · Day 1</span>
+      <span class="clock-time"><b id="hud-time">7:00 AM</b><span class="weather" id="hud-weather">☀️</span></span>
     </button>
     <div class="wallet">
-      <span class="coin" aria-hidden="true">€</span><b id="hud-money">60</b>
+      <span class="coin" aria-hidden="true">$</span><b id="hud-money">60</b>
     </div>
     <div class="tb-buttons">
-      <button type="button" class="icon-btn" id="btn-speed" aria-label="Vitesse du temps">▶</button>
+      <button type="button" class="icon-btn" id="btn-speed" aria-label="Time speed">▶</button>
       <button type="button" class="icon-btn" id="btn-menu" aria-label="Menu">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
         <span class="badge" id="menu-badge" hidden></span>
@@ -41,14 +41,14 @@
     </div>
   </header>
 
-  <!-- Jauges -->
-  <button type="button" class="gauges" id="gauges" aria-label="Voir les besoins en détail">
+  <!-- Gauges -->
+  <button type="button" class="gauges" id="gauges" aria-label="See needs in detail">
     <div class="g-group" id="g-nena"></div>
     <div class="g-sep"></div>
     <div class="g-group" id="g-simba"></div>
   </button>
 
-  <!-- Scène -->
+  <!-- Scene -->
   <div class="scene" id="scene">
     <svg id="scene-bg" class="scene-bg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMax slice" aria-hidden="true"></svg>
     <canvas id="weather-fx" class="weather-fx" aria-hidden="true"></canvas>
@@ -56,16 +56,16 @@
     <div class="actor nena" id="nena"><div class="bubble" id="nena-bubble" hidden></div><div class="sprite-wrap" id="nena-sprite"></div></div>
     <div class="actor simba" id="simba"><div class="bubble" id="simba-bubble" hidden></div><div class="sprite-wrap" id="simba-sprite"></div></div>
     <div class="particles" id="particles" aria-hidden="true"></div>
-    <div class="room-label" id="room-label">Chambre</div>
+    <div class="room-label" id="room-label">Bedroom</div>
     <div class="busy" id="busy" hidden>
       <div class="busy-card">
-        <p id="busy-label">Nena s'occupe…</p>
+        <p id="busy-label">Nena is busy…</p>
         <div class="busy-track"><div class="busy-fill" id="busy-fill"></div></div>
         <span id="busy-time" class="busy-time"></span>
       </div>
     </div>
     <div class="toasts" id="toasts" aria-live="polite"></div>
-    <button type="button" class="tasks-fab" id="btn-tasks" aria-label="Liste du jour"><span id="tasks-count">0/0</span></button>
+    <button type="button" class="tasks-fab" id="btn-tasks" aria-label="Today’s list"><span id="tasks-count">0/0</span></button>
   </div>
 
   <!-- Actions -->
@@ -74,105 +74,105 @@
     <div class="actions" id="actions"></div>
   </section>
 
-  <!-- Pièces -->
-  <nav class="tabbar" id="rooms" aria-label="Pièces"></nav>
+  <!-- Rooms -->
+  <nav class="tabbar" id="rooms" aria-label="Rooms"></nav>
 </div>
 
-<!-- Feuille du bas (liste, besoins, boutique, succès, menu) -->
+<!-- Bottom sheet (list, needs, shop, achievements, settings) -->
 <div class="sheet-wrap" id="sheet-wrap" hidden>
   <div class="sheet-dim" id="sheet-dim"></div>
   <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
     <div class="sheet-grip" aria-hidden="true"></div>
     <header class="sheet-head">
-      <h2 id="sheet-title">Titre</h2>
-      <button type="button" class="icon-btn" id="sheet-close" aria-label="Fermer">✕</button>
+      <h2 id="sheet-title">Title</h2>
+      <button type="button" class="icon-btn" id="sheet-close" aria-label="Close">✕</button>
     </header>
     <div class="sheet-tabs" id="sheet-tabs" role="tablist"></div>
     <div class="sheet-body" id="sheet-body"></div>
   </section>
 </div>
 
-<!-- Mini-jeux -->
+<!-- Mini-games -->
 <div class="mg" id="mg" hidden>
   <header class="mg-head">
-    <div><h2 id="mg-title">Mini-jeu</h2><p id="mg-hint"></p></div>
+    <div><h2 id="mg-title">Mini-game</h2><p id="mg-hint"></p></div>
     <span class="mg-timer" id="mg-timer"></span>
   </header>
   <canvas id="mg-canvas" class="mg-canvas"></canvas>
-  <button type="button" class="btn btn-ghost mg-skip" id="mg-skip">Passer</button>
+  <button type="button" class="btn btn-ghost mg-skip" id="mg-skip">Skip</button>
   <div class="mg-result" id="mg-result" hidden>
     <div class="mg-result-card">
-      <p class="mg-verdict" id="mg-verdict">Bravo !</p>
+      <p class="mg-verdict" id="mg-verdict">Great!</p>
       <p class="mg-score" id="mg-score">100 %</p>
       <p class="mg-detail" id="mg-detail"></p>
-      <button type="button" class="btn btn-primary" id="mg-continue">Continuer</button>
+      <button type="button" class="btn btn-primary" id="mg-continue">Continue</button>
     </div>
   </div>
 </div>
 
-<!-- Ecran titre -->
+<!-- Title screen -->
 <div class="modal title-screen" id="title-screen">
   <div class="title-art">
-    <img src="assets/nena-simba.jpg" alt="Nena et Simba endormis, blottis sous la couette" class="cover">
+    <img src="assets/nena-simba.jpg" alt="Nena and Simba asleep, snuggled under the duvet" class="cover">
     <div class="title-glow"></div>
     <div class="title-hearts" aria-hidden="true"><span>♥</span><span>♥</span><span>♥</span><span>♥</span><span>♥</span></div>
   </div>
   <div class="title-panel">
     <h1>Nena <em>&amp;</em> Simba</h1>
-    <p class="tagline">Une vie à deux, une patte à la fois.</p>
+    <p class="tagline">A life for two, one paw at a time.</p>
     <div class="slides" id="slides">
-      <p class="slide">Nena vit avec Simba, son chow-chow tout roux. Chaque jour, elle s'occupe d'elle <b>et</b> de lui.</p>
+      <p class="slide">Nena lives with Simba, her fluffy orange chow chow. Every day she takes care of herself <b>and</b> him.</p>
     </div>
     <div class="title-buttons">
-      <button type="button" class="btn btn-primary btn-big" id="btn-continue" hidden>Continuer · jour <span id="continue-day">1</span></button>
-      <button type="button" class="btn btn-big" id="btn-new">Nouvelle partie</button>
+      <button type="button" class="btn btn-primary btn-big" id="btn-continue" hidden>Continue · day <span id="continue-day">1</span></button>
+      <button type="button" class="btn btn-big" id="btn-new">New game</button>
     </div>
-    <button type="button" class="install-link" id="btn-install-title" hidden>Installer l'app sur mon téléphone</button>
+    <button type="button" class="install-link" id="btn-install-title" hidden>Install the app on my phone</button>
   </div>
 </div>
 
-<!-- Didacticiel -->
+<!-- Tutorial -->
 <div class="coach" id="coach" hidden>
   <div class="coach-card">
     <p class="coach-step" id="coach-step">1 / 4</p>
     <p id="coach-text"></p>
     <div class="title-buttons">
-      <button type="button" class="btn btn-primary" id="coach-next">Suivant</button>
-      <button type="button" class="btn btn-ghost" id="coach-skip">Passer</button>
+      <button type="button" class="btn btn-primary" id="coach-next">Next</button>
+      <button type="button" class="btn btn-ghost" id="coach-skip">Skip</button>
     </div>
   </div>
 </div>
 
-<!-- Fin de journée -->
+<!-- End of day -->
 <div class="modal night-screen" id="night-screen" hidden>
   <div class="night-card">
-    <div class="night-art"><img src="assets/nena-simba.jpg" alt="Nena et Simba dorment ensemble" class="cover"><div class="zzz" aria-hidden="true"><span>z</span><span>z</span><span>Z</span></div></div>
+    <div class="night-art"><img src="assets/nena-simba.jpg" alt="Nena and Simba sleeping together" class="cover"><div class="zzz" aria-hidden="true"><span>z</span><span>z</span><span>Z</span></div></div>
     <div class="night-body">
-      <h2 id="night-title">Bonne nuit !</h2>
+      <h2 id="night-title">Good night!</h2>
       <p id="night-sub"></p>
       <div class="stars" id="night-stars"></div>
       <div class="night-gains" id="night-gains"></div>
       <ul class="summary" id="night-list"></ul>
       <p class="night-notes" id="night-notes"></p>
-      <button type="button" class="btn btn-primary btn-big" id="btn-next-day">Se réveiller</button>
+      <button type="button" class="btn btn-primary btn-big" id="btn-next-day">Wake up</button>
     </div>
   </div>
 </div>
 
-<!-- Succès débloqué -->
+<!-- Achievement unlocked -->
 <div class="achv-pop" id="achv-pop" hidden>
   <span class="achv-medal">★</span>
-  <div><small>Succès débloqué</small><b id="achv-name"></b></div>
+  <div><small>Achievement unlocked</small><b id="achv-name"></b></div>
 </div>
 
-<!-- Confirmation -->
+<!-- Confirm -->
 <div class="modal confirm" id="confirm-screen" hidden>
   <div class="confirm-card">
-    <h2>Recommencer ?</h2>
-    <p>La partie en cours sera effacée.</p>
+    <h2>Start over?</h2>
+    <p>Your current game will be erased.</p>
     <div class="title-buttons">
-      <button type="button" class="btn btn-primary" id="btn-confirm-yes">Oui, recommencer</button>
-      <button type="button" class="btn" id="btn-confirm-no">Annuler</button>
+      <button type="button" class="btn btn-primary" id="btn-confirm-yes">Yes, start over</button>
+      <button type="button" class="btn" id="btn-confirm-no">Cancel</button>
     </div>
   </div>
 </div>

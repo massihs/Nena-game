@@ -1,23 +1,23 @@
 # Nena & Simba
 
-Web app mobile (PWA, installable et jouable hors-ligne) : Nena vit avec Simba, son chow-chow,
-et doit accomplir chaque jour ses propres tâches, celles de la maison et celles du chien.
-HTML/CSS/JS pur, aucune dépendance ni étape de build.
+A mobile web app (PWA, installable and playable offline): Nena lives with Simba, her chow chow,
+and every day she has to take care of herself, the home, and the dog.
+Plain HTML/CSS/JS, no dependencies, no build step.
 
-## Jouer
-- Servir le dossier en HTTPS (GitHub Pages, Netlify…) ou en local : `python3 -m http.server`, puis ouvrir `http://localhost:8000`.
-- Sur téléphone : « Ajouter à l'écran d'accueil » (Android : menu Options du jeu → Installer ; iPhone : Safari → Partager → Sur l'écran d'accueil).
+## Play
+- Serve the folder over HTTPS (GitHub Pages, Netlify…) or locally: `python3 -m http.server`, then open `http://localhost:8000`.
+- On a phone: "Add to Home Screen" (Android: in-game Settings → Install the app; iPhone: Safari → Share → Add to Home Screen).
 
-## Contenu
-- 5 pièces (Chambre, Bain, Cuisine, Salon, Dehors), horloge en temps réel (pause / ×1 / ×3), jours de la semaine et week-ends.
-- Besoins de Nena (faim, forme, hygiène, moral) et de Simba (faim, eau, pipi, poils, joie), propreté de la maison.
-- 3 mini-jeux tactiles : brossage du pelage, « Rapporte ! » (lancer de balle), balade à 3 voies.
-- Météo quotidienne (soleil, nuages, pluie, neige) avec effets sur le gameplay.
-- Boutique : tenues de Nena, accessoires de Simba, objets de maison aux effets permanents.
-- 14 succès, niveau de complicité, prime d'étoiles, événements aléatoires (boue, bêtises, rencontres).
-- Musique lo-fi et bruitages générés en Web Audio, vibrations, particules, didacticiel.
-- Sauvegarde automatique dans le navigateur.
+## Features
+- 5 rooms (Bedroom, Bath, Kitchen, Living, Outside), a real-time clock (pause / ×1 / ×3), weekdays and weekends.
+- Nena's needs (food, energy, hygiene, mood), Simba's needs (food, water, potty, coat, joy), home tidiness.
+- 3 touch mini-games: coat brushing, "Fetch!", and a 3-lane walk.
+- Daily weather (sun, clouds, rain, snow) that affects gameplay.
+- Shop: outfits for Nena, accessories for Simba, home items with lasting effects.
+- 14 achievements, a bond level, star bonuses, random events (mud, mischief, encounters).
+- Lo-fi music and sound effects generated with Web Audio, vibration, particles, a tutorial.
+- Autosave in the browser.
 
-## Fichiers
-`index.html`, `style.css`, `js/art.js` (personnages SVG), `js/audio.js`, `js/minigames.js`, `js/game.js`,
-`manifest.webmanifest`, `sw.js` (hors-ligne), `icons/`, `assets/`.
+## Files
+`index.html`, `style.css`, `js/art.js` (SVG characters), `js/audio.js`, `js/minigames.js`, `js/game.js`,
+`manifest.webmanifest`, `sw.js` (offline), `icons/`, `assets/`.

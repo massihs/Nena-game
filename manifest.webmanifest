@@ -1,8 +1,8 @@
 {
   "name": "Nena & Simba",
   "short_name": "Nena & Simba",
-  "description": "Nena vit avec Simba, son chow-chow. Une simulation de vie douce.",
-  "lang": "fr",
+  "description": "Nena lives with Simba, her chow chow. A cozy life sim.",
+  "lang": "en",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

@@ -1,5 +1,5 @@
-/* Nena & Simba — simulation de vie sur mobile.
-   Nena s'occupe d'elle-même, de la maison et de Simba, son chow-chow. */
+/* Nena & Simba — a cozy mobile life sim.
+   Nena takes care of herself, the home and Simba, her chow chow. */
 (function () {
   'use strict';
 
@@ -16,17 +16,17 @@
   const buzz = (p) => { try { if (S && S.settings.haptics && navigator.vibrate) navigator.vibrate(p); } catch (e) { /* */ } };
 
   /* ------------------------------------------------------------------ */
-  /* Données                                                             */
+  /* Data                                                                */
   /* ------------------------------------------------------------------ */
-  const WEEKDAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+  const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const weekday = (d) => WEEKDAYS[(d - 1) % 7];
   const isWeekend = (d) => (d - 1) % 7 >= 5;
 
   const WEATHER = {
-    soleil: { label: 'Grand soleil', icon: '☀️', w: 0.36, tip: 'Les chows-chows craignent la chaleur : Simba boit davantage.' },
-    nuages: { label: 'Nuageux', icon: '⛅', w: 0.28, tip: 'Temps idéal pour une longue balade.' },
-    pluie:  { label: 'Pluie', icon: '🌧️', w: 0.24, tip: 'Gare aux flaques ! Un ciré garde Nena au sec.' },
-    neige:  { label: 'Neige', icon: '❄️', w: 0.12, tip: 'Simba adore le froid : promenades encore plus joyeuses.' },
+    soleil: { label: 'Sunny', icon: '☀️', w: 0.36, tip: 'Chow chows dislike the heat: Simba drinks more.' },
+    nuages: { label: 'Cloudy', icon: '⛅', w: 0.28, tip: 'Perfect weather for a long walk.' },
+    pluie:  { label: 'Rain', icon: '🌧️', w: 0.24, tip: 'Watch out for puddles! A raincoat keeps Nena dry.' },
+    neige:  { label: 'Snow', icon: '❄️', w: 0.12, tip: 'Simba loves the cold: walks are even happier.' },
   };
   function rollWeather() {
     let r = rnd(), acc = 0;
@@ -35,27 +35,27 @@
   }
 
   const TASKS = {
-    lit:           { label: 'Faire le lit', who: 'nena' },
-    dents_matin:   { label: 'Se brosser les dents (matin)', who: 'nena' },
-    douche:        { label: 'Prendre une douche', who: 'nena' },
-    habiller:      { label: "S'habiller", who: 'nena' },
-    repas:         { label: 'Manger 3 repas', who: 'nena', need: 3 },
-    travail:       { label: 'Travailler 4 h', who: 'nena', need: 2 },
-    dents_soir:    { label: 'Se brosser les dents (soir)', who: 'nena' },
-    gamelle_matin: { label: 'Gamelle de Simba (matin)', who: 'simba' },
-    gamelle_soir:  { label: 'Gamelle de Simba (soir)', who: 'simba' },
-    eau:           { label: 'Eau fraîche pour Simba', who: 'simba', need: 2 },
-    promenade:     { label: 'Promener Simba 3 fois', who: 'simba', need: 3 },
-    brosser:       { label: 'Brosser le pelage de Simba', who: 'simba' },
-    jouer:         { label: 'Jouer avec Simba', who: 'simba' },
-    calin:         { label: 'Câlin avec Simba', who: 'simba' },
-    parc:          { label: 'Sortie au parc à chiens', who: 'simba' },
-    vaisselle:     { label: 'Cuisine rangée au coucher', who: 'maison', check: (s) => s.maison.vaisselle === 0 },
-    aspirateur:    { label: 'Aspirateur (poils de chow-chow !)', who: 'maison' },
-    lessive:       { label: 'Faire une lessive', who: 'maison' },
-    courses:       { label: 'Faire des courses', who: 'maison' },
-    veto:          { label: 'Rendez-vous chez le véto', who: 'simba' },
-    bain:          { label: 'Donner un bain à Simba', who: 'simba' },
+    lit:           { label: 'Make the bed', who: 'nena' },
+    dents_matin:   { label: 'Brush teeth (morning)', who: 'nena' },
+    douche:        { label: 'Take a shower', who: 'nena' },
+    habiller:      { label: 'Get dressed', who: 'nena' },
+    repas:         { label: 'Eat 3 meals', who: 'nena', need: 3 },
+    travail:       { label: 'Work 4 hours', who: 'nena', need: 2 },
+    dents_soir:    { label: 'Brush teeth (evening)', who: 'nena' },
+    gamelle_matin: { label: 'Feed Simba (morning)', who: 'simba' },
+    gamelle_soir:  { label: 'Feed Simba (evening)', who: 'simba' },
+    eau:           { label: 'Fresh water for Simba', who: 'simba', need: 2 },
+    promenade:     { label: 'Walk Simba 3 times', who: 'simba', need: 3 },
+    brosser:       { label: 'Brush Simba’s coat', who: 'simba' },
+    jouer:         { label: 'Play with Simba', who: 'simba' },
+    calin:         { label: 'Cuddle Simba', who: 'simba' },
+    parc:          { label: 'Trip to the dog park', who: 'simba' },
+    vaisselle:     { label: 'Clean kitchen at bedtime', who: 'maison', check: (s) => s.maison.vaisselle === 0 },
+    aspirateur:    { label: 'Vacuum (chow chow fur!)', who: 'maison' },
+    lessive:       { label: 'Do the laundry', who: 'maison' },
+    courses:       { label: 'Go shopping', who: 'maison' },
+    veto:          { label: 'Vet appointment', who: 'simba' },
+    bain:          { label: 'Give Simba a bath', who: 'simba' },
   };
 
   function makeDay(day) {
@@ -74,43 +74,43 @@
   }
 
   const SHOP = [
-    { id: 'sweat', cat: 'tenues', name: 'Sweat lavande', desc: 'Doux et chaud.', price: 60 },
-    { id: 'robe', cat: 'tenues', name: 'Robe jaune', desc: 'Pour les jours de soleil.', price: 90 },
-    { id: 'cire', cat: 'tenues', name: 'Ciré de pluie', desc: 'Nena reste sèche sous la pluie.', price: 70 },
-    { id: 'rouge', cat: 'simba', name: 'Collier rouge', desc: 'Avec une médaille dorée.', price: 25 },
-    { id: 'bandana', cat: 'simba', name: 'Bandana rose', desc: 'Assorti au pyjama de Nena.', price: 35 },
-    { id: 'noeud', cat: 'simba', name: 'Nœud papillon', desc: 'Très chic au parc.', price: 45 },
-    { id: 'panier', cat: 'maison', name: 'Panier douillet', desc: 'Simba s’ennuie moins vite.', price: 80, icon: '🧺' },
-    { id: 'robot', cat: 'maison', name: 'Robot aspirateur', desc: 'Les poils s’accumulent 2× moins vite.', price: 150, icon: '🤖' },
-    { id: 'cafe', cat: 'maison', name: 'Machine à café', desc: 'Nouvelle action : un café (+énergie).', price: 60, icon: '☕' },
-    { id: 'corde', cat: 'maison', name: 'Jouet corde', desc: 'Jouer rend Simba encore plus heureux.', price: 30, icon: '🪢' },
-    { id: 'plante', cat: 'maison', name: 'Grande plante', desc: 'Le moral de Nena baisse moins vite.', price: 40, icon: '🪴' },
+    { id: 'sweat', cat: 'tenues', name: 'Lavender hoodie', desc: 'Soft and warm.', price: 60 },
+    { id: 'robe', cat: 'tenues', name: 'Yellow dress', desc: 'For sunny days.', price: 90 },
+    { id: 'cire', cat: 'tenues', name: 'Raincoat', desc: 'Nena stays dry in the rain.', price: 70 },
+    { id: 'rouge', cat: 'simba', name: 'Red collar', desc: 'With a golden tag.', price: 25 },
+    { id: 'bandana', cat: 'simba', name: 'Pink bandana', desc: 'Matches Nena’s pajamas.', price: 35 },
+    { id: 'noeud', cat: 'simba', name: 'Bow tie', desc: 'Very dapper at the park.', price: 45 },
+    { id: 'panier', cat: 'maison', name: 'Cozy dog bed', desc: 'Simba gets bored more slowly.', price: 80, icon: '🧺' },
+    { id: 'robot', cat: 'maison', name: 'Robot vacuum', desc: 'Fur piles up half as fast.', price: 150, icon: '🤖' },
+    { id: 'cafe', cat: 'maison', name: 'Coffee machine', desc: 'New action: a coffee (+energy).', price: 60, icon: '☕' },
+    { id: 'corde', cat: 'maison', name: 'Rope toy', desc: 'Playtime makes Simba even happier.', price: 30, icon: '🪢' },
+    { id: 'plante', cat: 'maison', name: 'Big plant', desc: 'Nena’s mood drops more slowly.', price: 40, icon: '🪴' },
   ];
 
   const ACHIEVEMENTS = [
-    { id: 'first_day', name: 'Premier dodo', desc: 'Terminer le premier jour.', test: (s) => s.counters.days >= 1 },
-    { id: 'perfect', name: 'Journée parfaite', desc: 'Gagner 3 étoiles en une journée.', test: (s) => s.counters.perfect >= 1 },
-    { id: 'perfect3', name: 'Routine en or', desc: 'Réussir 3 journées parfaites.', test: (s) => s.counters.perfect >= 3 },
-    { id: 'week', name: 'Une semaine ensemble', desc: 'Atteindre le jour 8.', test: (s) => s.day >= 8 },
-    { id: 'walker', name: 'Grande marcheuse', desc: 'Promener Simba 20 fois.', test: (s) => s.counters.walks >= 20 },
-    { id: 'groomer', name: 'Crinière de lion', desc: 'Brosser Simba 10 fois.', test: (s) => s.counters.brushes >= 10 },
-    { id: 'petter', name: 'Câlinothérapie', desc: 'Caresser Simba 50 fois.', test: (s) => s.counters.pets >= 50 },
-    { id: 'brush_master', name: 'Maîtresse du peigne', desc: 'Démêler tous les nœuds au brossage.', test: (s) => s.best.brush >= 1 },
-    { id: 'fetch_master', name: 'Lanceuse d’élite', desc: 'Faire 90 % ou plus à « Rapporte ! ».', test: (s) => s.best.fetch >= 0.9 },
-    { id: 'walk_master', name: 'Balade sans faute', desc: 'Faire 90 % ou plus pendant une balade.', test: (s) => s.best.walk >= 0.9 },
-    { id: 'shopper', name: 'Petit plaisir', desc: 'Acheter un objet à la boutique.', test: (s) => s.owned.length > 1 },
-    { id: 'saver', name: 'Économe', desc: 'Avoir 300 € dans le porte-monnaie.', test: (s) => s.money >= 300 },
-    { id: 'clean', name: 'Zéro accident', desc: 'Finir 3 jours sans pipi sur le tapis.', test: (s) => s.counters.cleanDays >= 3 },
-    { id: 'snow', name: 'Ourson des neiges', desc: 'Promener Simba sous la neige.', test: (s) => s.counters.snowWalks >= 1 },
+    { id: 'first_day', name: 'First sleepover', desc: 'Finish the first day.', test: (s) => s.counters.days >= 1 },
+    { id: 'perfect', name: 'Perfect day', desc: 'Earn 3 stars in one day.', test: (s) => s.counters.perfect >= 1 },
+    { id: 'perfect3', name: 'Golden routine', desc: 'Have 3 perfect days.', test: (s) => s.counters.perfect >= 3 },
+    { id: 'week', name: 'One week together', desc: 'Reach day 8.', test: (s) => s.day >= 8 },
+    { id: 'walker', name: 'Big walker', desc: 'Walk Simba 20 times.', test: (s) => s.counters.walks >= 20 },
+    { id: 'groomer', name: 'Lion’s mane', desc: 'Brush Simba 10 times.', test: (s) => s.counters.brushes >= 10 },
+    { id: 'petter', name: 'Cuddle therapy', desc: 'Pet Simba 50 times.', test: (s) => s.counters.pets >= 50 },
+    { id: 'brush_master', name: 'Comb master', desc: 'Untangle every knot while brushing.', test: (s) => s.best.brush >= 1 },
+    { id: 'fetch_master', name: 'Star pitcher', desc: 'Score 90% or more at “Fetch!”.', test: (s) => s.best.fetch >= 0.9 },
+    { id: 'walk_master', name: 'Flawless walk', desc: 'Score 90% or more on a walk.', test: (s) => s.best.walk >= 0.9 },
+    { id: 'shopper', name: 'Treat yourself', desc: 'Buy an item from the shop.', test: (s) => s.owned.length > 1 },
+    { id: 'saver', name: 'Saver', desc: 'Have $300 in the wallet.', test: (s) => s.money >= 300 },
+    { id: 'clean', name: 'Zero accidents', desc: 'Finish 3 days with no pee on the rug.', test: (s) => s.counters.cleanDays >= 3 },
+    { id: 'snow', name: 'Snow bear', desc: 'Walk Simba in the snow.', test: (s) => s.counters.snowWalks >= 1 },
   ];
 
   const BONDS = [
-    [0, 'Nouvelle colocation'], [6, 'Premiers pas ensemble'], [15, 'Duo complice'],
-    [30, 'Inséparables'], [50, 'Meilleurs amis pour la vie'], [80, 'Âmes sœurs à poils roux'],
+    [0, 'New roommates'], [6, 'First steps together'], [15, 'Partners in crime'],
+    [30, 'Inseparable'], [50, 'Best friends forever'], [80, 'Fluffy soulmates'],
   ];
 
   /* ------------------------------------------------------------------ */
-  /* Etat                                                                */
+  /* State                                                               */
   /* ------------------------------------------------------------------ */
   function newState() {
     return {
@@ -136,9 +136,12 @@
   const has = (id) => S.owned.includes(id);
 
   /* ------------------------------------------------------------------ */
-  /* Temps                                                               */
+  /* Time                                                                */
   /* ------------------------------------------------------------------ */
-  const hh = (t) => String(Math.floor(t / 60) % 24).padStart(2, '0') + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+  const hh = (t) => {
+    const h = Math.floor(t / 60) % 24, m = String(Math.floor(t % 60)).padStart(2, '0');
+    return `${h % 12 || 12}:${m} ${h < 12 ? 'AM' : 'PM'}`;
+  };
   function durTxt(m) {
     if (m < 60) return m + ' min';
     const h = Math.floor(m / 60), r = m % 60;
@@ -196,14 +199,14 @@
     if (d.pipi <= 0) {
       d.pipi = 75; m.proprete = clamp(m.proprete - 25); n.moral = clamp(n.moral - 8);
       S.today.accidents++;
-      note('Oups ! Simba ne pouvait plus attendre : pipi sur le tapis…', 'bad');
+      note('Oops! Simba couldn’t hold it: pee on the rug…', 'bad');
       snd('fail'); buzz([40, 60, 40]);
     }
     if (d.bonheur < 18 && rnd() < 0.006) {
-      const betises = ['Simba a mâchouillé une pantoufle.', 'Simba a renversé la plante.', 'Simba a mis un coussin en pièces.', 'Simba a caché la télécommande.'];
+      const betises = ['Simba chewed up a slipper.', 'Simba knocked over the plant.', 'Simba shredded a cushion.', 'Simba hid the TV remote.'];
       m.proprete = clamp(m.proprete - 12); n.moral = clamp(n.moral - 5);
       S.today.mischief++;
-      note(pick(betises) + ' Il s’ennuie !', 'bad'); snd('bark');
+      note(pick(betises) + ' He’s bored!', 'bad'); snd('bark');
     }
     if (n.energie <= 0 || S.time >= COLLAPSE_AT) { endDay(true); return false; }
     return true;
@@ -221,121 +224,121 @@
   /* ------------------------------------------------------------------ */
   /* Actions                                                             */
   /* ------------------------------------------------------------------ */
-  const outside = (s, extra) => (!s.dressed ? 'Nena est encore en pyjama !' : extra ? extra(s) : true);
+  const outside = (s, extra) => (!s.dressed ? 'Nena is still in her pajamas!' : extra ? extra(s) : true);
   function rainCheck(s) {
-    if (s.today.weather === 'pluie' && s.outfit !== 'cire') { s.nena.hygiene -= 10; note('Nena est trempée… un ciré serait utile.'); }
+    if (s.today.weather === 'pluie' && s.outfit !== 'cire') { s.nena.hygiene -= 10; note('Nena got soaked… a raincoat would help.'); }
   }
   const ACTIONS = [
     // Chambre
-    { room: 'chambre', id: 'lit', name: 'Faire le lit', desc: 'Une chambre rangée, un moral au top.', tag: 'maison', dur: 5,
-      verb: 'Nena tire la couette…', task: 'lit', sfx: 'swoosh',
-      avail: (s) => (!s.maison.lit ? true : 'Le lit est déjà fait.'),
+    { room: 'chambre', id: 'lit', name: 'Make the bed', desc: 'A tidy room, a happy mind.', tag: 'maison', dur: 5,
+      verb: 'Nena straightens the duvet…', task: 'lit', sfx: 'swoosh',
+      avail: (s) => (!s.maison.lit ? true : 'The bed is already made.'),
       run: (s) => { s.maison.lit = true; s.nena.moral += 4; credit('lit'); } },
-    { room: 'chambre', id: 'habiller', name: "S'habiller", desc: 'Indispensable avant de sortir.', tag: 'nena', dur: 10,
-      verb: 'Nena choisit sa tenue…', task: 'habiller', sfx: 'swoosh',
-      avail: (s) => (!s.dressed ? true : 'Nena est déjà habillée.'),
+    { room: 'chambre', id: 'habiller', name: 'Get dressed', desc: 'A must before going out.', tag: 'nena', dur: 10,
+      verb: 'Nena picks an outfit…', task: 'habiller', sfx: 'swoosh',
+      avail: (s) => (!s.dressed ? true : 'Nena is already dressed.'),
       run: (s) => { s.dressed = true; s.nena.moral += 3; credit('habiller'); burstAt('spark', posOf('nena')[0], 45, 6); } },
-    { room: 'chambre', id: 'pyjama', name: 'Mettre son pyjama', desc: 'Le pyjama rose préféré.', tag: 'nena', dur: 5,
-      verb: 'Nena enfile son pyjama…',
-      avail: (s) => (!s.dressed ? 'Elle est déjà en pyjama.' : s.time < 18 * 60 ? 'Il est un peu tôt.' : true),
+    { room: 'chambre', id: 'pyjama', name: 'Put on pajamas', desc: 'Her favorite pink pajamas.', tag: 'nena', dur: 5,
+      verb: 'Nena slips into her pajamas…',
+      avail: (s) => (!s.dressed ? 'She’s already in pajamas.' : s.time < 18 * 60 ? 'It’s a bit early.' : true),
       run: (s) => { s.dressed = false; s.nena.moral += 3; } },
-    { room: 'chambre', id: 'calin', name: 'Câlin avec Simba', desc: 'Le nez dans sa crinière.', tag: 'simba', dur: 10,
-      verb: 'Gros câlin tout doux…', task: 'calin', sfx: 'happy',
+    { room: 'chambre', id: 'calin', name: 'Cuddle Simba', desc: 'Nose buried in his mane.', tag: 'simba', dur: 10,
+      verb: 'A big soft cuddle…', task: 'calin', sfx: 'happy',
       run: (s) => { s.simba.bonheur += 20; s.nena.moral += 10; credit('calin'); burstAt('heart', 58, 45, 10); } },
-    { room: 'chambre', id: 'sieste', name: 'Faire une sieste', desc: 'Simba se colle à elle.', tag: 'nena', dur: 60,
-      verb: 'Zzz… petite sieste…', sleepy: true, sfx: 'yawn',
-      avail: (s) => (s.nena.energie < 70 ? true : 'Nena n’est pas fatiguée.'),
+    { room: 'chambre', id: 'sieste', name: 'Take a nap', desc: 'Simba snuggles up to her.', tag: 'nena', dur: 60,
+      verb: 'Zzz… quick nap…', sleepy: true, sfx: 'yawn',
+      avail: (s) => (s.nena.energie < 70 ? true : 'Nena isn’t tired.'),
       run: (s) => { s.nena.energie += 30; s.simba.bonheur += 5; } },
-    { room: 'chambre', id: 'dormir', name: 'Dormir avec Simba', desc: 'Termine la journée.', tag: 'nena', dur: 0,
-      verb: 'Bonne nuit…',
-      avail: (s) => (s.time >= BEDTIME_OK || s.nena.energie < 20 ? true : 'Pas avant 20:00 (sauf si épuisée).'),
+    { room: 'chambre', id: 'dormir', name: 'Sleep with Simba', desc: 'Ends the day.', tag: 'nena', dur: 0,
+      verb: 'Good night…',
+      avail: (s) => (s.time >= BEDTIME_OK || s.nena.energie < 20 ? true : 'Not before 8 PM (unless exhausted).'),
       run: () => { snd('yawn'); endDay(false); } },
 
     // Salle de bain
-    { room: 'sdb', id: 'douche', name: 'Prendre une douche', desc: 'Hygiène au maximum.', tag: 'nena', dur: 15,
-      verb: 'Nena chante sous la douche…', task: 'douche', sfx: 'water',
-      avail: (s) => (s.nena.hygiene < 92 ? true : 'Nena est déjà toute propre.'),
+    { room: 'sdb', id: 'douche', name: 'Take a shower', desc: 'Hygiene to the max.', tag: 'nena', dur: 15,
+      verb: 'Nena sings in the shower…', task: 'douche', sfx: 'water',
+      avail: (s) => (s.nena.hygiene < 92 ? true : 'Nena is already squeaky clean.'),
       run: (s) => { s.nena.hygiene = 100; s.nena.moral += 5; s.maison.linge += 1; credit('douche'); burstAt('bubbleb', posOf('nena')[0], 40, 12); } },
-    { room: 'sdb', id: 'dents', name: 'Se brosser les dents', desc: 'Avant midi, puis après 19:00.', tag: 'nena', dur: 3,
-      verb: 'Brossage, brossage…', sfx: 'brush',
+    { room: 'sdb', id: 'dents', name: 'Brush teeth', desc: 'Before noon, then after 7 PM.', tag: 'nena', dur: 3,
+      verb: 'Brush, brush, brush…', sfx: 'brush',
       task: (s) => (s.time < 12 * 60 ? 'dents_matin' : s.time >= 19 * 60 ? 'dents_soir' : null),
       run: (s) => {
         s.nena.hygiene += 6;
         if (s.time < 12 * 60) credit('dents_matin'); else if (s.time >= 19 * 60) credit('dents_soir');
       } },
-    { room: 'sdb', id: 'brosser', name: 'Brosser Simba', desc: 'Son double pelage en a besoin chaque jour.', tag: 'simba', dur: 20, mini: 'brush',
-      verb: 'Nena démêle la crinière…', task: 'brosser',
-      avail: (s) => (s.simba.pelage < 95 ? true : 'Son pelage est déjà parfait.'),
+    { room: 'sdb', id: 'brosser', name: 'Brush Simba', desc: 'His double coat needs it every day.', tag: 'simba', dur: 20, mini: 'brush',
+      verb: 'Nena untangles his mane…', task: 'brosser',
+      avail: (s) => (s.simba.pelage < 95 ? true : 'His coat is already perfect.'),
       run: (s, r) => {
         const sc = r ? r.score : 0.6;
         s.simba.pelage = clamp(55 + 45 * sc); s.simba.bonheur += 4 + 10 * sc; s.maison.proprete -= 6;
         s.counters.brushes++; s.best.brush = Math.max(s.best.brush, sc);
         credit('brosser'); burstAt('fur', posOf('simba')[0], 40, 12);
       } },
-    { room: 'sdb', id: 'bain', name: 'Bain pour Simba', desc: 'Il n’aime pas trop l’eau…', tag: 'simba', dur: 35,
-      verb: 'Shampoing et éclaboussures…', task: 'bain', sfx: 'water',
-      avail: (s) => (s.muddy ? true : 'Simba n’est pas sale.'),
-      run: (s) => { s.muddy = false; s.simba.bonheur -= 8; s.nena.hygiene -= 15; s.maison.linge += 1; credit('bain'); burstAt('bubbleb', posOf('simba')[0], 35, 16); note('Simba est propre… et Nena trempée !'); } },
-    { room: 'sdb', id: 'lessive', name: 'Lancer une lessive', desc: 'Plaids pleins de poils roux.', tag: 'maison', dur: 15,
-      verb: 'La machine tourne…', task: 'lessive', sfx: 'water',
-      avail: (s) => (s.maison.linge > 0 ? true : 'Le panier à linge est vide.'),
+    { room: 'sdb', id: 'bain', name: 'Bath for Simba', desc: 'He’s not a fan of water…', tag: 'simba', dur: 35,
+      verb: 'Shampoo and splashes…', task: 'bain', sfx: 'water',
+      avail: (s) => (s.muddy ? true : 'Simba isn’t dirty.'),
+      run: (s) => { s.muddy = false; s.simba.bonheur -= 8; s.nena.hygiene -= 15; s.maison.linge += 1; credit('bain'); burstAt('bubbleb', posOf('simba')[0], 35, 16); note('Simba is clean… and Nena is soaked!'); } },
+    { room: 'sdb', id: 'lessive', name: 'Start the laundry', desc: 'Blankets full of orange fur.', tag: 'maison', dur: 15,
+      verb: 'The machine is spinning…', task: 'lessive', sfx: 'water',
+      avail: (s) => (s.maison.linge > 0 ? true : 'The laundry basket is empty.'),
       run: (s) => { s.maison.linge = 0; s.nena.moral += 2; credit('lessive'); } },
 
     // Cuisine
-    { room: 'cuisine', id: 'repas', name: (s) => mealName(s.time), desc: 'Utilise 1 repas du frigo.', tag: 'nena', dur: 20,
-      verb: 'Nena cuisine et mange…', task: 'repas', sfx: 'pop',
-      avail: (s) => (s.food <= 0 ? 'Frigo vide : va faire les courses.' : s.nena.faim > 88 ? 'Nena n’a pas faim.' : true),
+    { room: 'cuisine', id: 'repas', name: (s) => mealName(s.time), desc: 'Uses 1 meal from the fridge.', tag: 'nena', dur: 20,
+      verb: 'Nena cooks and eats…', task: 'repas', sfx: 'pop',
+      avail: (s) => (s.food <= 0 ? 'Fridge is empty: go shopping.' : s.nena.faim > 88 ? 'Nena isn’t hungry.' : true),
       run: (s) => { s.food -= 1; s.nena.faim += 42; s.nena.moral += 4; s.maison.vaisselle += 1; credit('repas'); } },
-    { room: 'cuisine', id: 'gamelle', name: 'Remplir la gamelle', desc: 'Avant midi, puis après 17:00.', tag: 'simba', dur: 3,
-      verb: 'Simba remue la queue…', sfx: 'bark',
+    { room: 'cuisine', id: 'gamelle', name: 'Fill the food bowl', desc: 'Before noon, then after 5 PM.', tag: 'simba', dur: 3,
+      verb: 'Simba wags his tail…', sfx: 'bark',
       task: (s) => (s.time < 12 * 60 ? 'gamelle_matin' : s.time >= 17 * 60 ? 'gamelle_soir' : null),
-      avail: (s) => (s.kibble <= 0 ? 'Plus de croquettes !' : s.simba.ventre > 80 ? 'Simba n’a pas faim.' : true),
+      avail: (s) => (s.kibble <= 0 ? 'Out of kibble!' : s.simba.ventre > 80 ? 'Simba isn’t hungry.' : true),
       run: (s) => {
         s.kibble -= 1; s.simba.ventre += 55; s.simba.bonheur += 5;
         if (s.time < 12 * 60) credit('gamelle_matin'); else if (s.time >= 17 * 60) credit('gamelle_soir');
-        if (s.kibble <= 1) note('Il reste ' + s.kibble + ' portion(s) de croquettes.', 'bad');
+        if (s.kibble <= 1) note('Only ' + s.kibble + ' portion(s) of kibble left.', 'bad');
       } },
-    { room: 'cuisine', id: 'eau', name: 'Changer l’eau', desc: 'Une gamelle d’eau fraîche.', tag: 'simba', dur: 2,
-      verb: 'Glouglou…', task: 'eau', sfx: 'water',
-      avail: (s) => (s.simba.eau < 85 ? true : 'Sa gamelle d’eau est pleine.'),
+    { room: 'cuisine', id: 'eau', name: 'Change the water', desc: 'A bowl of fresh water.', tag: 'simba', dur: 2,
+      verb: 'Slurp slurp…', task: 'eau', sfx: 'water',
+      avail: (s) => (s.simba.eau < 85 ? true : 'His water bowl is full.'),
       run: (s) => { s.simba.eau = 100; credit('eau'); } },
-    { room: 'cuisine', id: 'friandise', name: 'Une friandise', desc: '3 par jour maximum.', tag: 'simba', dur: 1,
-      verb: 'Assis… la patte… bravo !', sfx: 'happy',
-      avail: (s) => (s.today.treats < 3 ? true : 'Assez de friandises aujourd’hui.'),
+    { room: 'cuisine', id: 'friandise', name: 'Give a treat', desc: '3 per day max.', tag: 'simba', dur: 1,
+      verb: 'Sit… paw… good boy!', sfx: 'happy',
+      avail: (s) => (s.today.treats < 3 ? true : 'Enough treats for today.'),
       run: (s) => { s.today.treats++; s.simba.bonheur += 10; s.simba.ventre += 5; burstAt('heart', posOf('simba')[0], 45, 5); } },
-    { room: 'cuisine', id: 'cafe', name: 'Un café', desc: '+15 énergie · 2 par jour.', tag: 'nena', dur: 5, needs: 'cafe',
-      verb: 'L’odeur du café envahit la cuisine…', sfx: 'pop',
-      avail: (s) => (s.today.coffee < 2 ? true : 'Assez de café pour aujourd’hui.'),
+    { room: 'cuisine', id: 'cafe', name: 'Have a coffee', desc: '+15 energy · 2 per day.', tag: 'nena', dur: 5, needs: 'cafe',
+      verb: 'The smell of coffee fills the kitchen…', sfx: 'pop',
+      avail: (s) => (s.today.coffee < 2 ? true : 'Enough coffee for today.'),
       run: (s) => { s.today.coffee++; s.nena.energie += 15; s.maison.vaisselle += 1; } },
-    { room: 'cuisine', id: 'vaisselle', name: 'Faire la vaisselle', desc: 'Une cuisine nette avant de dormir.', tag: 'maison', dur: 15,
-      verb: 'Ça mousse dans l’évier…', task: 'vaisselle', sfx: 'water',
-      avail: (s) => (s.maison.vaisselle > 0 ? true : 'Pas de vaisselle sale.'),
+    { room: 'cuisine', id: 'vaisselle', name: 'Do the dishes', desc: 'A clean kitchen before bed.', tag: 'maison', dur: 15,
+      verb: 'Suds in the sink…', task: 'vaisselle', sfx: 'water',
+      avail: (s) => (s.maison.vaisselle > 0 ? true : 'No dirty dishes.'),
       run: (s) => { s.maison.vaisselle = 0; s.nena.moral += 2; burstAt('bubbleb', 25, 45, 8); } },
 
     // Salon
-    { room: 'salon', id: 'travail', name: 'Télétravail (2 h)', desc: '+45 € · de 08:00 à 19:00.', tag: 'nena', dur: 120,
-      verb: 'Nena travaille sur son ordinateur…', task: 'travail', working: true,
-      avail: (s) => (isWeekend(s.day) ? 'C’est le week-end, repos !' : s.time < 8 * 60 || s.time > 19 * 60 ? 'Le bureau est fermé.' : s.nena.energie < 20 ? 'Nena est trop fatiguée.' : true),
+    { room: 'salon', id: 'travail', name: 'Work from home (2 h)', desc: '+$45 · 8 AM to 7 PM.', tag: 'nena', dur: 120,
+      verb: 'Nena works on her laptop…', task: 'travail', working: true,
+      avail: (s) => (isWeekend(s.day) ? 'It’s the weekend, time off!' : s.time < 8 * 60 || s.time > 19 * 60 ? 'The office is closed.' : s.nena.energie < 20 ? 'Nena is too tired.' : true),
       run: (s) => { s.money += 45; s.nena.energie -= 12; s.nena.moral -= 5; s.simba.bonheur -= 8; credit('travail'); moneyFx(45); } },
-    { room: 'salon', id: 'balle', name: 'Jouer à la balle', desc: 'Lance, Simba rapporte… parfois.', tag: 'simba', dur: 15, mini: 'fetch',
-      verb: 'Lancer, courir, rapporter !', task: 'jouer',
+    { room: 'salon', id: 'balle', name: 'Play ball', desc: 'You throw, Simba fetches… sometimes.', tag: 'simba', dur: 15, mini: 'fetch',
+      verb: 'Throw, run, fetch!', task: 'jouer',
       run: (s, r) => {
         const sc = r ? r.score : 0.6;
         s.simba.bonheur += 12 + 22 * sc + (has('corde') ? 8 : 0); s.nena.energie -= 5; s.nena.moral += 6;
         s.best.fetch = Math.max(s.best.fetch, sc);
         credit('jouer'); burstAt('heart', posOf('simba')[0], 45, 8);
       } },
-    { room: 'salon', id: 'aspirateur', name: 'Passer l’aspirateur', desc: 'Les poils roux s’accumulent vite.', tag: 'maison', dur: 20,
-      verb: 'Vrrrrr ! Simba aboie sur l’aspirateur…', task: 'aspirateur', sfx: 'bark',
-      avail: (s) => (s.maison.proprete < 92 ? true : 'La maison est déjà propre.'),
+    { room: 'salon', id: 'aspirateur', name: 'Vacuum', desc: 'Orange fur piles up fast.', tag: 'maison', dur: 20,
+      verb: 'Vrrrrr! Simba barks at the vacuum…', task: 'aspirateur', sfx: 'bark',
+      avail: (s) => (s.maison.proprete < 92 ? true : 'The house is already clean.'),
       run: (s) => { s.maison.proprete = 100; s.simba.bonheur -= 4; credit('aspirateur'); burstAt('spark', 50, 70, 10); } },
-    { room: 'salon', id: 'serie', name: 'Série sur le canapé', desc: 'Simba ronfle sur ses genoux.', tag: 'nena', dur: 45,
-      verb: 'Encore un épisode…',
+    { room: 'salon', id: 'serie', name: 'Couch & TV show', desc: 'Simba snores on her lap.', tag: 'nena', dur: 45,
+      verb: 'Just one more episode…',
       run: (s) => { s.nena.moral += 14; s.nena.energie += 5; s.simba.bonheur += 8; } },
 
     // Dehors
-    { room: 'dehors', id: 'promenade', name: 'Promener Simba', desc: 'Pipi, reniflage et air frais.', tag: 'simba', dur: 30, mini: 'walk',
-      verb: 'Promenade dans le quartier…', task: 'promenade', walk: true,
+    { room: 'dehors', id: 'promenade', name: 'Walk Simba', desc: 'Pee, sniffing and fresh air.', tag: 'simba', dur: 30, mini: 'walk',
+      verb: 'A walk around the block…', task: 'promenade', walk: true,
       avail: (s) => outside(s),
       run: (s, r) => {
         const sc = r ? r.score : 0.6;
@@ -344,12 +347,12 @@
         s.counters.walks++; if (s.today.weather === 'neige') s.counters.snowWalks++;
         if (r && !r.skipped) s.best.walk = Math.max(s.best.walk, r.hits ? Math.min(sc, 0.89) : sc);
         credit('promenade'); rainCheck(s);
-        if (r && r.muddy) { s.muddy = true; addTask('bain'); note('Simba a sauté dans une flaque de boue ! Un bain s’impose.', 'bad'); }
+        if (r && r.muddy) { s.muddy = true; addTask('bain'); note('Simba jumped into a mud puddle! Bath time.', 'bad'); }
         else if (r && r.skipped) walkEvent(s);
         else if (rnd() < 0.3) friendEvent(s);
       } },
-    { room: 'dehors', id: 'parc', name: 'Parc à chiens (1 h)', desc: 'Compte comme une promenade.', tag: 'simba', dur: 60,
-      verb: 'Simba court avec ses copains…', task: 'parc', walk: true, sfx: 'bark',
+    { room: 'dehors', id: 'parc', name: 'Dog park (1 h)', desc: 'Counts as a walk.', tag: 'simba', dur: 60,
+      verb: 'Simba runs with his buddies…', task: 'parc', walk: true, sfx: 'bark',
       avail: (s) => outside(s),
       run: (s) => {
         s.simba.pipi = 100; s.simba.bonheur += 35; s.nena.energie -= 12; s.nena.moral += 8;
@@ -357,50 +360,50 @@
         credit('parc'); credit('promenade'); credit('jouer'); rainCheck(s);
         walkEvent(s, 0.15); burstAt('heart', posOf('simba')[0], 45, 8);
       } },
-    { room: 'dehors', id: 'courses', name: 'Courses pour Nena', desc: '−24 € · +4 repas au frigo.', tag: 'maison', dur: 40,
-      verb: 'Nena remplit son panier…', task: 'courses', sfx: 'coin',
-      avail: (s) => outside(s, (x) => (x.money < 24 ? 'Pas assez d’argent (24 €).' : true)),
+    { room: 'dehors', id: 'courses', name: 'Groceries for Nena', desc: '−$24 · +4 meals in the fridge.', tag: 'maison', dur: 40,
+      verb: 'Nena fills her basket…', task: 'courses', sfx: 'coin',
+      avail: (s) => outside(s, (x) => (x.money < 24 ? 'Not enough money ($24).' : true)),
       run: (s) => { s.money -= 24; s.food += 4; s.simba.bonheur -= 6; credit('courses'); rainCheck(s); } },
-    { room: 'dehors', id: 'croquettes', name: 'Sac de croquettes', desc: '−20 € · +8 portions.', tag: 'simba', dur: 25,
-      verb: 'Direction l’animalerie…', task: 'courses', sfx: 'coin',
-      avail: (s) => outside(s, (x) => (x.money < 20 ? 'Pas assez d’argent (20 €).' : true)),
+    { room: 'dehors', id: 'croquettes', name: 'Bag of kibble', desc: '−$20 · +8 portions.', tag: 'simba', dur: 25,
+      verb: 'Off to the pet store…', task: 'courses', sfx: 'coin',
+      avail: (s) => outside(s, (x) => (x.money < 20 ? 'Not enough money ($20).' : true)),
       run: (s) => { s.money -= 20; s.kibble += 8; s.simba.bonheur -= 4; credit('courses'); rainCheck(s); } },
-    { room: 'dehors', id: 'veto', name: 'Visite chez le véto', desc: '−30 € · de 09:00 à 18:00.', tag: 'simba', dur: 60,
-      verb: 'Simba tremble un peu dans la salle d’attente…', task: 'veto',
-      avail: (s) => outside(s, (x) => (!x.today.tasks.find((t) => t.id === 'veto') ? 'Pas de rendez-vous aujourd’hui.' :
-        x.time < 9 * 60 || x.time > 18 * 60 ? 'Le cabinet est fermé.' : x.money < 30 ? 'Pas assez d’argent (30 €).' : true)),
-      run: (s) => { s.money -= 30; s.simba.bonheur -= 6; credit('veto'); note('Le véto : « Simba est en pleine forme ! »', 'good'); } },
+    { room: 'dehors', id: 'veto', name: 'Vet visit', desc: '−$30 · 9 AM to 6 PM.', tag: 'simba', dur: 60,
+      verb: 'Simba trembles a little in the waiting room…', task: 'veto',
+      avail: (s) => outside(s, (x) => (!x.today.tasks.find((t) => t.id === 'veto') ? 'No appointment today.' :
+        x.time < 9 * 60 || x.time > 18 * 60 ? 'The clinic is closed.' : x.money < 30 ? 'Not enough money ($30).' : true)),
+      run: (s) => { s.money -= 30; s.simba.bonheur -= 6; credit('veto'); note('The vet: “Simba is in great shape!”', 'good'); } },
   ];
 
   function friendEvent(s) {
     const ev = pick([
-      ['Simba a rencontré Biscotte, sa copine shiba.', () => { s.simba.bonheur += 10; }],
-      ['Une passante : « Oh, on dirait un petit ours ! »', () => { s.nena.moral += 8; }],
-      ['Nena a trouvé 5 € par terre !', () => { s.money += 5; moneyFx(5); }],
+      ['Simba met Biscuit, his shiba friend.', () => { s.simba.bonheur += 10; }],
+      ['A passerby: “Aww, he looks like a little bear!”', () => { s.nena.moral += 8; }],
+      ['Nena found $5 on the ground!', () => { s.money += 5; moneyFx(5); }],
     ]);
     ev[1](); note(ev[0], 'good');
   }
   function walkEvent(s, extra = 0) {
     const mud = 0.12 + extra + (s.today.weather === 'pluie' ? 0.2 : 0);
-    if (rnd() < mud) { s.muddy = true; addTask('bain'); note('Simba s’est roulé dans la boue ! Un bain s’impose.', 'bad'); }
+    if (rnd() < mud) { s.muddy = true; addTask('bain'); note('Simba rolled in the mud! Bath time.', 'bad'); }
     else if (rnd() < 0.35) friendEvent(s);
   }
   function mealName(t) {
     const h = t / 60;
-    return h < 11 ? 'Petit-déjeuner' : h < 15 ? 'Déjeuner' : h < 18 ? 'Goûter' : 'Dîner';
+    return h < 11 ? 'Breakfast' : h < 15 ? 'Lunch' : h < 18 ? 'Snack' : 'Dinner';
   }
   const val = (x, s) => (typeof x === 'function' ? x(s) : x);
   const visibleActions = (room) => ACTIONS.filter((a) => a.room === room && (!a.needs || has(a.needs)));
 
   /* ------------------------------------------------------------------ */
-  /* Pièces & décors                                                     */
+  /* Rooms & scenery                                                      */
   /* ------------------------------------------------------------------ */
   const ROOMS = {
-    chambre: { name: 'Chambre', icon: '🛏️', nena: [44, 6], simba: [70, 5] },
-    sdb:     { name: 'Bain', icon: '🛁', nena: [56, 6], simba: [78, 5] },
-    cuisine: { name: 'Cuisine', icon: '🍳', nena: [36, 6], simba: [68, 5] },
-    salon:   { name: 'Salon', icon: '🛋️', nena: [64, 7], simba: [34, 6] },
-    dehors:  { name: 'Dehors', icon: '🌳', nena: [40, 9], simba: [64, 8] },
+    chambre: { name: 'Bedroom', icon: '🛏️', nena: [44, 6], simba: [70, 5] },
+    sdb:     { name: 'Bath', icon: '🛁', nena: [56, 6], simba: [78, 5] },
+    cuisine: { name: 'Kitchen', icon: '🍳', nena: [36, 6], simba: [68, 5] },
+    salon:   { name: 'Living', icon: '🛋️', nena: [64, 7], simba: [34, 6] },
+    dehors:  { name: 'Outside', icon: '🌳', nena: [40, 9], simba: [64, 8] },
   };
   const posOf = (who) => ROOMS[S.room][who];
 
@@ -500,7 +503,7 @@
         <rect x="446" y="110" width="110" height="230" rx="16" fill="#f7f4ef" stroke="#ddd5ca" stroke-width="3"/>
         <path d="M446 190 h110" stroke="#ddd5ca" stroke-width="3"/><rect x="538" y="140" width="6" height="34" rx="3" fill="#b8b0a6"/>
         <rect x="538" y="210" width="6" height="40" rx="3" fill="#b8b0a6"/>
-        <text x="501" y="300" text-anchor="middle" font-family="Nunito, sans-serif" font-size="16" font-weight="800" fill="#b8b0a6">${s.food} repas</text>
+        <text x="501" y="300" text-anchor="middle" font-family="Nunito, sans-serif" font-size="16" font-weight="800" fill="#b8b0a6">${s.food} meals</text>
         <path d="M560 400 h56 l-8 22 h-40z" fill="#e98aab"/>
         <ellipse cx="588" cy="400" rx="28" ry="6" fill="${foodLvl ? '#9a6232' : '#c95f84'}"/>
         <path d="M624 400 h56 l-8 22 h-40z" fill="#7aa6c2"/>
@@ -560,7 +563,7 @@
   };
 
   /* ------------------------------------------------------------------ */
-  /* Effets : particules, météo, toasts                                  */
+  /* Effects: particles, weather, toasts                                 */
   /* ------------------------------------------------------------------ */
   const GLYPH = { heart: '♥', spark: '✦', money: '' };
   function burstAt(kind, xPct, yPct, n) {
@@ -583,7 +586,7 @@
   function moneyFx(n) {
     const box = $('particles');
     const el = document.createElement('span');
-    el.className = 'pt money'; el.textContent = (n > 0 ? '+' : '') + n + ' €';
+    el.className = 'pt money'; el.textContent = (n > 0 ? '+$' : '-$') + Math.abs(n);
     el.style.left = posOf('nena')[0] + '%'; el.style.top = '30%';
     el.style.setProperty('--dx', '0px'); el.style.setProperty('--dy', '-70px'); el.style.setProperty('--rot', '0deg');
     box.appendChild(el); setTimeout(() => el.remove(), 1600);
@@ -591,7 +594,7 @@
     snd('coin');
   }
 
-  // pluie / neige sur la scène extérieure
+  // rain / snow on the outdoor scene
   const fx = { cv: null, cx: null, drops: [], run: false };
   function weatherFx() {
     const want = S.room === 'dehors' && (S.today.weather === 'pluie' || S.today.weather === 'neige') && !modalOpen;
@@ -632,7 +635,7 @@
   function flushToasts() { while (pendingToasts.length) toast(...pendingToasts.shift()); }
 
   /* ------------------------------------------------------------------ */
-  /* Succès                                                              */
+  /* Achievements                                                             */
   /* ------------------------------------------------------------------ */
   const achvQueue = [];
   let achvShowing = false;
@@ -655,22 +658,22 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Rendu                                                               */
+  /* Render                                                              */
   /* ------------------------------------------------------------------ */
   const GAUGES = {
-    nena: [['faim', '🍽️', 'Faim'], ['energie', '⚡', 'Forme'], ['hygiene', '🧼', 'Propre'], ['moral', '💗', 'Moral']],
-    simba: [['ventre', '🍖', 'Faim'], ['eau', '💧', 'Eau'], ['pipi', '🌳', 'Pipi'], ['pelage', '✨', 'Poils'], ['bonheur', '🎾', 'Joie']],
+    nena: [['faim', '🍽️', 'Food'], ['energie', '⚡', 'Pep'], ['hygiene', '🧼', 'Clean'], ['moral', '💗', 'Mood']],
+    simba: [['ventre', '🍖', 'Food'], ['eau', '💧', 'Water'], ['pipi', '🌳', 'Potty'], ['pelage', '✨', 'Coat'], ['bonheur', '🎾', 'Joy']],
   };
   const barColor = (v) => (v < 25 ? 'var(--bad)' : v < 50 ? 'var(--warn)' : 'var(--good)');
 
   function renderHud() {
-    $('hud-weekday').textContent = `${weekday(S.day)} · Jour ${S.day}`;
+    $('hud-weekday').textContent = `${weekday(S.day)} · Day ${S.day}`;
     $('hud-time').textContent = hh(S.time);
     $('hud-weather').textContent = WEATHER[S.today.weather].icon;
     $('hud-weather').title = WEATHER[S.today.weather].label;
     $('hud-money').textContent = S.money;
     $('btn-speed').textContent = S.speed === 0 ? '❚❚' : S.speed === 1 ? '▶' : '▶▶';
-    $('btn-speed').setAttribute('aria-label', S.speed === 0 ? 'Temps en pause' : S.speed === 1 ? 'Vitesse normale' : 'Vitesse rapide');
+    $('btn-speed').setAttribute('aria-label', S.speed === 0 ? 'Time paused' : S.speed === 1 ? 'Normal speed' : 'Fast speed');
   }
   function renderGauges() {
     for (const who of ['nena', 'simba']) {
@@ -703,21 +706,21 @@
     simba.classList.toggle('happy', S.simba.bonheur >= 60);
 
     const d = S.simba;
-    const dogNeeds = [[d.pipi, 'Sortir ! 🌳'], [d.eau, 'Soif… 💧'], [d.ventre, 'Faim ! 🍖'], [d.bonheur, 'Joue avec moi 🎾'], [d.pelage, 'Brosse-moi ✨']]
+    const dogNeeds = [[d.pipi, 'Walkies! 🌳'], [d.eau, 'Thirsty… 💧'], [d.ventre, 'Hungry! 🍖'], [d.bonheur, 'Play with me 🎾'], [d.pelage, 'Brush me ✨']]
       .filter(([v]) => v < 30).sort((x, y) => x[0] - y[0]);
     const sb = $('simba-bubble');
     if (busy) sb.hidden = true;
-    else if (S.muddy) { sb.hidden = false; sb.textContent = 'Tout boueux 🛁'; }
+    else if (S.muddy) { sb.hidden = false; sb.textContent = 'All muddy 🛁'; }
     else if (dogNeeds.length) { sb.hidden = false; sb.textContent = dogNeeds[0][1]; }
     else sb.hidden = true;
 
     const n = S.nena;
-    const hers = [[n.energie, 'Je suis épuisée…'], [n.faim, 'J’ai faim…'], [n.hygiene, 'Une douche ?'], [n.moral, 'Pas le moral…']]
+    const hers = [[n.energie, 'I’m exhausted…'], [n.faim, 'I’m hungry…'], [n.hygiene, 'Shower time?'], [n.moral, 'Feeling down…']]
       .filter(([v]) => v < 25).sort((x, y) => x[0] - y[0]);
     const nb = $('nena-bubble');
     if (busy) nb.hidden = true;
     else if (hers.length) { nb.hidden = false; nb.textContent = hers[0][1]; }
-    else if (S.time >= 22 * 60) { nb.hidden = false; nb.textContent = 'Il est tard, au lit !'; }
+    else if (S.time >= 22 * 60) { nb.hidden = false; nb.textContent = 'It’s late, bedtime!'; }
     else nb.hidden = true;
     weatherFx();
   }
@@ -737,7 +740,7 @@
     $('rooms').innerHTML = Object.entries(ROOMS).map(([id, r]) =>
       `<button type="button" class="tab" data-room="${id}" aria-current="${S.room === id}" ${busy ? 'disabled' : ''}>
         <span class="tab-ico" aria-hidden="true">${r.icon}</span><span>${r.name}</span>
-        ${roomHasTodo(id) && S.room !== id ? '<span class="dot" aria-label="tâche à faire"></span>' : ''}</button>`).join('');
+        ${roomHasTodo(id) && S.room !== id ? '<span class="dot" aria-label="task to do"></span>' : ''}</button>`).join('');
   }
 
   function renderActions() {
@@ -749,11 +752,11 @@
     $('actions').innerHTML = list.map((a) => {
       const ok = availOf(a);
       const todo = isTodo(a) && ok === true;
-      const tagTxt = { nena: 'Nena', simba: 'Simba', maison: 'Maison' }[a.tag];
+      const tagTxt = { nena: 'Nena', simba: 'Simba', maison: 'Home' }[a.tag];
       return `<button type="button" class="action${ok !== true ? ' locked' : ''}${todo ? ' todo' : ''}" data-action="${a.id}" ${busy ? 'disabled' : ''}>
         <span class="a-top"><span class="a-name">${val(a.name, S)}</span><span class="a-dur">${a.dur ? durTxt(a.dur) : ''}</span></span>
         <span class="a-desc">${ok === true ? a.desc : ok}</span>
-        <span class="a-tags"><span class="a-tag ${a.tag}">${tagTxt}</span>${a.mini ? '<span class="a-tag play">Mini-jeu</span>' : ''}${todo ? '<span class="a-tag todo">À faire</span>' : ''}</span>
+        <span class="a-tags"><span class="a-tag ${a.tag}">${tagTxt}</span>${a.mini ? '<span class="a-tag play">Mini-game</span>' : ''}${todo ? '<span class="a-tag todo">To do</span>' : ''}</span>
       </button>`;
     }).join('');
   }
@@ -773,10 +776,10 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Feuilles (liste, besoins, boutique, succès, menu)                   */
+  /* Sheets (list, needs, shop, achievements, menu)                  */
   /* ------------------------------------------------------------------ */
   const sheet = { open: false, view: 'tasks', shopCat: 'tenues' };
-  const MENU_TABS = [['tasks', 'Journée'], ['needs', 'Besoins'], ['shop', 'Boutique'], ['achv', 'Succès'], ['menu', 'Options']];
+  const MENU_TABS = [['tasks', 'Today'], ['needs', 'Needs'], ['shop', 'Shop'], ['achv', 'Achievements'], ['menu', 'Settings']];
   function openSheet(view) {
     sheet.open = true; sheet.view = view;
     $('sheet-wrap').hidden = false;
@@ -788,7 +791,7 @@
 
   function renderSheet() {
     const v = sheet.view;
-    $('sheet-title').textContent = { tasks: 'Liste du jour', needs: 'Besoins', shop: 'Boutique', achv: 'Succès', menu: 'Options' }[v];
+    $('sheet-title').textContent = { tasks: 'Today’s list', needs: 'Needs', shop: 'Shop', achv: 'Achievements', menu: 'Settings' }[v];
     $('sheet-tabs').innerHTML = MENU_TABS.map(([id, l]) => `<button type="button" class="stab" role="tab" data-view="${id}" aria-selected="${v === id}">${l}</button>`).join('');
     const body = $('sheet-body');
     if (v === 'tasks') body.innerHTML = sheetTasks();
@@ -800,7 +803,7 @@
   function sheetTasks() {
     const ts = S.today.tasks, done = ts.filter(taskDone).length;
     const w = WEATHER[S.today.weather];
-    return `<p><b>${weekday(S.day)}, jour ${S.day}</b> · ${w.icon} ${w.label}</p>
+    return `<p><b>${weekday(S.day)}, day ${S.day}</b> · ${w.icon} ${w.label}</p>
       <div class="progress"><div style="width:${(done / ts.length) * 100}%"></div></div>
       <ul class="tasks">${ts.map((t) => {
         const def = TASKS[t.id], ok = taskDone(t);
@@ -808,7 +811,7 @@
           <span class="t-label"><span class="who ${def.who}"></span>${def.label}</span>
           <span class="t-count">${t.need > 1 && !def.check ? t.done + '/' + t.need : ''}</span></li>`;
       }).join('')}</ul>
-      <p class="tip">90 % des tâches = 3 étoiles. Va dormir avec Simba après 20:00 pour finir la journée. ${w.tip}</p>`;
+      <p class="tip">90% of tasks = 3 stars. Go to sleep with Simba after 8 PM to end the day. ${w.tip}</p>`;
   }
   function needRow(ico, label, v) {
     const r = Math.round(v);
@@ -817,13 +820,13 @@
   }
   function sheetNeeds() {
     return `<h3>Nena</h3>${GAUGES.nena.map(([k, i, l]) => needRow(i, l, S.nena[k])).join('')}
-      <h3>Simba · chow-chow</h3>${GAUGES.simba.map(([k, i, l]) => needRow(i, l, S.simba[k])).join('')}
-      <h3>Maison</h3>${needRow('🧹', 'Propreté', S.maison.proprete)}
-      <div class="need"><span>🍽️</span><span class="need-name">Vaisselle</span><span>${S.maison.vaisselle ? S.maison.vaisselle + ' assiette(s) sale(s)' : 'Rangée'}</span><span></span></div>
-      <div class="need"><span>🧺</span><span class="need-name">Linge</span><span>${S.maison.linge ? S.maison.linge + ' panier(s)' : 'Panier vide'}</span><span></span></div>
-      <h3>Réserves</h3>
-      <div class="stats-grid"><div class="stat"><b>${S.kibble}</b><small>Croquettes</small></div><div class="stat"><b>${S.food}</b><small>Repas</small></div><div class="stat"><b>${S.money} €</b><small>Argent</small></div></div>
-      <p class="tip">Le chow-chow a une langue bleu-noir, un double pelage épais et une queue enroulée sur le dos. Il perd beaucoup de poils : brosse-le chaque jour !</p>`;
+      <h3>Simba · chow chow</h3>${GAUGES.simba.map(([k, i, l]) => needRow(i, l, S.simba[k])).join('')}
+      <h3>Home</h3>${needRow('🧹', 'Tidiness', S.maison.proprete)}
+      <div class="need"><span>🍽️</span><span class="need-name">Dishes</span><span>${S.maison.vaisselle ? S.maison.vaisselle + ' dirty plate(s)' : 'All clean'}</span><span></span></div>
+      <div class="need"><span>🧺</span><span class="need-name">Laundry</span><span>${S.maison.linge ? S.maison.linge + ' load(s)' : 'Basket empty'}</span><span></span></div>
+      <h3>Supplies</h3>
+      <div class="stats-grid"><div class="stat"><b>${S.kibble}</b><small>Kibble</small></div><div class="stat"><b>${S.food}</b><small>Meals</small></div><div class="stat"><b>$${S.money}</b><small>Money</small></div></div>
+      <p class="tip">Chow chows have a blue-black tongue, a thick double coat and a tail curled over the back. They shed a lot: brush Simba every day!</p>`;
   }
   function itemArt(it) {
     if (it.cat === 'tenues') return window.Art.nena({ dressed: true, outfit: it.id, eyes: 'open' });
@@ -831,29 +834,29 @@
     return `<span class="big">${it.icon}</span>`;
   }
   function sheetShop() {
-    const cats = [['tenues', 'Tenues de Nena'], ['simba', 'Pour Simba'], ['maison', 'Maison']];
+    const cats = [['tenues', 'Nena’s outfits'], ['simba', 'For Simba'], ['maison', 'Home']];
     const items = SHOP.filter((i) => i.cat === sheet.shopCat);
     let extra = '';
     if (sheet.shopCat === 'tenues') extra = `<button type="button" class="item${S.outfit === 'basique' ? ' equipped owned' : ' owned'}" data-equip="basique">
-      <div class="item-art">${window.Art.nena({ dressed: true, outfit: 'basique', eyes: 'open' })}</div><b>Tenue de tous les jours</b><small>Pull rayé et jean.</small>
-      <span class="price">${S.outfit === 'basique' ? 'Portée' : 'Porter'}</span></button>`;
+      <div class="item-art">${window.Art.nena({ dressed: true, outfit: 'basique', eyes: 'open' })}</div><b>Everyday outfit</b><small>Striped sweater and jeans.</small>
+      <span class="price">${S.outfit === 'basique' ? 'Wearing' : 'Wear'}</span></button>`;
     if (sheet.shopCat === 'simba') extra = `<button type="button" class="item owned${!S.collar ? ' equipped' : ''}" data-equip="none">
-      <div class="item-art">${window.Art.simba({ eyes: 'open', tongue: false })}</div><b>Sans accessoire</b><small>Au naturel.</small>
-      <span class="price">${!S.collar ? 'Porté' : 'Retirer'}</span></button>`;
-    return `<p>Porte-monnaie : <b>${S.money} €</b>. Gagne de l’argent en télétravail.</p>
+      <div class="item-art">${window.Art.simba({ eyes: 'open', tongue: false })}</div><b>No accessory</b><small>Au naturel.</small>
+      <span class="price">${!S.collar ? 'Wearing' : 'Remove'}</span></button>`;
+    return `<p>Wallet: <b>$${S.money}</b>. Earn money by working from home.</p>
       <div class="sheet-tabs" style="padding:0 0 10px">${cats.map(([id, l]) => `<button type="button" class="stab" data-cat="${id}" aria-selected="${sheet.shopCat === id}">${l}</button>`).join('')}</div>
       <div class="shop">${extra}${items.map((it) => {
         const owned = has(it.id);
         const equipped = S.outfit === it.id || S.collar === it.id;
         const cant = !owned && S.money < it.price;
-        const label = owned ? (it.cat === 'maison' ? 'Installé' : equipped ? (it.cat === 'tenues' ? 'Portée' : 'Porté') : 'Porter') : it.price + ' €';
+        const label = owned ? (it.cat === 'maison' ? 'Installed' : equipped ? 'Wearing' : 'Wear') : '$' + it.price;
         return `<button type="button" class="item${owned ? ' owned' : ''}${equipped ? ' equipped' : ''}${cant ? ' cant' : ''}" data-item="${it.id}">
           <div class="item-art">${itemArt(it)}</div><b>${it.name}</b><small>${it.desc}</small><span class="price">${label}</span></button>`;
       }).join('')}</div>`;
   }
   function sheetAchv() {
     const n = S.achievements.length;
-    return `<p><b>${n} / ${ACHIEVEMENTS.length}</b> succès débloqués</p>
+    return `<p><b>${n} / ${ACHIEVEMENTS.length}</b> achievements unlocked</p>
       <div class="progress"><div style="width:${(n / ACHIEVEMENTS.length) * 100}%"></div></div>
       <div class="achs">${ACHIEVEMENTS.map((a) => {
         const on = S.achievements.includes(a.id);
@@ -868,25 +871,25 @@
   function sheetMenu() {
     const b = bondInfo();
     const sw = (on) => `<span class="switch${on ? ' on' : ''}" aria-hidden="true"></span>`;
-    return `<h3>Complicité · ${S.stars} ★</h3>
+    return `<h3>Bond · ${S.stars} ★</h3>
       <p class="bond-title">${b.cur[1]}</p>
       <div class="progress"><div style="width:${b.pct}%"></div></div>
-      <p style="font-size:.82rem;color:var(--cocoa-soft)">${b.next ? `Encore ${b.next[0] - S.stars} ★ pour « ${b.next[1]} »` : 'Niveau maximum atteint !'}</p>
+      <p style="font-size:.82rem;color:var(--cocoa-soft)">${b.next ? `${b.next[0] - S.stars} more ★ to reach “${b.next[1]}”` : 'Maximum level reached!'}</p>
       <div class="stats-grid">
-        <div class="stat"><b>${S.counters.walks}</b><small>Balades</small></div>
-        <div class="stat"><b>${S.counters.pets}</b><small>Caresses</small></div>
-        <div class="stat"><b>${S.counters.perfect}</b><small>Jours 3★</small></div>
+        <div class="stat"><b>${S.counters.walks}</b><small>Walks</small></div>
+        <div class="stat"><b>${S.counters.pets}</b><small>Pets</small></div>
+        <div class="stat"><b>${S.counters.perfect}</b><small>3★ days</small></div>
       </div>
-      <h3>Réglages</h3>
+      <h3>Preferences</h3>
       <div class="menu-list">
-        <button type="button" class="menu-row" data-set="sound" role="switch" aria-checked="${S.settings.sound}"><span>Bruitages</span>${sw(S.settings.sound)}</button>
-        <button type="button" class="menu-row" data-set="music" role="switch" aria-checked="${S.settings.music}"><span>Musique lo-fi</span>${sw(S.settings.music)}</button>
-        <button type="button" class="menu-row" data-set="haptics" role="switch" aria-checked="${S.settings.haptics}"><span>Vibrations</span>${sw(S.settings.haptics)}</button>
-        ${installPrompt ? '<button type="button" class="menu-row" data-cmd="install"><span>Installer l’app<small>Ajouter Nena &amp; Simba à l’écran d’accueil</small></span><span>⤓</span></button>'
-          : '<div class="menu-row"><span>Installer sur iPhone<small>Dans Safari : bouton Partager, puis « Sur l’écran d’accueil ».</small></span></div>'}
-        <button type="button" class="menu-row" data-cmd="tutorial"><span>Revoir le didacticiel</span><span>›</span></button>
-        <button type="button" class="menu-row" data-cmd="title"><span>Écran titre</span><span>›</span></button>
-        <button type="button" class="menu-row" data-cmd="reset"><span style="color:var(--bad)">Nouvelle partie</span><span>›</span></button>
+        <button type="button" class="menu-row" data-set="sound" role="switch" aria-checked="${S.settings.sound}"><span>Sound effects</span>${sw(S.settings.sound)}</button>
+        <button type="button" class="menu-row" data-set="music" role="switch" aria-checked="${S.settings.music}"><span>Lo-fi music</span>${sw(S.settings.music)}</button>
+        <button type="button" class="menu-row" data-set="haptics" role="switch" aria-checked="${S.settings.haptics}"><span>Vibration</span>${sw(S.settings.haptics)}</button>
+        ${installPrompt ? '<button type="button" class="menu-row" data-cmd="install"><span>Install the app<small>Add Nena &amp; Simba to your home screen</small></span><span>⤓</span></button>'
+          : '<div class="menu-row"><span>Install on iPhone<small>In Safari: Share button, then “Add to Home Screen”.</small></span></div>'}
+        <button type="button" class="menu-row" data-cmd="tutorial"><span>Replay the tutorial</span><span>›</span></button>
+        <button type="button" class="menu-row" data-cmd="title"><span>Title screen</span><span>›</span></button>
+        <button type="button" class="menu-row" data-cmd="reset"><span style="color:var(--bad)">New game</span><span>›</span></button>
       </div>`;
   }
 
@@ -912,13 +915,13 @@
   function buyOrEquip(id) {
     const it = SHOP.find((x) => x.id === id);
     if (!has(id)) {
-      if (S.money < it.price) { toast(`Il manque ${it.price - S.money} € pour ${it.name}.`, 'bad'); snd('fail'); return; }
+      if (S.money < it.price) { toast(`You need $${it.price - S.money} more for the ${it.name}.`, 'bad'); snd('fail'); return; }
       S.money -= it.price; S.owned.push(id);
       snd('coin'); setTimeout(() => snd('success'), 150); buzz(20);
-      toast(`${it.name} acheté !`, 'good');
+      toast(`${it.name} purchased!`, 'good');
       burstAt('spark', 50, 40, 12);
     }
-    if (it.cat === 'tenues') { S.outfit = id; if (!S.dressed) toast('Habille Nena pour voir sa nouvelle tenue.'); }
+    if (it.cat === 'tenues') { S.outfit = id; if (!S.dressed) toast('Dress Nena to see her new outfit.'); }
     if (it.cat === 'simba') S.collar = id;
     checkAchievements();
     after();
@@ -934,7 +937,7 @@
   if (window.Sound) window.Sound.play = (n) => { if (soundFx) origPlay(n); };
 
   /* ------------------------------------------------------------------ */
-  /* Exécution d'une action                                              */
+  /* Running an action                                                */
   /* ------------------------------------------------------------------ */
   function doAction(id) {
     if (busy || modalOpen) return;
@@ -995,7 +998,7 @@
   function after() { clampAll(); checkAchievements(); render(); save(); }
 
   /* ------------------------------------------------------------------ */
-  /* Interactions directes                                               */
+  /* Direct interactions                                               */
   /* ------------------------------------------------------------------ */
   let petCool = 0;
   function petSimba() {
@@ -1010,19 +1013,19 @@
     snd(rnd() < 0.3 ? 'bark' : 'happy'); buzz(12);
     S.counters.pets++;
     if (S.today.pets < 10) { S.today.pets++; S.simba.bonheur = clamp(S.simba.bonheur + 2); S.nena.moral = clamp(S.nena.moral + 1); }
-    else if (S.today.pets === 10) { S.today.pets++; toast('Simba a eu son compte de caresses… pour l’instant !'); }
+    else if (S.today.pets === 10) { S.today.pets++; toast('Simba has had enough pets… for now!'); }
     renderGauges(); checkAchievements();
     if (coach.step === 0 && !$('coach').hidden) nextCoach();
   }
   const NENA_LINES = [
-    (s) => s.simba.pipi < 35 && 'Simba a besoin de sortir, je crois…',
-    (s) => !s.dressed && s.time > 9 * 60 && 'Je devrais m’habiller.',
-    (s) => s.simba.pelage < 40 && 'Des poils roux partout… une séance de brossage ?',
-    (s) => s.today.weather === 'pluie' && 'Il pleut… Simba va adorer les flaques. Pas moi.',
-    (s) => s.today.weather === 'neige' && 'De la neige ! Simba va se prendre pour un ours polaire.',
-    (s) => s.money < 25 && 'Mon porte-monnaie est presque vide.',
-    () => 'Tu es le meilleur, Simba !',
-    () => 'Encore une belle journée à deux.',
+    (s) => s.simba.pipi < 35 && 'I think Simba needs to go out…',
+    (s) => !s.dressed && s.time > 9 * 60 && 'I should get dressed.',
+    (s) => s.simba.pelage < 40 && 'Orange fur everywhere… brushing time?',
+    (s) => s.today.weather === 'pluie' && 'It’s raining… Simba will love the puddles. Not me.',
+    (s) => s.today.weather === 'neige' && 'Snow! Simba is going to think he’s a polar bear.',
+    (s) => s.money < 25 && 'My wallet is almost empty.',
+    () => 'You’re the best, Simba!',
+    () => 'Another lovely day, just us two.',
   ];
   function talkNena() {
     if (busy || modalOpen) return;
@@ -1034,7 +1037,7 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Fin de journée                                                      */
+  /* End of day                                                         */
   /* ------------------------------------------------------------------ */
   function endDay(collapsed) {
     if (modalOpen) return;
@@ -1042,10 +1045,10 @@
     const ratio = done.length / ts.length;
     let stars = ratio >= 0.9 ? 3 : ratio >= 0.65 ? 2 : ratio >= 0.35 ? 1 : 0;
     const notes = [];
-    if (collapsed) { stars = Math.max(0, stars - 1); notes.push('Nena s’est endormie d’épuisement sur le canapé (−1 ★).'); }
-    if (S.today.accidents) notes.push(`${S.today.accidents} accident(s) pipi : sors Simba plus souvent.`);
-    if (S.today.mischief) notes.push(`${S.today.mischief} bêtise(s) : Simba s’ennuyait.`);
-    if (S.simba.bonheur >= 80 && S.nena.moral >= 70) notes.push('Nena et Simba s’endorment heureux, blottis l’un contre l’autre.');
+    if (collapsed) { stars = Math.max(0, stars - 1); notes.push('Nena passed out from exhaustion on the couch (−1 ★).'); }
+    if (S.today.accidents) notes.push(`${S.today.accidents} potty accident(s): take Simba out more often.`);
+    if (S.today.mischief) notes.push(`${S.today.mischief} bit(s) of mischief: Simba was bored.`);
+    if (S.simba.bonheur >= 80 && S.nena.moral >= 70) notes.push('Nena and Simba fall asleep happy, snuggled up together.');
     const bonus = stars * 5;
     S.money += bonus;
     S.stars += stars;
@@ -1061,12 +1064,12 @@
   function showNight(sum) {
     modalOpen = true;
     weatherFx();
-    $('night-title').textContent = sum.collapsed ? 'Nena s’est écroulée…' : `Bonne nuit, jour ${sum.day} !`;
+    $('night-title').textContent = sum.collapsed ? 'Nena collapsed…' : `Good night, day ${sum.day}!`;
     const done = sum.tasks.filter((t) => t.ok).length;
-    $('night-sub').textContent = `Couchée à ${hh(sum.bedtime)} · ${done} tâche(s) sur ${sum.tasks.length}.`;
+    $('night-sub').textContent = `In bed at ${hh(sum.bedtime)} · ${done} of ${sum.tasks.length} task(s).`;
     $('night-stars').innerHTML = [0, 1, 2].map((i) => `<span class="${i < sum.stars ? 'on' : ''}">★</span>`).join('');
-    $('night-stars').setAttribute('aria-label', sum.stars + ' étoile(s) sur 3');
-    $('night-gains').innerHTML = `<span>+${sum.stars} ★ complicité</span>${sum.bonus ? `<span>+${sum.bonus} € prime</span>` : ''}<span>${bondInfo().cur[1]}</span>`;
+    $('night-stars').setAttribute('aria-label', sum.stars + ' of 3 stars');
+    $('night-gains').innerHTML = `<span>+${sum.stars} ★ bond</span>${sum.bonus ? `<span>+$${sum.bonus} bonus</span>` : ''}<span>${bondInfo().cur[1]}</span>`;
     $('night-list').innerHTML = sum.tasks.map((t) => `<li class="${t.ok ? 'ok' : 'ko'}">${t.ok ? '✓' : '✗'} ${t.label}</li>`).join('');
     $('night-notes').textContent = sum.notes.join(' ');
     $('night-screen').hidden = false;
@@ -1095,23 +1098,23 @@
     $('night-screen').hidden = true;
     modalOpen = false;
     const w = WEATHER[S.today.weather];
-    note(`${weekday(S.day)} · ${w.icon} ${w.label}. Simba te réveille d’un coup de truffe !`);
-    if (isWeekend(S.day)) note('C’est le week-end : pas de travail, sortie au parc !', 'good');
-    if (S.today.tasks.find((t) => t.id === 'veto')) note('Rappel : rendez-vous chez le véto aujourd’hui.');
-    if (S.money < 20 && S.kibble < 3) { S.money += 30; note('Mamie t’a envoyé 30 € « pour les croquettes de Simba ».', 'good'); }
+    note(`${weekday(S.day)} · ${w.icon} ${w.label}. Simba wakes you with a nose boop!`);
+    if (isWeekend(S.day)) note('It’s the weekend: no work, park day!', 'good');
+    if (S.today.tasks.find((t) => t.id === 'veto')) note('Reminder: vet appointment today.');
+    if (S.money < 20 && S.kibble < 3) { S.money += 30; note('Grandma sent you $30 “for Simba’s kibble”.', 'good'); }
     snd('bark');
     after();
   }
 
   /* ------------------------------------------------------------------ */
-  /* Didacticiel                                                         */
+  /* Tutorial                                                            */
   /* ------------------------------------------------------------------ */
   const COACH = [
-    ['#simba', 'Voici Simba, ton chow-chow ! Touche-le pour le caresser.', 'top'],
-    ['#gauges', 'À gauche les besoins de Nena, à droite ceux de Simba. Touche-les pour le détail.', 'bottom'],
-    ['#rooms', 'Change de pièce ici. Un point orange signale une tâche à faire.', 'top'],
-    ['.tray', 'Choisis une action. Chaque action prend du temps. Les « Mini-jeux » se jouent au doigt !', 'top'],
-    ['#btn-tasks', 'Ta liste du jour. Après 20:00, va dormir avec Simba pour gagner des étoiles. Bonne vie à deux !', 'bottom'],
+    ['#simba', 'This is Simba, your chow chow! Tap him to pet him.', 'top'],
+    ['#gauges', 'Nena’s needs on the left, Simba’s on the right. Tap them for details.', 'bottom'],
+    ['#rooms', 'Switch rooms here. An orange dot means there’s a task to do.', 'top'],
+    ['.tray', 'Pick an action. Every action takes time. “Mini-games” are played with your finger!', 'top'],
+    ['#btn-tasks', 'Your list for today. After 8 PM, go to sleep with Simba to earn stars. Enjoy life together!', 'bottom'],
   ];
   const coach = { step: -1, el: null };
   function startCoach() { coach.step = -1; $('coach').hidden = false; nextCoach(); }
@@ -1126,7 +1129,7 @@
     $('coach-text').textContent = txt;
     $('coach').style.alignItems = where === 'top' ? 'flex-start' : 'flex-end';
     $('coach').style.paddingTop = where === 'top' ? 'calc(70px + env(safe-area-inset-top, 0px))' : '20px';
-    $('coach-next').textContent = coach.step === COACH.length - 1 ? 'C’est parti !' : 'Suivant';
+    $('coach-next').textContent = coach.step === COACH.length - 1 ? 'Let’s go!' : 'Next';
     snd('pop');
   }
   function endCoach() {
@@ -1137,9 +1140,9 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Sauvegarde                                                          */
+  /* Save                                                                */
   /* ------------------------------------------------------------------ */
-  function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* stockage indisponible */ } }
+  function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* storage unavailable */ } }
   function load() {
     try {
       const raw = localStorage.getItem(SAVE_KEY);
@@ -1156,7 +1159,7 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Boucle temps réel : 1 s = 1 min de jeu (×3 en rapide)                */
+  /* Real-time loop: 1 s = 1 game minute (×3 when fast)                  */
   /* ------------------------------------------------------------------ */
   let lastFull = 0;
   setInterval(() => {
@@ -1172,7 +1175,7 @@
   }, 1000);
 
   /* ------------------------------------------------------------------ */
-  /* PWA : installation et hors-ligne                                    */
+  /* PWA: install and offline                                           */
   /* ------------------------------------------------------------------ */
   let installPrompt = null;
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; $('btn-install-title').hidden = false; });
@@ -1182,11 +1185,11 @@
     installPrompt.userChoice.finally(() => { installPrompt = null; $('btn-install-title').hidden = true; if (sheet.open) renderSheet(); });
   }
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
-    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { /* pas de hors-ligne ici */ }); });
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { /* no offline support here */ }); });
   }
 
   /* ------------------------------------------------------------------ */
-  /* Evénements UI                                                       */
+  /* UI events                                                          */
   /* ------------------------------------------------------------------ */
   $('rooms').addEventListener('click', (e) => {
     const b = e.target.closest('[data-room]');
@@ -1223,7 +1226,7 @@
     $('title-screen').hidden = true;
     modalOpen = false;
     if (S.pendingNight) { render(); showNight(S.pendingNight); return; }
-    if (fresh) note('Bienvenue ! Simba attend sa gamelle et sa promenade du matin.');
+    if (fresh) note('Welcome! Simba is waiting for his breakfast and morning walk.');
     render();
     if (!S.tutorialDone) setTimeout(startCoach, 600);
   }
@@ -1252,7 +1255,7 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
 
   /* ------------------------------------------------------------------ */
-  /* Démarrage                                                           */
+  /* Boot                                                                */
   /* ------------------------------------------------------------------ */
   const saved = load();
   if (saved) { $('btn-continue').hidden = false; $('continue-day').textContent = saved.day; S = saved; }

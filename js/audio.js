@@ -1,11 +1,11 @@
-/* Musique lo-fi et bruitages générés en direct avec la Web Audio API (aucun fichier audio). */
+/* Lo-fi music and sound effects generated live with the Web Audio API (no audio files). */
 window.Sound = (function () {
   'use strict';
   let ctx = null, master, music, sfx, filter, noiseBuf;
   let enabled = true, musicOn = true, night = false;
   let nextBar = 0, bar = 0, timer = null;
 
-  // Progression douce : Fmaj7 – Em7 – Dm7 – Cmaj7 (en Hz)
+  // Gentle progression: Fmaj7 – Em7 – Dm7 – Cmaj7 (Hz)
   const CHORDS = [
     [174.61, 220.0, 261.63, 329.63],
     [164.81, 196.0, 246.94, 293.66],
@@ -59,7 +59,7 @@ window.Sound = (function () {
       const t = nextBar;
       ch.forEach((f, i) => note(f, t + i * 0.03, barLen * 0.98, { type: 'sine', vol: 0.09, attack: 0.4, out: music }));
       note(ch[0] / 2, t, barLen * 0.9, { type: 'sine', vol: 0.16, attack: 0.05, out: music });
-      // petites notes de mélodie, clairsemées
+      // sparse little melody notes
       const steps = 8;
       for (let s = 0; s < steps; s++) {
         if (Math.random() < (night ? 0.18 : 0.32)) {
@@ -67,7 +67,7 @@ window.Sound = (function () {
           note(f, t + (s * barLen) / steps, 0.5, { type: 'triangle', vol: 0.05, attack: 0.01, out: music });
         }
       }
-      // "vinyle" léger sur le temps
+      // light "vinyl" tick on the beat
       noise(t, 0.04, 3000, 1, 0.01);
       nextBar += barLen; bar++;
     }
@@ -98,7 +98,7 @@ window.Sound = (function () {
 
   function play(name) {
     if (!ctx || !enabled || !fx[name]) return;
-    try { fx[name](); } catch (e) { /* audio indisponible */ }
+    try { fx[name](); } catch (e) { /* audio unavailable */ }
   }
   function setEnabled(v) { enabled = v; if (master) master.gain.setTargetAtTime(v ? 0.9 : 0, ctx.currentTime, 0.05); }
   function setMusic(v) { musicOn = v; if (music) music.gain.setTargetAtTime(v ? 0.16 : 0, ctx.currentTime, 0.3); }

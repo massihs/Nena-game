@@ -1,5 +1,5 @@
-/* Service worker : met le jeu en cache pour jouer hors-ligne. */
-const CACHE = 'nena-simba-v2';
+/* Service worker: caches the game so it plays offline. */
+const CACHE = 'nena-simba-v3-en';
 const SHELL = [
   './', './index.html', './style.css', './manifest.webmanifest',
   './js/art.js', './js/audio.js', './js/minigames.js', './js/game.js',
