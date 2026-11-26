@@ -132,7 +132,7 @@
       best: { brush: 0, fetch: 0, walk: 0 },
       achievements: [],
       tutorialDone: false,
-      settings: { sound: true, music: true, haptics: true, three: true, fx: true },
+      settings: { sound: true, music: true, haptics: true },
       story: { base: 0, seen: [], flags: {}, rel: { fariba: 0, mohsen: 0, negin: 0, nasim: 0, mia: 0, lee: 0, sam: 0 }, ended: false, tmp: 0 },
       family: { out: false, back: 0 },
       pet: { tricks: { sit: 0, paw: 0, down: 0, spin: 0, playdead: 0 }, weight: 23, sick: false, meds: 0, age: 1, stubborn: 60, plays: 0, cuddles: 0 },
@@ -646,175 +646,246 @@
     <path d="M${x + 34} ${y} h10 l-2 -14 h-6z" fill="rgba(200,90,40,.75)" stroke="#e8e0d0" stroke-width="1.5"/><path d="M${x + 50} ${y} h10 l-2 -14 h-6z" fill="rgba(200,90,40,.75)" stroke="#e8e0d0" stroke-width="1.5"/></g>`;
   const vignette = '<rect width="800" height="450" fill="url(#sc-vig)"/>';
 
+  /* ---------- Modern apartment kit: panoramic windows over Tehran ---------- */
+  const hash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  // A 1200×300 panorama seen from the 5th floor: sky, Alborz, Milad tower, the city.
+  function panorama(s) {
+    const night = nightLevel(s.time) > 0.4, w = s.today.weather;
+    let o = '<rect x="0" y="0" width="1200" height="300" fill="url(#pv-sky)"/>';
+    if (night) {
+      for (let i = 0; i < 40; i++) o += `<circle cx="${(hash(i) * 1200).toFixed(0)}" cy="${(hash(i + 50) * 110).toFixed(0)}" r="${hash(i + 9) < 0.2 ? 1.6 : 1}" fill="#fff" opacity=".8"/>`;
+      o += '<circle cx="980" cy="50" r="18" fill="#fff3c9"/><circle cx="988" cy="45" r="16" fill="url(#pv-sky)"/>';
+    } else if (w === 'soleil') o += '<circle cx="980" cy="56" r="60" fill="#ffe7a0" opacity=".35"/><circle cx="980" cy="56" r="22" fill="#fff1bf"/>';
+    if (!night && w !== 'pluie') o += '<g fill="#fff" opacity=".85"><ellipse cx="220" cy="60" rx="70" ry="14"/><ellipse cx="250" cy="52" rx="40" ry="14"/><ellipse cx="640" cy="78" rx="56" ry="11"/><ellipse cx="1080" cy="96" rx="50" ry="10"/></g>';
+    // Alborz ridge with snow caps
+    let ridge = 'M0 300 L0 170 ', snow = '';
+    for (let x = 0; x <= 1200; x += 20) {
+      const hgt = 52 + Math.sin(x * 0.011) * 30 + Math.sin(x * 0.033 + 1) * 13 + Math.sin(x * 0.09) * 5;
+      ridge += `L${x} ${(190 - hgt).toFixed(1)} `;
+      if (hgt > 78) snow += `<path d="M${x - 14} ${(190 - hgt + 16).toFixed(1)} L${x} ${(190 - hgt).toFixed(1)} L${x + 16} ${(190 - hgt + 14).toFixed(1)} Z"/>`;
+    }
+    o += `<path d="${ridge} L1200 300 Z" fill="${night ? '#23264a' : w === 'pluie' ? '#7d879a' : '#8e9ab6'}"/>`;
+    o += `<g fill="${night ? '#5a5f86' : '#ffffff'}" opacity="${night ? 0.6 : 0.95}">${snow}</g>`;
+    o += `<rect x="0" y="150" width="1200" height="60" fill="${night ? '#1a1b36' : '#ffffff'}" opacity="${night ? 0.25 : 0.18}"/>`;
+    // Milad tower
+    const mc = night ? '#1b1c34' : '#6f7c96';
+    o += `<g fill="${mc}"><rect x="842" y="70" width="7" height="170"/><ellipse cx="845.5" cy="104" rx="24" ry="10"/><rect x="824" y="98" width="43" height="9" rx="4"/><rect x="844" y="30" width="3" height="42"/><path d="M832 240 l13.5 -40 l13.5 40z"/></g>`;
+    if (night) o += '<circle cx="845.5" cy="30" r="3" fill="#ff5a5a"/><g fill="#ffcf73"><rect x="828" y="103" width="3" height="2"/><rect x="836" y="103" width="3" height="2"/><rect x="852" y="103" width="3" height="2"/><rect x="860" y="103" width="3" height="2"/></g>';
+    // two layers of city blocks
+    [[205, 0.55, ['#b6c2d2', '#a4b2c5', '#c6cfdb'], ['#1f1f3c', '#262648', '#1a1a32']], [250, 1, ['#c9d1dc', '#b3bfce', '#d6dce5'], ['#24244a', '#2b2b55', '#1f1f3c']]].forEach(([base, sc, dayC, nightC], L) => {
+      let x = -10, i = L * 100;
+      while (x < 1210) {
+        const bw = 26 + hash(i) * 44, bh = (28 + hash(i + 7) * 70) * sc + 10;
+        o += `<rect x="${x.toFixed(0)}" y="${(base - bh).toFixed(0)}" width="${bw.toFixed(0)}" height="${(bh + 60).toFixed(0)}" fill="${(night ? nightC : dayC)[i % 3]}"/>`;
+        if (L === 1) for (let wy = base - bh + 6; wy < base + 30; wy += 10) for (let wx = x + 5; wx < x + bw - 5; wx += 8) {
+          const lit = hash(wx * 3.1 + wy * 7.7) < 0.45;
+          if (night) { if (lit) o += `<rect x="${wx.toFixed(0)}" y="${wy.toFixed(0)}" width="3.5" height="5" fill="${hash(wx + wy) < 0.8 ? '#ffcf73' : '#fff1c9'}"/>`; }
+          else if (lit) o += `<rect x="${wx.toFixed(0)}" y="${wy.toFixed(0)}" width="3.5" height="5" fill="#ffffff" opacity=".45"/>`;
+        }
+        x += bw + 4 + hash(i + 3) * 10; i++;
+      }
+    });
+    for (let x = 0; x < 1200; x += 34) o += `<circle cx="${x + hash(x) * 10}" cy="${296 + hash(x + 1) * 6}" r="${20 + hash(x + 2) * 10}" fill="${night ? '#13261a' : w === 'neige' ? '#eef3f6' : '#5f9a4c'}"/>`;
+    if (w === 'pluie') { o += '<rect width="1200" height="300" fill="#7a8696" opacity=".28"/>'; for (let i = 0; i < 70; i++) o += `<path d="M${(hash(i) * 1200).toFixed(0)} ${(hash(i + 3) * 300).toFixed(0)} l-5 14" stroke="#e6eef7" stroke-width="1.6" opacity=".6"/>`; }
+    if (w === 'neige') for (let i = 0; i < 70; i++) o += `<circle cx="${(hash(i) * 1200).toFixed(0)}" cy="${(hash(i + 3) * 300).toFixed(0)}" r="2.4" fill="#fff"/>`;
+    return o;
+  }
+  function viewDefs(s) {
+    const [a, b] = skyColor(s.time);
+    return `<defs><linearGradient id="pv-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient>
+      <linearGradient id="pv-glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset=".55" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <linearGradient id="pv-sheer" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fffaf2" stop-opacity=".85"/><stop offset=".5" stop-color="#fffaf2" stop-opacity=".55"/><stop offset="1" stop-color="#fffaf2" stop-opacity=".85"/></linearGradient>
+      <linearGradient id="pv-cove" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe2b0" stop-opacity=".9"/><stop offset="1" stop-color="#ffe2b0" stop-opacity="0"/></linearGradient></defs>`;
+  }
+  // A floor-to-ceiling window: slim black frame, mullions, glass sheen, light pooling on the floor.
+  function bigWindow(s, view, x, y, w, h, o) {
+    o = o || {};
+    const vw = (w * 300) / h, ox = o.ox != null ? o.ox : Math.max(0, Math.min(1200 - vw, x * 1.35));
+    const panes = o.panes || Math.max(1, Math.round(w / 110));
+    let mull = '';
+    for (let i = 1; i < panes; i++) mull += `<rect x="${(x + (w / panes) * i - 2).toFixed(1)}" y="${y}" width="4" height="${h}" fill="#1e1d22"/>`;
+    const light = dayLight(s) > 0.2 && !o.noPool ? `<polygon points="${x},${y + h} ${x + w},${y + h} ${x + w + 90},450 ${x - 30},450" fill="#fff6d8" opacity="${(dayLight(s) * (s.today.weather === 'soleil' ? 0.22 : 0.1)).toFixed(2)}"/>` : '';
+    const sheer = o.sheer ? `<path d="M${x - 26} ${y - 4} h46 q-8 ${h / 2} 4 ${h + 4} h-50 z" fill="url(#pv-sheer)"/><path d="M${x - 14} ${y} v${h} M${x} ${y} v${h}" stroke="rgba(0,0,0,.05)" stroke-width="3"/>` : '';
+    return `<g>
+      <rect x="${x - 6}" y="${y - 6}" width="${w + 12}" height="${h + 12}" fill="#1e1d22"/>
+      <svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${ox.toFixed(1)} 0 ${vw.toFixed(1)} 300" preserveAspectRatio="none">${view}</svg>
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#pv-glass)"/>
+      ${mull}
+      ${o.transom ? `<rect x="${x}" y="${y + h * 0.18}" width="${w}" height="3" fill="#1e1d22"/>` : ''}
+      ${sheer}</g>${light}`;
+  }
+  function marbleFloor(dark) {
+    let o = `<rect x="0" y="330" width="800" height="120" fill="${dark ? '#d9d2c8' : '#efebe5'}"/>`;
+    for (let x = -200; x < 1000; x += 120) o += `<path d="M${x} 330 L${x + (x - 400) * 0.35} 450" stroke="rgba(120,110,100,.18)" stroke-width="1.5"/>`;
+    for (const y of [360, 400]) o += `<path d="M0 ${y} H800" stroke="rgba(120,110,100,.16)" stroke-width="1.5"/>`;
+    for (let i = 0; i < 7; i++) o += `<path d="M${hash(i) * 800} ${335 + hash(i + 2) * 100} q40 -10 70 6 t70 -4" stroke="rgba(140,130,120,.25)" stroke-width="1.2" fill="none"/>`;
+    o += '<rect x="0" y="330" width="800" height="120" fill="url(#sc-gloss)" opacity=".18"/>';
+    return o + '<rect x="0" y="326" width="800" height="5" fill="#e3dacd"/>';
+  }
+  function oakFloor() {
+    let o = '<rect x="0" y="330" width="800" height="120" fill="#d2ab80"/>';
+    const rows = [330, 348, 370, 398, 432, 470];
+    for (let i = 0; i < rows.length - 1; i++) {
+      o += `<path d="M0 ${rows[i + 1]} H800" stroke="rgba(110,70,35,.16)" stroke-width="1.2"/>`;
+      for (let x = (i * 131) % 240; x < 800; x += 240) o += `<path d="M${x} ${rows[i]} V${rows[i + 1]}" stroke="rgba(110,70,35,.13)" stroke-width="1.2"/>`;
+      o += `<rect x="0" y="${rows[i]}" width="800" height="${rows[i + 1] - rows[i]}" fill="${i % 2 ? '#c99f72' : '#d8b48a'}" opacity=".35"/>`;
+    }
+    return o + '<rect x="0" y="326" width="800" height="5" fill="#ece3d6"/>';
+  }
+  const ceiling = (s) => `<rect x="0" y="0" width="800" height="16" fill="#f7f2ea"/><rect x="0" y="16" width="800" height="3" fill="#ffe9c4"/>${nightLevel(s.time) > 0.25 ? '<rect x="0" y="19" width="800" height="40" fill="url(#pv-cove)" opacity=".6"/>' : ''}`;
+  const globe = (s, x, y, len) => `<path d="M${x} 16 V${y - 16}" stroke="#1e1d22" stroke-width="1.5"/><circle cx="${x}" cy="${y}" r="16" fill="${nightLevel(s.time) > 0.3 ? '#fff1cf' : '#fbf6ee'}" stroke="#e8dccb"/>${nightLevel(s.time) > 0.3 ? `<circle cx="${x}" cy="${y}" r="60" fill="url(#sc-glow)"/>` : ''}`;
+  const brassPendant = (s, x, y) => `<path d="M${x} 16 V${y - 18}" stroke="#1e1d22" stroke-width="1.5"/><path d="M${x - 26} ${y} q26 -36 52 0 z" fill="#c9a24a"/><ellipse cx="${x}" cy="${y}" rx="26" ry="4" fill="${nightLevel(s.time) > 0.3 ? '#fff1cf' : '#a8862e'}"/>${nightLevel(s.time) > 0.3 ? `<circle cx="${x}" cy="${y + 30}" r="70" fill="url(#sc-glow)"/>` : ''}`;
+  const bigPlant = (x, y, sc = 1) => `<g transform="translate(${x} ${y}) scale(${sc})">
+    <path d="M-26 0 h52 l-6 -56 h-40z" fill="#ebe5dc"/><rect x="-28" y="-60" width="56" height="6" rx="3" fill="#ddd5c8"/>
+    <path d="M0 -60 V-200" stroke="#4a3524" stroke-width="3"/>
+    ${[[-30, -110, -30], [28, -128, 25], [-24, -150, -20], [26, -172, 30], [-10, -196, -5], [16, -92, 35], [-32, -82, -40]].map(([dx, dy, rot], i) => `<ellipse cx="${dx}" cy="${dy}" rx="28" ry="15" fill="${['#3f6f3a', '#4d8044', '#5a9150'][i % 3]}" transform="rotate(${rot} ${dx} ${dy})"/>`).join('')}</g>`;
+  const artPiece = (x, y, w, h) => `<g><rect x="${x - 4}" y="${y - 4}" width="${w + 8}" height="${h + 8}" fill="#c9a24a"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#f3ede4"/><circle cx="${x + w * 0.4}" cy="${y + h * 0.48}" r="${Math.min(w, h) * 0.26}" fill="#c96f4a"/><rect x="${x + w * 0.5}" y="${y + h * 0.2}" width="${w * 0.2}" height="${h * 0.6}" fill="#2f4a3e"/><path d="M${x + w * 0.3} ${y + h * 0.8} q${w * 0.3} -${h * 0.2} ${w * 0.5} 0" stroke="#c9a24a" stroke-width="2" fill="none"/></g>`;
+  const modernWall = (c1, c2) => `<rect width="800" height="330" fill="url(#sc-wall)"/>`;
+
   const DRAW = {
     hall(s) {
-      const negZ = '<text x="0" y="0" font-family="Baloo 2, sans-serif" font-weight="800" font-size="22" fill="#7a7fb8">z</text>';
+      const view = panorama(s);
       const door = (x, color, sign, extra) => `<g>
-        <rect x="${x - 6}" y="104" width="112" height="226" rx="4" fill="#e6d3bd"/>
-        <rect x="${x}" y="110" width="100" height="220" rx="3" fill="${color}"/>
-        <rect x="${x + 10}" y="122" width="80" height="86" rx="3" fill="rgba(0,0,0,.06)"/><rect x="${x + 10}" y="218" width="80" height="100" rx="3" fill="rgba(0,0,0,.06)"/>
-        <circle cx="${x + 84}" cy="224" r="5" fill="#d9b25c"/><rect x="${x + 80}" y="222" width="14" height="4" rx="2" fill="#d9b25c"/>
+        <rect x="${x - 4}" y="70" width="98" height="260" fill="#e2d6c4"/>
+        <rect x="${x}" y="74" width="90" height="256" fill="${color}"/>
+        <rect x="${x}" y="74" width="90" height="256" fill="url(#sc-gloss)" opacity=".12"/>
+        <rect x="${x + 74}" y="190" width="4" height="46" rx="2" fill="#c9a24a"/>
         ${sign}${extra || ''}</g>`;
-      const runner = (() => {
-        let o = '<polygon points="230,338 570,338 640,450 160,450" fill="#8c1f30"/><polygon points="244,344 556,344 616,444 184,444" fill="none" stroke="#1f2a5a" stroke-width="8"/>';
-        o += '<polygon points="262,352 538,352 590,436 210,436" fill="#a8293c"/><ellipse cx="400" cy="392" rx="70" ry="24" fill="#f0d9a8"/><ellipse cx="400" cy="392" rx="46" ry="15" fill="#1f2a5a"/><ellipse cx="400" cy="392" rx="20" ry="7" fill="#f0d9a8"/>';
-        for (let i = 0; i < 9; i++) o += `<path d="M${180 + i * 55} 448 v6" stroke="#f4ead9" stroke-width="2"/>`;
-        return o;
-      })();
-      return `${sceneDefs(s, '#f4e6d3', '#e9d5bd', '#c69a6e', '#a37650')}
-        ${wallpaper('rgba(255,255,255,.2)')}
-        ${woodFloor()}
-        ${door(70, '#f3c6d5', '<rect x="84" y="140" width="72" height="44" rx="6" fill="#fff8ee" transform="rotate(-4 120 162)"/><text x="120" y="158" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="11" fill="#7a5c4e" transform="rotate(-4 120 162)">NENA</text><path d="M108 172 q4 -6 8 0 q4 -6 8 0 q-8 10 -8 10 q0 0 -8 -10z" fill="#e05b7b" transform="rotate(-4 120 162)"/>', '')}
-        ${door(250, '#bcd6e6', '<rect x="262" y="136" width="76" height="52" rx="6" fill="#fff8ee"/><text x="300" y="156" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="10" fill="#4a5a8a">NEGIN</text><text x="300" y="174" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="800" font-size="9" fill="#4a5a8a">DO NOT WAKE</text>',
-          `<g class="zz-door"><g transform="translate(340 120)">${negZ}</g><g transform="translate(352 98) scale(1.3)">${negZ}</g><g transform="translate(366 72) scale(1.6)">${negZ}</g></g>`)}
-        ${door(430, '#3d3a5c', '<rect x="442" y="132" width="76" height="58" rx="4" fill="#ef5f7f" transform="rotate(5 480 161)"/><text x="480" y="154" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="11" fill="#fff" transform="rotate(5 480 161)">KEEP OUT!</text><text x="480" y="176" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="10" fill="#fff" transform="rotate(5 480 161)">NASIM 😠</text>', '<circle cx="460" cy="290" r="9" fill="#ffd36b"/><circle cx="492" cy="270" r="7" fill="#7fe0b4"/>')}
-        ${door(610, '#d8c3a5', '<rect x="626" y="138" width="68" height="40" rx="4" fill="#fff8ee"/><text x="660" y="162" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="10" fill="#7a5c4e">MAMAN · BABA</text>', '')}
-        <g><rect x="726" y="250" width="64" height="80" rx="4" fill="#8a5a3c"/><rect x="732" y="272" width="52" height="4" fill="#6d4630"/><rect x="732" y="300" width="52" height="4" fill="#6d4630"/>
-          <ellipse cx="744" cy="268" rx="8" ry="3" fill="#ef8fb0"/><ellipse cx="764" cy="268" rx="8" ry="3" fill="#ef8fb0"/><ellipse cx="746" cy="296" rx="8" ry="3" fill="#6b6f7e"/><ellipse cx="766" cy="296" rx="8" ry="3" fill="#6b6f7e"/></g>
-        ${runner}
+      const negZ = '<text x="0" y="0" font-family="Baloo 2, sans-serif" font-weight="800" font-size="22" fill="#7a7fb8">z</text>';
+      return `${sceneDefs(s, '#f4eee6', '#ebe2d6', '#efebe5', '#d9d2c8')}${viewDefs(s)}
+        ${modernWall()}${ceiling(s)}
+        ${marbleFloor()}
+        ${bigWindow(s, view, 0, 30, 54, 296, { panes: 1, noPool: true, ox: 0 })}
+        ${door(78, '#f3c6d5', '<rect x="92" y="110" width="62" height="34" rx="5" fill="#fff8ee"/><text x="123" y="132" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="12" fill="#c9496f">NENA ♥</text>')}
+        ${door(222, '#a9c2d4', '<rect x="232" y="108" width="70" height="44" rx="5" fill="#fff8ee"/><text x="267" y="126" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="11" fill="#4a5a8a">NEGIN</text><text x="267" y="142" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="800" font-size="8.5" fill="#4a5a8a">DO NOT WAKE</text>',
+          `<g class="zz-door"><g transform="translate(308 96)">${negZ}</g><g transform="translate(320 76) scale(1.3)">${negZ}</g><g transform="translate(334 52) scale(1.6)">${negZ}</g></g>`)}
+        ${door(366, '#2c2a40', '<rect x="374" y="104" width="74" height="50" rx="4" fill="#ef5f7f" transform="rotate(5 411 129)"/><text x="411" y="126" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="11" fill="#fff" transform="rotate(5 411 129)">KEEP OUT!</text><text x="411" y="144" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="10" fill="#fff" transform="rotate(5 411 129)">NASIM 😠</text>')}
+        ${door(510, '#6b4632', '<rect x="522" y="110" width="66" height="34" rx="4" fill="#c9a24a"/><text x="555" y="132" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="10" fill="#2a1a10">MAMAN · BABA</text>')}
+        ${bigWindow(s, view, 640, 30, 160, 296, { panes: 2, sheer: true, ox: 700 })}
+        ${[190, 334, 478].map((x) => `<rect x="${x - 3}" y="140" width="6" height="16" rx="2" fill="#c9a24a"/><ellipse cx="${x}" cy="138" rx="9" ry="7" fill="#fff1cf"/>${nightLevel(s.time) > 0.3 ? `<circle cx="${x}" cy="140" r="40" fill="url(#sc-glow)"/>` : ''}`).join('')}
+        <g><rect x="652" y="268" width="120" height="7" rx="2" fill="#2a2626"/><rect x="660" y="275" width="3" height="55" fill="#c9a24a"/><rect x="760" y="275" width="3" height="55" fill="#c9a24a"/>
+          <path d="M680 268 q-6 -22 6 -34 q-4 -10 4 -14 h8 q8 4 4 14 q12 12 6 34z" fill="#2f4a3e"/><path d="M688 220 q-10 -20 4 -34 M694 222 q14 -16 6 -36" stroke="#6aa04c" stroke-width="3" fill="none"/></g>
+        ${persianRug(400, 394, 520, 70)}
         ${fluff(s)}${vignette}`;
     },
     chambre(s) {
-      const made = s.maison.lit, lamp = nightLevel(s.time) > 0.3;
-      return `${sceneDefs(s, '#f1ddcb', '#e5c9b2', '#c08d63', '#9c6a44')}
-        ${wallpaper('rgba(255,255,255,.18)')}
-        ${woodFloor()}
-        ${windowSvg(530, 74, 140, 130, s, '#efe0cc')}
-        ${photo(250, 70, 76, 76)}
-        ${frame(350, 92, 46, 56, '<circle cx="373" cy="114" r="12" fill="#f2a94e"/><path d="M356 140 q17 -16 34 0" fill="#ef8fb0"/>')}
-        <g fill="#7d553d"><rect x="120" y="120" width="96" height="8" rx="3"/></g>
-        <g><rect x="128" y="96" width="12" height="24" fill="#c9496f"/><rect x="141" y="100" width="10" height="20" fill="#5f8f45"/><rect x="152" y="94" width="14" height="26" fill="#e8b73a"/><rect x="167" y="104" width="9" height="16" fill="#4a7bd0" transform="rotate(12 171 112)"/></g>
-        ${pothos(196, 120)}
-        ${rug(400, 404, 230, 30, '#f0b6c8', '#fff3f7')}
-        <rect x="102" y="186" width="320" height="22" rx="11" fill="#8f5f3f"/>
-        <rect x="110" y="200" width="304" height="100" rx="16" fill="#a77450"/>
-        <g fill="#b9875f">${[0, 1, 2, 3].map((i) => `<circle cx="${150 + i * 76}" cy="236" r="5"/>`).join('')}${[0, 1, 2].map((i) => `<circle cx="${188 + i * 76}" cy="264" r="5"/>`).join('')}</g>
-        <rect x="96" y="264" width="332" height="88" rx="26" fill="#f6ebdb"/>
+      const view = panorama(s);
+      const made = s.maison.lit;
+      return `${sceneDefs(s, '#f4ece3', '#eadfd2', '#d8b48a', '#c99f72')}${viewDefs(s)}
+        ${modernWall()}${ceiling(s)}
+        ${oakFloor()}
+        ${bigWindow(s, view, 430, 30, 340, 296, { panes: 3, sheer: true, ox: 620 })}
+        <rect x="60" y="30" width="340" height="296" fill="#5a3a26"/>
+        ${Array.from({ length: 17 }, (_, i) => `<rect x="${62 + i * 20}" y="30" width="10" height="296" fill="#6e4a32"/>`).join('')}
+        <rect x="60" y="30" width="340" height="296" fill="url(#sc-gloss)" opacity=".08"/>
+        ${globe(s, 84, 190)}${globe(s, 376, 190)}
+        <rect x="88" y="182" width="284" height="104" rx="22" fill="#eadbcf"/>
+        ${[0, 1, 2, 3, 4].map((i) => `<rect x="${100 + i * 54}" y="190" width="46" height="90" rx="14" fill="#f1e5da"/>`).join('')}
+        <rect x="80" y="268" width="300" height="70" rx="18" fill="#e3d2c4"/>
+        <rect x="86" y="258" width="288" height="26" rx="12" fill="#fbf8f3"/>
         ${made
-          ? `<rect x="124" y="236" width="104" height="42" rx="18" fill="#fffaf2"/><rect x="242" y="236" width="104" height="42" rx="18" fill="#fffaf2"/>
-             <path d="M132 250 q46 -10 88 0 M250 250 q46 -10 88 0" stroke="#ecdcc6" stroke-width="3" fill="none"/>
-             <path d="M96 290 h332 v40 q0 22 -26 22 h-280 q-26 0 -26 -22z" fill="#e9d2b3"/>
-             <path d="M96 292 h332" stroke="#fff6e8" stroke-width="5"/><path d="M130 312 q40 8 90 0 q50 -8 100 0 q40 6 90 0" stroke="#d8bd98" stroke-width="3" fill="none"/>`
-          : `<rect x="118" y="232" width="104" height="42" rx="18" fill="#fffaf2" transform="rotate(-12 170 254)"/>
-             <path d="M96 300 q40 -46 96 -10 q46 -36 92 4 q50 -44 94 -2 q28 -18 50 8 v32 q0 22 -26 22 h-280 q-26 0 -26 -22z" fill="#e9d2b3"/>
-             <path d="M140 300 q20 -18 46 -4 M240 298 q26 -20 50 0 M330 296 q22 -16 44 2" stroke="#d8bd98" stroke-width="3" fill="none"/>`}
-        <ellipse cx="262" cy="356" rx="170" ry="8" fill="rgba(0,0,0,.12)"/>
-        <rect x="438" y="258" width="78" height="86" rx="8" fill="#8a5a3c"/><rect x="438" y="258" width="78" height="10" rx="5" fill="#a06d4a"/>
-        <rect x="448" y="292" width="58" height="4" rx="2" fill="#6d4630"/><circle cx="477" cy="314" r="3.4" fill="#e8c38f"/>
-        ${lampGlow(s, 466, 196, 110)}
-        <rect x="460" y="218" width="10" height="40" fill="#6d4630"/><ellipse cx="465" cy="258" rx="16" ry="4" fill="#5a3a28"/>
-        <path d="M436 222 l20 -52 h20 l20 52z" fill="${lamp ? '#ffe3a3' : '#f4e2c4'}"/><path d="M436 222 h60" stroke="${lamp ? '#ffd27a' : '#e2ccaa'}" stroke-width="3"/>
-        <g><rect x="482" y="240" width="22" height="18" rx="4" fill="#fffaf2"/><path d="M504 244 q8 0 8 6 q0 6 -8 6" stroke="#fffaf2" stroke-width="3" fill="none"/><path d="M489 247 q4 -3 8 0 q-4 6 -8 0z" fill="#e05b7b"/>
-          <path d="M488 236 q4 -8 0 -14 M496 236 q4 -8 0 -14" stroke="rgba(255,255,255,.7)" stroke-width="2" fill="none"/></g>
-        ${has('panier') ? dogBed(616, 404) : ''}
-        ${has('plante') ? plant(706, 312, 0.95) : plant(712, 318, 0.75)}
+          ? `<rect x="110" y="236" width="76" height="34" rx="14" fill="#fffaf4"/><rect x="194" y="236" width="76" height="34" rx="14" fill="#c9785a"/><rect x="278" y="236" width="76" height="34" rx="14" fill="#fffaf4"/>
+             <rect x="82" y="276" width="296" height="54" rx="14" fill="#f6efe6"/><rect x="82" y="300" width="296" height="22" rx="6" fill="#c9785a"/><path d="M90 288 h280" stroke="#fff" stroke-width="3" opacity=".7"/>`
+          : `<rect x="104" y="230" width="76" height="34" rx="14" fill="#fffaf4" transform="rotate(-12 142 247)"/><rect x="280" y="238" width="76" height="34" rx="14" fill="#c9785a" transform="rotate(8 318 255)"/>
+             <path d="M82 300 q40 -44 96 -10 q46 -36 92 4 q50 -40 108 0 v28 q0 10 -14 10 h-268 q-14 0 -14 -10z" fill="#f6efe6"/><path d="M130 296 q24 -16 46 -2 M232 294 q26 -18 50 0" stroke="#e2d6c6" stroke-width="3" fill="none"/>`}
+        <ellipse cx="230" cy="346" rx="170" ry="7" fill="rgba(0,0,0,.12)"/>
+        ${[24, 384].map((x) => `<rect x="${x}" y="262" width="52" height="66" rx="4" fill="#6b4632"/><rect x="${x - 2}" y="258" width="56" height="7" rx="2" fill="#f3efe9"/>`).join('')}
+        <g><rect x="398" y="230" width="22" height="24" rx="2" fill="#c9a24a"/><svg x="400" y="232" width="18" height="20" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><image href="assets/nena-simba.jpg" width="100" height="100" preserveAspectRatio="xMidYMid slice"/></svg></g>
+        <ellipse cx="560" cy="404" rx="190" ry="30" fill="#f4ece2"/><ellipse cx="560" cy="404" rx="150" ry="22" fill="none" stroke="#e8dccb" stroke-width="3"/>
+        ${has('panier') ? dogBed(650, 404) : ''}
+        ${bigPlant(760, 330, has('plante') ? 1 : 0.8)}
         ${fluff(s)}${vignette}`;
     },
     sdb(s) {
-      let tiles = '';
-      for (let y = 0; y < 322; y += 32) for (let x = (y / 32) % 2 ? -16 : 0; x < 800; x += 32) tiles += `<rect x="${x + 1}" y="${y + 1}" width="30" height="30" rx="3" fill="rgba(255,255,255,.35)"/>`;
+      const view = panorama(s);
+      let veins = '';
+      for (let i = 0; i < 9; i++) veins += `<path d="M${hash(i) * 800} ${hash(i + 4) * 300} q60 30 120 10 t120 40" stroke="rgba(110,100,90,.28)" stroke-width="1.4" fill="none"/>`;
       const linge = Math.min(3, s.maison.linge);
       let basket = '';
-      for (let i = 0; i < linge; i++) basket += `<ellipse cx="${640 + i * 8}" cy="${296 - i * 9}" rx="22" ry="9" fill="${['#f19bb8', '#9cc2d9', '#f6d9b8'][i]}"/>`;
-      let floorTiles = '<rect x="0" y="330" width="800" height="120" fill="url(#sc-floor)"/>';
-      for (let x = 0; x < 800; x += 56) floorTiles += `<path d="M${x} 330 L${x - 40 + (x - 400) * 0.25} 450" stroke="rgba(0,0,0,.08)" stroke-width="2"/>`;
-      for (const y of [356, 388, 428]) floorTiles += `<path d="M0 ${y} H800" stroke="rgba(0,0,0,.08)" stroke-width="2"/>`;
-      return `${sceneDefs(s, '#cfe3e6', '#b6d2d6', '#efe8de', '#d9cfc2')}
-        <rect width="800" height="330" fill="url(#sc-wall)"/>${tiles}
-        <rect x="0" y="180" width="800" height="8" fill="#9cc2c8"/>
-        ${floorTiles}<rect x="0" y="322" width="800" height="10" fill="#e9f2f3"/>
-        ${rug(470, 400, 120, 24, '#9cc2d9', '#d7ecf5')}
-        <path d="M104 70 h8 v170 h-8z" fill="#c4ccd2"/><path d="M100 66 h250 v8 h-250z" fill="#c4ccd2"/>
-        <path d="M112 74 q20 80 4 170 h70 q-24 -90 -10 -170z" fill="#f3c6d5" opacity=".9"/><path d="M130 80 q10 80 0 160 M152 80 q12 80 2 160" stroke="#e7a8bf" stroke-width="3" fill="none"/>
-        <ellipse cx="248" cy="346" rx="150" ry="10" fill="rgba(0,0,0,.12)"/>
-        <path d="M110 238 h276 v40 q0 64 -70 64 h-136 q-70 0 -70 -64z" fill="#fffdf9"/>
-        <path d="M120 248 h256 v18 q-128 14 -256 0z" fill="#bfe1ee"/>
-        <path d="M118 250 q60 40 130 40" stroke="url(#sc-gloss)" stroke-width="10" fill="none" opacity=".6"/>
-        <g fill="#fff"><circle cx="190" cy="246" r="12"/><circle cx="212" cy="238" r="9"/><circle cx="232" cy="248" r="11"/><circle cx="300" cy="244" r="8"/><circle cx="318" cy="238" r="6"/></g>
-        <g fill="#c4ccd2"><rect x="128" y="342" width="12" height="10" rx="3"/><rect x="356" y="342" width="12" height="10" rx="3"/></g>
-        <path d="M352 238 v-34 q0 -10 10 -10 h10" stroke="#c4ccd2" stroke-width="6" fill="none" stroke-linecap="round"/>
-        <g><ellipse cx="458" cy="150" rx="54" ry="70" fill="#d8c2a8"/><ellipse cx="458" cy="150" rx="46" ry="62" fill="#e8f3f6"/>
-          <path d="M424 112 q20 -30 50 -26" stroke="#fff" stroke-width="8" stroke-linecap="round" fill="none" opacity=".8"/>
-          <path d="M430 196 q28 14 56 0" stroke="#cfe3e6" stroke-width="4" fill="none"/></g>
-        <rect x="404" y="232" width="108" height="22" rx="9" fill="#fffdf9"/><rect x="434" y="254" width="48" height="76" rx="6" fill="#f2ede6"/>
-        <path d="M458 232 v-12 h12" stroke="#c4ccd2" stroke-width="4" fill="none"/>
-        <g><rect x="420" y="214" width="12" height="18" rx="3" fill="#ef8fb0"/><rect x="490" y="208" width="10" height="24" rx="3" fill="#7fc9a7"/></g>
-        <rect x="540" y="196" width="104" height="138" rx="12" fill="#f8f6f3"/><rect x="540" y="196" width="104" height="26" rx="12" fill="#ece8e2"/>
-        <circle cx="592" cy="276" r="36" fill="#cfd8dd"/><circle cx="592" cy="276" r="28" fill="#8fb3c4"/><path d="M572 262 q14 -12 32 -4" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".7"/>
-        <circle cx="560" cy="209" r="5" fill="#e98aab"/><circle cx="576" cy="209" r="5" fill="#8fcf8f"/><rect x="600" y="204" width="34" height="10" rx="3" fill="#cfd8dd"/>
-        <path d="M652 290 h72 l-6 46 h-60z" fill="#c9a67a"/><path d="M656 302 h64 M658 316 h60 M660 328 h56" stroke="#b08c60" stroke-width="2"/>${basket}
-        <rect x="690" y="120" width="40" height="70" rx="6" fill="#f6d9b8"/><rect x="684" y="114" width="52" height="8" rx="4" fill="#c4ccd2"/><path d="M690 170 h40" stroke="#ef8fb0" stroke-width="4"/>
+      for (let i = 0; i < linge; i++) basket += `<ellipse cx="${700 + i * 8}" cy="${296 - i * 9}" rx="20" ry="8" fill="${['#f19bb8', '#9cc2d9', '#f6d9b8'][i]}"/>`;
+      return `${sceneDefs(s, '#f1ece5', '#e5ddd2', '#efebe5', '#d9d2c8')}${viewDefs(s)}
+        <rect width="800" height="330" fill="url(#sc-wall)"/>${veins}${ceiling(s)}
+        ${marbleFloor(true)}
+        ${bigWindow(s, view, 70, 30, 300, 296, { panes: 2, ox: 120 })}
+        <rect x="70" y="200" width="300" height="126" fill="#fbf8f3" opacity=".72"/>
+        <ellipse cx="220" cy="344" rx="150" ry="9" fill="rgba(0,0,0,.12)"/>
+        <path d="M90 268 q0 -10 14 -12 h232 q14 2 14 12 q0 70 -60 74 h-140 q-60 -4 -60 -74z" fill="#ffffff"/>
+        <path d="M100 268 q120 -14 240 0 v6 q-120 14 -240 0z" fill="#bfe1ee"/>
+        <path d="M100 280 q60 40 140 40" stroke="url(#sc-gloss)" stroke-width="10" fill="none" opacity=".6"/>
+        <g fill="#fff"><circle cx="170" cy="266" r="11"/><circle cx="190" cy="258" r="8"/><circle cx="212" cy="267" r="10"/><circle cx="286" cy="263" r="8"/></g>
+        <path d="M70 342 V230 q0 -14 14 -14 h12" stroke="#c9a24a" stroke-width="5" fill="none"/>
+        <rect x="406" y="232" width="190" height="34" rx="4" fill="#6b4632"/><rect x="402" y="226" width="198" height="8" rx="2" fill="#2a2626"/>
+        ${[454, 548].map((x) => `<ellipse cx="${x}" cy="226" rx="26" ry="6" fill="#fff"/><path d="M${x} 226 v-18 q0 -6 8 -6 h6" stroke="#c9a24a" stroke-width="3" fill="none"/><circle cx="${x}" cy="150" r="38" fill="#e8eff2" stroke="#ffe2b0" stroke-width="5"/><path d="M${x - 20} ${138} q12 -14 28 -10" stroke="#fff" stroke-width="5" fill="none" opacity=".8"/>`).join('')}
+        ${nightLevel(s.time) > 0.3 ? '<circle cx="454" cy="150" r="60" fill="url(#sc-glow)"/><circle cx="548" cy="150" r="60" fill="url(#sc-glow)"/>' : ''}
+        <rect x="620" y="30" width="2" height="300" fill="#1e1d22"/><rect x="622" y="30" width="96" height="300" fill="#dfeef3" opacity=".25"/>
+        <circle cx="670" cy="60" r="20" fill="#1e1d22"/><path d="M670 40 V22" stroke="#1e1d22" stroke-width="3"/>
+        <rect x="728" y="196" width="66" height="134" rx="8" fill="#f2f2f0"/><circle cx="761" cy="268" r="24" fill="#8fb3c4" stroke="#d9dde0" stroke-width="5"/>
+        <path d="M676 296 h52 l-5 38 h-42z" fill="#c9a67a"/>${basket}
         ${fluff(s)}${vignette}`;
     },
     cuisine(s) {
-      let tiles = '';
-      for (let y = 168; y < 240; y += 18) for (let x = 100 + ((y / 18) % 2) * 15; x < 430; x += 30) tiles += `<rect x="${x}" y="${y}" width="28" height="16" rx="2" fill="rgba(255,255,255,.6)"/>`;
+      const view = panorama(s);
       let dishes = '';
-      for (let i = 0; i < Math.min(5, s.maison.vaisselle); i++) dishes += `<ellipse cx="${348 + (i % 2) * 5}" cy="${236 - i * 7}" rx="26" ry="5" fill="#fffaf2" stroke="#c9b8a4" stroke-width="1.6"/>`;
+      for (let i = 0; i < Math.min(5, s.maison.vaisselle); i++) dishes += `<ellipse cx="${124 + (i % 2) * 5}" cy="${222 - i * 6}" rx="22" ry="5" fill="#fff" stroke="#c9b8a4" stroke-width="1.5"/>`;
       const foodLvl = s.simba.ventre > 70 ? 0 : 1;
       const water = Math.round(s.simba.eau / 100 * 10);
-      return `${sceneDefs(s, '#f6e6cd', '#ecd5b4', '#d2ae86', '#ad8660')}
-        <rect width="800" height="330" fill="url(#sc-wall)"/>
-        ${woodFloor()}
-        <rect x="96" y="164" width="340" height="80" fill="#e6f0ea"/>${tiles}
-        ${windowSvg(470, 64, 120, 100, s, null)}
-        <g>${[0, 1, 2].map((i) => `<path d="M${484 + i * 34} 168 h22 l-3 16 h-16z" fill="#c97b52"/><g fill="#6aa04c"><ellipse cx="${495 + i * 34}" cy="160" rx="7" ry="10"/><ellipse cx="${489 + i * 34}" cy="164" rx="5" ry="7" transform="rotate(-30 ${489 + i * 34} 164)"/><ellipse cx="${501 + i * 34}" cy="164" rx="5" ry="7" transform="rotate(30 ${501 + i * 34} 164)"/></g>`).join('')}</g>
-        <rect x="96" y="48" width="340" height="104" rx="6" fill="#f2e3cc"/>
-        ${[0, 1, 2].map((i) => `<rect x="${104 + i * 112}" y="56" width="104" height="88" rx="6" fill="#fffaf2"/><rect x="${150 + i * 112}" y="124" width="12" height="4" rx="2" fill="#c9a27a"/>`).join('')}
-        <path d="M240 20 v18" stroke="#3a3550" stroke-width="2"/><path d="M220 38 h40 l-6 14 h-28z" fill="#3a3550"/>${lampGlow(s, 240, 60, 90)}
-        <ellipse cx="270" cy="346" rx="190" ry="9" fill="rgba(0,0,0,.12)"/>
-        <rect x="92" y="250" width="348" height="92" fill="#a8744d"/>
-        <rect x="86" y="238" width="360" height="16" rx="5" fill="#efe3cf"/><rect x="86" y="238" width="360" height="5" rx="2.5" fill="#fff7ea"/>
-        ${[0, 1, 2].map((i) => `<rect x="${104 + i * 112}" y="264" width="100" height="70" rx="6" fill="#b98157"/><rect x="${146 + i * 112}" y="272" width="16" height="4" rx="2" fill="#e8c38f"/>`).join('')}
-        <rect x="320" y="224" width="70" height="16" rx="6" fill="#c9cfd3"/>${dishes}${samovar(260, 238)}
-        <g><path d="M128 214 h40 q4 0 4 4 v20 h-48 v-20 q0 -4 4 -4z" fill="#e05b7b"/><path d="M172 222 q12 0 12 8" stroke="#e05b7b" stroke-width="4" fill="none"/><rect x="142" y="206" width="12" height="8" rx="2" fill="#c9496f"/></g>
-        ${has('cafe') ? '<rect x="196" y="200" width="36" height="40" rx="6" fill="#3a3550"/><rect x="204" y="222" width="18" height="14" rx="3" fill="#fff"/><circle cx="214" cy="210" r="3" fill="#7ee08a"/>' : ''}
-        <rect x="462" y="190" width="120" height="152" rx="16" fill="#f7f4ef"/><rect x="462" y="190" width="120" height="152" rx="16" fill="url(#sc-gloss)" opacity=".25"/>
-        <path d="M462 248 h120" stroke="#ddd5ca" stroke-width="3"/><rect x="564" y="206" width="6" height="30" rx="3" fill="#b8b0a6"/><rect x="564" y="258" width="6" height="40" rx="3" fill="#b8b0a6"/>
-        <rect x="478" y="204" width="30" height="34" rx="2" fill="#fff" transform="rotate(-4 493 221)"/><circle cx="490" cy="216" r="6" fill="#f2a94e"/><path d="M482 232 q10 -8 20 0" stroke="#ef8fb0" stroke-width="3" fill="none"/>
-        <circle cx="530" cy="212" r="6" fill="#ef8fb0"/><circle cx="546" cy="226" r="5" fill="#7fc9a7"/>
-        <text x="522" y="290" text-anchor="middle" font-family="Nunito, sans-serif" font-size="15" font-weight="800" fill="#b8b0a6">${s.food} meals</text>
-        <ellipse cx="634" cy="424" rx="74" ry="8" fill="rgba(0,0,0,.12)"/>
-        <path d="M576 400 h56 l-8 22 h-40z" fill="#e98aab"/><ellipse cx="604" cy="400" rx="28" ry="6" fill="${foodLvl ? '#9a6232' : '#c95f84'}"/>
-        ${foodLvl ? '<g fill="#7a4a22"><circle cx="596" cy="398" r="3"/><circle cx="606" cy="397" r="3"/><circle cx="614" cy="399" r="2.6"/></g>' : ''}
-        <path d="M640 400 h56 l-8 22 h-40z" fill="#7aa6c2"/><ellipse cx="668" cy="400" rx="${16 + water}" ry="5" fill="${water > 2 ? '#bfe6f5' : '#5d88a3'}"/>
-        <text x="636" y="444" text-anchor="middle" font-family="Baloo 2, sans-serif" font-size="15" font-weight="800" fill="#7a5c4e">SIMBA</text>
+      return `${sceneDefs(s, '#f4eee6', '#ebe2d6', '#d8b48a', '#c99f72')}${viewDefs(s)}
+        ${modernWall()}${ceiling(s)}
+        ${oakFloor()}
+        ${[0, 1, 2].map((i) => `<rect x="${60 + i * 92}" y="40" width="88" height="100" rx="3" fill="#2f4a3e"/><rect x="${66 + i * 92}" y="128" width="76" height="3" fill="#c9a24a"/>`).join('')}
+        <rect x="60" y="150" width="276" height="76" fill="#efebe5"/>${Array.from({ length: 5 }, (_, i) => `<path d="M${70 + i * 60} 150 q20 30 50 76" stroke="rgba(120,110,100,.25)" stroke-width="1.2" fill="none"/>`).join('')}
+        <rect x="60" y="226" width="276" height="10" fill="#f3efe9"/>
+        <rect x="60" y="236" width="276" height="94" fill="#2f4a3e"/>${[0, 1, 2].map((i) => `<rect x="${66 + i * 92}" y="244" width="80" height="3" fill="#c9a24a"/>`).join('')}
+        ${dishes}
+        <rect x="200" y="214" width="40" height="12" rx="4" fill="#c4ccd2"/>
+        ${has('cafe') ? '<rect x="262" y="190" width="30" height="36" rx="5" fill="#bfc4c9"/><rect x="268" y="214" width="16" height="10" rx="2" fill="#fff"/>' : ''}
+        <rect x="346" y="30" width="80" height="300" rx="2" fill="#d8d6d2"/><rect x="346" y="30" width="80" height="300" fill="url(#sc-gloss)" opacity=".2"/><rect x="410" y="120" width="4" height="110" rx="2" fill="#c9a24a"/>
+        <text x="386" y="300" text-anchor="middle" font-family="Nunito, sans-serif" font-size="13" font-weight="800" fill="#9a958e">${s.food} meals</text>
+        ${bigWindow(s, view, 446, 30, 330, 296, { panes: 3, ox: 560 })}
+        ${brassPendant(s, 200, 178)}${brassPendant(s, 330, 178)}
+        <ellipse cx="270" cy="352" rx="200" ry="9" fill="rgba(0,0,0,.14)"/>
+        <rect x="80" y="262" width="380" height="82" rx="4" fill="#2f4a3e"/>
+        <rect x="72" y="254" width="396" height="12" rx="3" fill="#f3efe9"/>${[0, 1, 2, 3].map((i) => `<path d="M${100 + i * 100} 254 q20 6 50 12" stroke="rgba(120,110,100,.3)" stroke-width="1" fill="none"/>`).join('')}
+        ${samovar(270, 254)}
+        <ellipse cx="380" cy="252" rx="26" ry="5" fill="#fff"/><circle cx="372" cy="245" r="6" fill="#e05b5b"/><circle cx="384" cy="244" r="6" fill="#e8b73a"/><circle cx="378" cy="238" r="5" fill="#7fbb5e"/>
+        ${[150, 210].map((x) => `<rect x="${x - 2}" y="300" width="4" height="44" fill="#c9a24a"/><ellipse cx="${x}" cy="300" rx="20" ry="6" fill="#c9785a"/>`).join('')}
+        <ellipse cx="660" cy="424" rx="74" ry="8" fill="rgba(0,0,0,.12)"/>
+        <rect x="596" y="410" width="128" height="4" fill="#c9a24a"/>
+        <path d="M604 396 h52 l-6 16 h-40z" fill="#e98aab"/><ellipse cx="630" cy="396" rx="26" ry="5" fill="${foodLvl ? '#9a6232' : '#c95f84'}"/>
+        ${foodLvl ? '<g fill="#7a4a22"><circle cx="622" cy="394" r="3"/><circle cx="632" cy="393" r="3"/><circle cx="640" cy="395" r="2.6"/></g>' : ''}
+        <path d="M664 396 h52 l-6 16 h-40z" fill="#7aa6c2"/><ellipse cx="690" cy="396" rx="${14 + water}" ry="4.5" fill="${water > 2 ? '#bfe6f5' : '#5d88a3'}"/>
+        <text x="660" y="440" text-anchor="middle" font-family="Baloo 2, sans-serif" font-size="14" font-weight="800" fill="#7a5c4e">SIMBA</text>
         ${fluff(s)}${vignette}`;
     },
     salon(s) {
+      const view = panorama(s);
       const tv = s.time >= 8 * 60 && s.time <= 19 * 60 && !isWeekend(s.day);
       const lamp = nightLevel(s.time) > 0.3;
-      let books = '';
-      const bc = ['#c9496f', '#5f8f45', '#e8b73a', '#4a7bd0', '#8a5bc9', '#e57f22'];
-      for (let r = 0; r < 3; r++) { let x = 614; for (let i = 0; i < 6; i++) { const h = 22 + ((i * 7 + r * 3) % 9); books += `<rect x="${x}" y="${132 + r * 46 - h}" width="11" height="${h}" fill="${bc[(i + r) % 6]}"/>`; x += 13; } }
-      return `${sceneDefs(s, '#efd8dc', '#e2c3c9', '#b58257', '#8c5f3b')}
-        ${wallpaper('rgba(255,255,255,.16)')}
-        <rect x="0" y="210" width="800" height="112" fill="rgba(160,90,110,.12)"/><rect x="0" y="206" width="800" height="6" fill="#d9b8bf"/>
-        ${woodFloor()}
-        ${windowSvg(330, 56, 136, 116, s, '#e7c3cc')}
-        ${photo(150, 90, 64, 64)}${frame(232, 104, 40, 40, '<path d="M236 140 l12 -18 l8 10 l6 -6 l6 14z" fill="#7fbb5e"/><circle cx="262" cy="114" r="5" fill="#ffd36b"/>')}
-        <rect x="600" y="40" width="96" height="290" rx="4" fill="#8f5f3f"/><rect x="606" y="46" width="84" height="278" fill="#6d4630"/>
-        ${[0, 1, 2, 3].map((r) => `<rect x="606" y="${132 + r * 46}" width="84" height="6" fill="#8f5f3f"/>`).join('')}${books}
-        <g><rect x="634" y="250" width="30" height="20" rx="4" fill="#fffaf2"/><path d="M640 256 q9 -8 18 0" stroke="#e05b7b" stroke-width="3" fill="none"/></g>
-        ${persianRug(380, 400, 460, 70)}
-        <rect x="470" y="226" width="110" height="8" rx="3" fill="#7c533a"/><rect x="478" y="234" width="8" height="96" fill="#7c533a"/><rect x="564" y="234" width="8" height="96" fill="#7c533a"/><rect x="478" y="290" width="94" height="6" fill="#7c533a"/>
-        <rect x="478" y="160" width="94" height="62" rx="6" fill="#2f2b46"/><rect x="484" y="166" width="82" height="50" rx="3" fill="${tv ? '#9fd0e8' : '#3d3a5c'}"/>
-        ${tv ? '<path d="M490 206 l14 -16 l10 10 l8 -8 l18 14z" fill="#7fbb5e"/><circle cx="550" cy="180" r="6" fill="#ffd36b"/>' : '<path d="M488 170 l30 20" stroke="rgba(255,255,255,.12)" stroke-width="6"/>'}
-        <rect x="518" y="220" width="14" height="6" fill="#2f2b46"/>
-        <ellipse cx="250" cy="348" rx="180" ry="9" fill="rgba(0,0,0,.14)"/>
-        <rect x="92" y="196" width="316" height="84" rx="34" fill="#d98aa5"/>
-        <rect x="80" y="246" width="340" height="88" rx="30" fill="#cf7c99"/>
-        <rect x="104" y="240" width="140" height="44" rx="18" fill="#e29ab3"/><rect x="256" y="240" width="140" height="44" rx="18" fill="#e29ab3"/>
-        <rect x="64" y="236" width="54" height="98" rx="24" fill="#bd6886"/><rect x="384" y="236" width="54" height="98" rx="24" fill="#bd6886"/>
-        <path d="M112 214 q40 -10 80 0 M260 214 q40 -10 80 0" stroke="rgba(255,255,255,.25)" stroke-width="5" fill="none" stroke-linecap="round"/>
-        <rect x="132" y="206" width="58" height="46" rx="16" fill="#f6d9b8" transform="rotate(-8 161 229)"/><rect x="300" y="208" width="54" height="44" rx="16" fill="#fff3c4" transform="rotate(6 327 230)"/>
-        <path d="M330 250 q30 30 60 20 l10 50 q-40 6 -70 -10z" fill="#9cc2d9"/><path d="M340 262 l50 50 M354 256 l40 40" stroke="#fff" stroke-width="3" opacity=".6"/>
-        <rect x="86" y="332" width="12" height="12" rx="3" fill="#7c533a"/><rect x="404" y="332" width="12" height="12" rx="3" fill="#7c533a"/>
-        ${lampGlow(s, 40, 120, 120)}<rect x="36" y="140" width="6" height="190" fill="#3a3550"/><path d="M14 146 l12 -46 h30 l12 46z" fill="${lamp ? '#ffe3a3' : '#f4e2c4'}"/><ellipse cx="39" cy="330" rx="18" ry="5" fill="#3a3550"/>
-        <circle cx="460" cy="414" r="12" fill="#d8e650"/><path d="M450 408 q10 8 20 0" stroke="#fff" stroke-width="2" fill="none"/>
-        ${has('corde') ? '<path d="M510 426 q20 -16 40 0 q20 16 40 0" stroke="#4a7bd0" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M510 426 q20 -16 40 0 q20 16 40 0" stroke="#fff" stroke-width="2" stroke-dasharray="4 6" fill="none"/>' : ''}
-        ${has('robot') ? '<g><ellipse cx="660" cy="432" rx="36" ry="11" fill="#2f2b46"/><ellipse cx="660" cy="426" rx="30" ry="9" fill="#6f6a92"/><circle cx="660" cy="424" r="3" fill="#7ee08a"/></g>' : ''}
-        ${has('plante') ? plant(730, 318, 1.05) : ''}
+      return `${sceneDefs(s, '#f4eee6', '#ebe2d6', '#d8b48a', '#c99f72')}${viewDefs(s)}
+        ${modernWall()}${ceiling(s)}
+        ${oakFloor()}
+        ${bigWindow(s, view, 40, 30, 620, 296, { panes: 5, transom: true, sheer: true, ox: 160 })}
+        <ellipse cx="350" cy="80" rx="70" ry="10" fill="none" stroke="${lamp ? '#ffe2b0' : '#d9c9a8'}" stroke-width="4"/><path d="M350 16 V70" stroke="#1e1d22" stroke-width="1.5"/>
+        ${lamp ? '<ellipse cx="350" cy="80" rx="120" ry="40" fill="url(#sc-glow)"/>' : ''}
+        <rect x="672" y="30" width="128" height="296" fill="#5a3a26"/>${Array.from({ length: 7 }, (_, i) => `<rect x="${674 + i * 18}" y="30" width="9" height="296" fill="#6e4a32"/>`).join('')}
+        <rect x="684" y="150" width="104" height="62" rx="3" fill="#0c0c10"/><rect x="688" y="154" width="96" height="54" rx="2" fill="${tv ? '#9fd0e8' : '#1a1a24'}"/>
+        ${tv ? '<path d="M694 202 l16 -18 l12 10 l10 -8 l22 16z" fill="#7fbb5e"/><circle cx="770" cy="168" r="6" fill="#ffd36b"/>' : ''}
+        <rect x="680" y="270" width="116" height="34" rx="3" fill="#111114"/><rect x="690" y="284" width="96" height="10" rx="2" fill="${lamp ? '#ff9a3c' : '#ff8a2a'}" opacity=".9"/>
+        ${persianRug(360, 396, 560, 76)}
+        <ellipse cx="230" cy="346" rx="200" ry="9" fill="rgba(0,0,0,.14)"/>
+        <rect x="40" y="250" width="380" height="90" rx="26" fill="#efe6da"/>
+        <rect x="52" y="214" width="356" height="64" rx="26" fill="#f4ece2"/>
+        <rect x="28" y="250" width="40" height="90" rx="18" fill="#e6dccf"/><rect x="392" y="250" width="40" height="90" rx="18" fill="#e6dccf"/>
+        <rect x="84" y="226" width="56" height="44" rx="14" fill="#c9785a" transform="rotate(-6 112 248)"/><rect x="200" y="228" width="54" height="42" rx="14" fill="#2f4a3e" transform="rotate(4 227 249)"/><rect x="314" y="228" width="54" height="42" rx="14" fill="#e8c38f" transform="rotate(8 341 249)"/>
+        <path d="M360 270 q30 24 60 16 l4 40 q-40 6 -64 -8z" fill="#c9785a"/>
+        <ellipse cx="300" cy="352" rx="70" ry="10" fill="rgba(0,0,0,.12)"/>
+        <path d="M290 344 h20 l-6 -34 h-8z" fill="#ebe5dc"/><ellipse cx="300" cy="308" rx="62" ry="11" fill="#f3efe9"/><path d="M250 306 q30 6 60 2" stroke="rgba(120,110,100,.3)" stroke-width="1.2" fill="none"/>
+        <path d="M284 302 h10 l-2 -12 h-6z" fill="rgba(200,90,40,.8)"/><path d="M300 302 h10 l-2 -12 h-6z" fill="rgba(200,90,40,.8)"/><rect x="316" y="296" width="30" height="7" rx="2" fill="#2f4a3e"/>
+        <path d="M30 330 V120 q0 -50 60 -50 h40" stroke="#c9a24a" stroke-width="5" fill="none"/><circle cx="140" cy="84" r="16" fill="${lamp ? '#fff1cf' : '#fbf6ee'}" stroke="#e8dccb"/>${lamp ? '<circle cx="140" cy="90" r="80" fill="url(#sc-glow)"/>' : ''}<ellipse cx="30" cy="332" rx="18" ry="4" fill="#1e1d22"/>
+        <circle cx="470" cy="414" r="12" fill="#d8e650"/><path d="M460 408 q10 8 20 0" stroke="#fff" stroke-width="2" fill="none"/>
+        ${has('corde') ? '<path d="M520 426 q20 -16 40 0 q20 16 40 0" stroke="#4a7bd0" stroke-width="8" fill="none" stroke-linecap="round"/>' : ''}
+        ${has('robot') ? '<g><ellipse cx="620" cy="432" rx="34" ry="11" fill="#1e1d22"/><ellipse cx="620" cy="427" rx="28" ry="8" fill="#3a3550"/><circle cx="620" cy="425" r="3" fill="#7ee08a"/></g>' : ''}
+        ${bigPlant(640, 330, has('plante') ? 1.05 : 0.85)}
         ${fluff(s)}${vignette}`;
     },
     dehors(s) {
@@ -831,20 +902,21 @@
         for (let wy = 306 - h; wy < 292; wy += 14) for (let wx = x + 6; wx < x + wd - 6; wx += 11)
           city += `<rect x="${wx}" y="${wy}" width="5" height="7" fill="${night ? ((wx * 3 + wy) % 5 ? '#ffcf73' : '#34334f') : 'rgba(255,255,255,.6)'}"/>`;
       });
-      // the family tower: 6 floors, they live on the 5th
-      let tower = `<rect x="18" y="58" width="190" height="290" fill="${night ? '#3a3858' : '#f2ece2'}"/><rect x="18" y="58" width="190" height="10" fill="${night ? '#2f2d4a' : '#ddd3c4'}"/>`;
+      // the family tower: modern, 6 floors of floor-to-ceiling glass; they live on the 5th
+      let tower = `<rect x="18" y="52" width="196" height="296" fill="${night ? '#33314f' : '#e9e3d8'}"/>`;
       for (let f = 0; f < 6; f++) {
         const y = 300 - f * 44;
-        tower += `<rect x="26" y="${y + 30}" width="174" height="5" fill="${night ? '#2f2d4a' : '#d8cdbc'}"/>`;
-        for (let k = 0; k < 4; k++) {
-          const lit = night ? ((f + k) % 3 !== 0) : false;
-          const home = f === 4 && k === 1;
-          tower += `<rect x="${34 + k * 42}" y="${y}" width="30" height="26" rx="2" fill="${home && night ? '#ffd27a' : lit ? '#ffcf73' : night ? '#24233c' : '#a9c4d8'}"/>`;
-          if (home) tower += `<circle cx="${49 + k * 42}" cy="${y + 20}" r="5" fill="#e38c30"/><circle cx="${46 + k * 42}" cy="${y + 16}" r="2.4" fill="#e38c30"/><circle cx="${52 + k * 42}" cy="${y + 16}" r="2.4" fill="#e38c30"/>`;
+        for (let k = 0; k < 2; k++) {
+          const home = f === 4 && k === 0;
+          const lit = night && (home || (f + k) % 3 !== 1);
+          tower += `<rect x="${28 + k * 92}" y="${y - 4}" width="84" height="34" fill="${lit ? (home ? '#ffd27a' : '#ffcf73') : night ? '#20203a' : '#9cc0d8'}"/>`;
+          if (!night) tower += `<path d="M${28 + k * 92} ${y + 30} L${58 + k * 92} ${y - 4} h18 L${46 + k * 92} ${y + 30} Z" fill="#ffffff" opacity=".35"/>`;
+          tower += `<rect x="${69 + k * 92}" y="${y - 4}" width="2" height="34" fill="${night ? '#55537a' : '#5a6070'}"/>`;
+          if (home) tower += `<circle cx="${48 + k * 92}" cy="${y + 22}" r="6" fill="#e38c30"/><circle cx="${44 + k * 92}" cy="${y + 17}" r="2.6" fill="#e38c30"/><circle cx="${52 + k * 92}" cy="${y + 17}" r="2.6" fill="#e38c30"/>`;
         }
-        tower += `<rect x="${30 + 42}" y="${y + 24}" width="38" height="4" fill="${night ? '#55537a' : '#bfb3a2'}"/>`;
+        tower += `<rect x="22" y="${y + 30}" width="188" height="6" fill="${night ? '#4a4870' : '#d6ccbc'}"/><rect x="22" y="${y + 18}" width="188" height="12" fill="#cfe6f0" opacity="${night ? 0.15 : 0.35}"/>`;
       }
-      tower += `<rect x="90" y="300" width="46" height="48" rx="3" fill="${night ? '#ffd27a' : '#7d553d'}"/><rect x="80" y="294" width="66" height="8" rx="3" fill="${night ? '#2f2d4a' : '#c4b6a2'}"/>`;
+      tower += `<rect x="86" y="300" width="60" height="48" rx="2" fill="${night ? '#ffd27a' : '#2c2a30'}"/><rect x="70" y="292" width="92" height="7" rx="3" fill="${night ? '#4a4870' : '#cfc4b2'}"/>`;
       const milad = `<g fill="${night ? '#2a2946' : '#8d9bb0'}"><rect x="514" y="94" width="8" height="206"/><ellipse cx="518" cy="132" rx="22" ry="12"/><rect x="500" y="124" width="36" height="16" rx="6"/><rect x="516" y="54" width="4" height="44"/><path d="M496 300 l22 -60 l22 60z"/></g>
         ${night ? '<g fill="#ffcf73"><circle cx="506" cy="132" r="2"/><circle cx="518" cy="134" r="2"/><circle cx="530" cy="132" r="2"/><circle cx="518" cy="56" r="2.4" fill="#ff6b6b"/></g>' : ''}`;
       const chenar = (x, y, r) => `<g><rect x="${x - 7}" y="${y}" width="14" height="${r * 2}" fill="#d9cdb4"/><path d="M${x - 7} ${y + 10} h7 v8 h-7z M${x} ${y + r} h7 v10 h-7z M${x - 7} ${y + r * 1.5} h6 v8 h-6z" fill="#a49478"/>
@@ -1048,10 +1120,8 @@
     const b = $('npc-bubble');
     b.hidden = !n.bubble || busy; b.textContent = n.bubble;
   }
-  const use3D = () => !!(window.World3D && window.World3D.ok && S.settings.three !== false);
   function renderScene() {
-    $('scene').classList.toggle('three', use3D());
-    if (!use3D()) $('scene-bg').innerHTML = DRAW[S.room](S);
+    $('scene-bg').innerHTML = DRAW[S.room](S);
     const lvl = S.room === 'dehors' ? nightLevel(S.time) * 0.55 : nightLevel(S.time) * 0.7;
     $('scene').style.setProperty('--nightlvl', lvl.toFixed(2));
     window.Sound && window.Sound.setNight(nightLevel(S.time) > 0.4);
@@ -1067,7 +1137,6 @@
     simba.hidden = away && S.room !== 'dehors';
     if (away && S.room === 'dehors') { simba.style.left = '68%'; }
     renderNpc();
-    if (use3D()) window.World3D.sync(S);
 
     const d = S.simba;
     const dogNeeds = [[d.pipi, 'Walkies! 🌳'], [d.eau, 'Thirsty… 💧'], [d.ventre, 'Hungry! 🍖'], [d.bonheur, 'Play with me 🎾'], [d.pelage, 'Brush me ✨']]
@@ -1259,8 +1328,6 @@
         <button type="button" class="menu-row" data-set="sound" role="switch" aria-checked="${S.settings.sound}"><span>Sound effects</span>${sw(S.settings.sound)}</button>
         <button type="button" class="menu-row" data-set="music" role="switch" aria-checked="${S.settings.music}"><span>Lo-fi music</span>${sw(S.settings.music)}</button>
         <button type="button" class="menu-row" data-set="haptics" role="switch" aria-checked="${S.settings.haptics}"><span>Vibration</span>${sw(S.settings.haptics)}</button>
-        ${window.World3D && window.World3D.ok ? `<button type="button" class="menu-row" data-set="three" role="switch" aria-checked="${S.settings.three !== false}"><span>3D graphics<small>Turn off on older phones to save battery</small></span>${sw(S.settings.three !== false)}</button>` : ''}
-        ${window.World3D && window.World3D.cinematic ? `<button type="button" class="menu-row" data-set="fx" role="switch" aria-checked="${S.settings.fx !== false}"><span>Cinematic effects<small>Glow, color grading and film grain</small></span>${sw(S.settings.fx !== false)}</button>` : ''}
         ${installPrompt ? '<button type="button" class="menu-row" data-cmd="install"><span>Install the app<small>Add Nena &amp; Simba to your home screen</small></span><span>⤓</span></button>'
           : '<div class="menu-row"><span>Install on iPhone<small>In Safari: Share button, then “Add to Home Screen”.</small></span></div>'}
         <button type="button" class="menu-row" data-cmd="tutorial"><span>Replay the tutorial</span><span>›</span></button>
@@ -1280,7 +1347,7 @@
     }
     if (t.dataset.item) { buyOrEquip(t.dataset.item); return; }
     if (t.dataset.set) {
-      const k = t.dataset.set; S.settings[k] = S.settings[k] === false ? true : !S.settings[k]; applySettings(); snd('click'); save(); renderSheet(); if (k === 'three' || k === 'fx') renderScene(); return;
+      const k = t.dataset.set; S.settings[k] = S.settings[k] === false ? true : !S.settings[k]; applySettings(); snd('click'); save(); renderSheet(); return;
     }
     const cmd = t.dataset.cmd;
     if (cmd === 'install') doInstall();
@@ -1849,7 +1916,6 @@
   /* ------------------------------------------------------------------ */
   /* Boot                                                                */
   /* ------------------------------------------------------------------ */
-  if (window.World3D) window.World3D.init($('scene'));
   const saved = load();
   if (saved) { $('btn-continue').hidden = false; $('continue-day').textContent = saved.day; S = saved; }
   render();

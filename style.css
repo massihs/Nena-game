@@ -806,20 +806,6 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 @keyframes zzfloat { 50% { transform: translateY(-6px); opacity: .7; } }
 
 
-/* ---------- 3D scene ---------- */
-.scene-3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; }
-.scene-3d.fade { animation: fade3d 0.45s ease; }
-@keyframes fade3d { from { opacity: 0; filter: blur(6px); } }
-.scene:not(.three) .scene-3d { display: none; }
-.scene.three .scene-bg, .scene.three .weather-fx, .scene.three .night-veil { display: none; }
-.scene.three .sprite-wrap { visibility: hidden; }
-.scene.three .actor::after { display: none; }
-.scene.three { background: #2a2236; }
-.scene.three .nena { width: var(--nena-w, 15%); max-width: none; }
-.scene.three .simba { width: var(--simba-w, 21%); max-width: none; }
-.scene.three .npc { width: var(--nena-w, 15%); max-width: none; }
-.scene.three .npc.small { width: var(--nasim-w, 13.5%); }
-
 @media (max-height: 640px) {
   .quest { margin-top: 4px; padding-block: 3px; }
   .gauge small { display: none; }
