@@ -48,6 +48,11 @@
     <div class="g-group" id="g-simba"></div>
   </button>
 
+  <!-- Story banner -->
+  <button type="button" class="quest" id="quest" aria-label="Story goals">
+    <span class="q-ch" id="q-ch">Ch. 1</span><span class="q-txt" id="q-txt">Meet your neighbor</span><span class="q-prog" id="q-prog"></span>
+  </button>
+
   <!-- Scene -->
   <div class="scene" id="scene">
     <svg id="scene-bg" class="scene-bg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMax slice" aria-hidden="true"></svg>
@@ -90,6 +95,24 @@
     <div class="sheet-tabs" id="sheet-tabs" role="tablist"></div>
     <div class="sheet-body" id="sheet-body"></div>
   </section>
+</div>
+
+<!-- Dialogue -->
+<div class="dlg" id="dlg" hidden>
+  <div class="dlg-stage">
+    <div class="dlg-portrait" id="dlg-portrait"></div>
+    <div class="dlg-box">
+      <span class="dlg-name" id="dlg-name">Nena</span>
+      <p class="dlg-text" id="dlg-text"></p>
+      <div class="dlg-choices" id="dlg-choices"></div>
+      <span class="dlg-next" id="dlg-next" aria-hidden="true">Tap ▾</span>
+    </div>
+  </div>
+  <div class="dlg-card" id="dlg-card" hidden>
+    <p class="dlg-card-t" id="dlg-card-t">Chapter 1</p>
+    <p class="dlg-card-sub" id="dlg-card-sub"></p>
+    <p class="dlg-card-tap">Tap to continue</p>
+  </div>
 </div>
 
 <!-- Mini-games -->
@@ -180,6 +203,7 @@
 <script src="js/art.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/minigames.js"></script>
+<script src="js/story.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

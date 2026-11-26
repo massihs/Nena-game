@@ -12,7 +12,7 @@
   const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
   const rnd = Math.random;
   const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
-  const snd = (n) => window.Sound && window.Sound.play(n);
+  const snd = (n, arg) => window.Sound && window.Sound.play(n, arg);
   const buzz = (p) => { try { if (S && S.settings.haptics && navigator.vibrate) navigator.vibrate(p); } catch (e) { /* */ } };
 
   /* ------------------------------------------------------------------ */
@@ -68,7 +68,7 @@
     const uniq = [...new Set(ids)];
     return {
       tasks: uniq.map((id) => ({ id, done: 0, need: TASKS[id].need || 1 })),
-      treats: 0, accidents: 0, mischief: 0, pets: 0, coffee: 0,
+      treats: 0, accidents: 0, mischief: 0, pets: 0, coffee: 0, trains: 0, medAM: false, medPM: false, miaWalk: false,
       weather: day === 1 ? 'soleil' : rollWeather(),
     };
   }
@@ -102,6 +102,11 @@
     { id: 'saver', name: 'Saver', desc: 'Have $300 in the wallet.', test: (s) => s.money >= 300 },
     { id: 'clean', name: 'Zero accidents', desc: 'Finish 3 days with no pee on the rug.', test: (s) => s.counters.cleanDays >= 3 },
     { id: 'snow', name: 'Snow bear', desc: 'Walk Simba in the snow.', test: (s) => s.counters.snowWalks >= 1 },
+    { id: 'first_trick', name: 'Good boy!', desc: 'Teach Simba his first trick.', test: (s) => Object.values(s.pet.tricks).some((v) => v >= 100) },
+    { id: 'all_tricks', name: 'Circus star', desc: 'Teach Simba all 5 tricks.', test: (s) => Object.values(s.pet.tricks).every((v) => v >= 100) },
+    { id: 'mia_friend', name: 'Neighbors for life', desc: 'Reach 5 hearts with Mia.', test: (s) => (s.story.rel.mia || 0) >= 10 },
+    { id: 'season', name: 'Season 1 complete', desc: 'Finish the story.', test: (s) => s.story.ended },
+    { id: 'best_show', name: 'Best in Show', desc: 'Win first place at the dog show.', test: (s) => s.story.flags.show === 1 },
   ];
 
   const BONDS = [
@@ -127,6 +132,9 @@
       achievements: [],
       tutorialDone: false,
       settings: { sound: true, music: true, haptics: true },
+      story: { base: 0, seen: [], flags: {}, rel: { mia: 0, grandma: 0, lee: 0, sam: 0 }, ended: false, tmp: 0 },
+      pet: { tricks: { sit: 0, paw: 0, down: 0, spin: 0, playdead: 0 }, weight: 23, sick: false, meds: 0, age: 1, stubborn: 60, plays: 0, cuddles: 0 },
+      album: [],
     };
   }
 
@@ -186,7 +194,7 @@
     S.time += 1;
     n.faim -= 0.085; n.energie -= 0.055; n.hygiene -= 0.045;
     d.ventre -= 0.1; d.eau -= w === 'soleil' ? 0.2 : 0.14; d.pipi -= 0.13; d.pelage -= 0.035;
-    d.bonheur -= (0.06 + (d.ventre < 20 ? 0.05 : 0) + (d.eau < 20 ? 0.05 : 0)) * (has('panier') ? 0.7 : 1);
+    d.bonheur -= (0.06 + (d.ventre < 20 ? 0.05 : 0) + (d.eau < 20 ? 0.05 : 0)) * (has('panier') ? 0.7 : 1) * (S.pet.sick ? 1.5 : 1) * (S.pet.weight > 26 ? 1.1 : 1);
     m.proprete -= (0.03 + (d.pelage < 40 ? 0.05 : 0)) * (has('robot') ? 0.5 : 1);
     let mood = -0.015 + (d.bonheur > 60 ? 0.025 : -0.02);
     if (n.faim < 20) mood -= 0.05;
@@ -224,6 +232,18 @@
   /* ------------------------------------------------------------------ */
   /* Actions                                                             */
   /* ------------------------------------------------------------------ */
+  const TRICKS = ['sit', 'paw', 'down', 'spin', 'playdead'];
+  const TRICK_NAMES = { sit: 'Sit', paw: 'Paw', down: 'Down', spin: 'Spin', playdead: 'Play dead' };
+  const nextTrick = (s) => TRICKS.find((t) => s.pet.tricks[t] < 100) || null;
+  const learned = (s) => TRICKS.filter((t) => s.pet.tricks[t] >= 100);
+  const chapterN = (s) => { const c = window.Story && window.Story.chapterOf(s); return c ? c.n : 0; };
+  const storyFlag = (s, k) => !!(s.story && s.story.flags[k]);
+  const weigh = (s, d) => { s.pet.weight = Math.max(18, Math.min(30, s.pet.weight + d)); };
+  function memory(id, title, text, icon) {
+    if (S.album.find((m) => m.id === id)) return;
+    S.album.push({ id, title, text, icon, day: S.day });
+    note('📸 New memory: ' + title, 'good');
+  }
   const outside = (s, extra) => (!s.dressed ? 'Nena is still in her pajamas!' : extra ? extra(s) : true);
   function rainCheck(s) {
     if (s.today.weather === 'pluie' && s.outfit !== 'cire') { s.nena.hygiene -= 10; note('Nena got soaked… a raincoat would help.'); }
@@ -244,7 +264,7 @@
       run: (s) => { s.dressed = false; s.nena.moral += 3; } },
     { room: 'chambre', id: 'calin', name: 'Cuddle Simba', desc: 'Nose buried in his mane.', tag: 'simba', dur: 10,
       verb: 'A big soft cuddle…', task: 'calin', sfx: 'happy',
-      run: (s) => { s.simba.bonheur += 20; s.nena.moral += 10; credit('calin'); burstAt('heart', 58, 45, 10); } },
+      run: (s) => { s.simba.bonheur += 20; s.nena.moral += 10; s.pet.cuddles++; credit('calin'); burstAt('heart', 58, 45, 10); } },
     { room: 'chambre', id: 'sieste', name: 'Take a nap', desc: 'Simba snuggles up to her.', tag: 'nena', dur: 60,
       verb: 'Zzz… quick nap…', sleepy: true, sfx: 'yawn',
       avail: (s) => (s.nena.energie < 70 ? true : 'Nena isn’t tired.'),
@@ -294,6 +314,7 @@
       task: (s) => (s.time < 12 * 60 ? 'gamelle_matin' : s.time >= 17 * 60 ? 'gamelle_soir' : null),
       avail: (s) => (s.kibble <= 0 ? 'Out of kibble!' : s.simba.ventre > 80 ? 'Simba isn’t hungry.' : true),
       run: (s) => {
+        if (s.simba.ventre > 45) weigh(s, 0.08);
         s.kibble -= 1; s.simba.ventre += 55; s.simba.bonheur += 5;
         if (s.time < 12 * 60) credit('gamelle_matin'); else if (s.time >= 17 * 60) credit('gamelle_soir');
         if (s.kibble <= 1) note('Only ' + s.kibble + ' portion(s) of kibble left.', 'bad');
@@ -305,7 +326,7 @@
     { room: 'cuisine', id: 'friandise', name: 'Give a treat', desc: '3 per day max.', tag: 'simba', dur: 1,
       verb: 'Sit… paw… good boy!', sfx: 'happy',
       avail: (s) => (s.today.treats < 3 ? true : 'Enough treats for today.'),
-      run: (s) => { s.today.treats++; s.simba.bonheur += 10; s.simba.ventre += 5; burstAt('heart', posOf('simba')[0], 45, 5); } },
+      run: (s) => { s.today.treats++; s.simba.bonheur += 10; s.simba.ventre += 5; weigh(s, 0.06); burstAt('heart', posOf('simba')[0], 45, 5); } },
     { room: 'cuisine', id: 'cafe', name: 'Have a coffee', desc: '+15 energy · 2 per day.', tag: 'nena', dur: 5, needs: 'cafe',
       verb: 'The smell of coffee fills the kitchen…', sfx: 'pop',
       avail: (s) => (s.today.coffee < 2 ? true : 'Enough coffee for today.'),
@@ -319,13 +340,13 @@
     { room: 'salon', id: 'travail', name: 'Work from home (2 h)', desc: '+$45 · 8 AM to 7 PM.', tag: 'nena', dur: 120,
       verb: 'Nena works on her laptop…', task: 'travail', working: true,
       avail: (s) => (isWeekend(s.day) ? 'It’s the weekend, time off!' : s.time < 8 * 60 || s.time > 19 * 60 ? 'The office is closed.' : s.nena.energie < 20 ? 'Nena is too tired.' : true),
-      run: (s) => { s.money += 45; s.nena.energie -= 12; s.nena.moral -= 5; s.simba.bonheur -= 8; credit('travail'); moneyFx(45); } },
+      run: (s) => { s.money += 45; s.nena.energie -= 12; s.nena.moral -= 5; s.simba.bonheur -= (s.pet.sick && storyFlag(s, 'mia_help')) ? 0 : 8; credit('travail'); moneyFx(45); } },
     { room: 'salon', id: 'balle', name: 'Play ball', desc: 'You throw, Simba fetches… sometimes.', tag: 'simba', dur: 15, mini: 'fetch',
       verb: 'Throw, run, fetch!', task: 'jouer',
       run: (s, r) => {
         const sc = r ? r.score : 0.6;
         s.simba.bonheur += 12 + 22 * sc + (has('corde') ? 8 : 0); s.nena.energie -= 5; s.nena.moral += 6;
-        s.best.fetch = Math.max(s.best.fetch, sc);
+        s.best.fetch = Math.max(s.best.fetch, sc); s.pet.plays++;
         credit('jouer'); burstAt('heart', posOf('simba')[0], 45, 8);
       } },
     { room: 'salon', id: 'aspirateur', name: 'Vacuum', desc: 'Orange fur piles up fast.', tag: 'maison', dur: 20,
@@ -344,9 +365,9 @@
         const sc = r ? r.score : 0.6;
         s.simba.pipi = 100; s.simba.bonheur += 8 + 14 * sc + (s.today.weather === 'neige' ? 10 : 0);
         s.nena.energie -= 6; s.nena.moral += 5;
-        s.counters.walks++; if (s.today.weather === 'neige') s.counters.snowWalks++;
+        s.counters.walks++; if (s.today.weather === 'neige') s.counters.snowWalks++; weigh(s, -0.05);
         if (r && !r.skipped) s.best.walk = Math.max(s.best.walk, r.hits ? Math.min(sc, 0.89) : sc);
-        credit('promenade'); rainCheck(s);
+        credit('promenade'); rainCheck(s); storyEvent('walk');
         if (r && r.muddy) { s.muddy = true; addTask('bain'); note('Simba jumped into a mud puddle! Bath time.', 'bad'); }
         else if (r && r.skipped) walkEvent(s);
         else if (rnd() < 0.3) friendEvent(s);
@@ -358,7 +379,7 @@
         s.simba.pipi = 100; s.simba.bonheur += 35; s.nena.energie -= 12; s.nena.moral += 8;
         s.counters.walks++; if (s.today.weather === 'neige') s.counters.snowWalks++;
         credit('parc'); credit('promenade'); credit('jouer'); rainCheck(s);
-        walkEvent(s, 0.15); burstAt('heart', posOf('simba')[0], 45, 8);
+        walkEvent(s, 0.15); burstAt('heart', posOf('simba')[0], 45, 8); weigh(s, -0.1); s.pet.plays++;
       } },
     { room: 'dehors', id: 'courses', name: 'Groceries for Nena', desc: '−$24 · +4 meals in the fridge.', tag: 'maison', dur: 40,
       verb: 'Nena fills her basket…', task: 'courses', sfx: 'coin',
@@ -370,9 +391,63 @@
       run: (s) => { s.money -= 20; s.kibble += 8; s.simba.bonheur -= 4; credit('courses'); rainCheck(s); } },
     { room: 'dehors', id: 'veto', name: 'Vet visit', desc: '−$30 · 9 AM to 6 PM.', tag: 'simba', dur: 60,
       verb: 'Simba trembles a little in the waiting room…', task: 'veto',
-      avail: (s) => outside(s, (x) => (!x.today.tasks.find((t) => t.id === 'veto') ? 'No appointment today.' :
+      avail: (s) => outside(s, (x) => (!x.today.tasks.find((t) => t.id === 'veto') && !(x.pet.sick && !storyFlag(x, 'vet_seen')) ? 'No appointment today.' :
         x.time < 9 * 60 || x.time > 18 * 60 ? 'The clinic is closed.' : x.money < 30 ? 'Not enough money ($30).' : true)),
-      run: (s) => { s.money -= 30; s.simba.bonheur -= 6; credit('veto'); note('The vet: “Simba is in great shape!”', 'good'); } },
+      run: (s) => {
+        s.money -= 30; s.simba.bonheur -= 6; credit('veto');
+        if (s.pet.sick && !storyFlag(s, 'vet_seen')) storyLater('vet_visit');
+        else note(s.pet.weight > 26 ? 'Dr. Lee: “He’s healthy, but a little chubby. Fewer treats, more walks!”' : 'Dr. Lee: “Simba is in great shape!”', 'good');
+      } },
+
+    // Story & Simba actions
+    { room: 'salon', id: 'training', name: 'Training', tag: 'simba', dur: 15, mini: 'train',
+      desc: (s) => { const t = nextTrick(s); return t ? `Teaching “${TRICK_NAMES[t]}” · ${Math.round(s.pet.tricks[t])}%` : 'Simba knows every trick!'; },
+      verb: 'Sit… good… treat!', show: (s) => storyFlag(s, 'training') || learned(s).length > 0 || s.story.ended,
+      task: () => null,
+      avail: (s) => (!nextTrick(s) ? 'He knows all 5 tricks. Superstar!' : s.today.trains >= 2 ? 'Short sessions work best: 2 per day max.' : s.pet.sick ? 'Simba is too sick to train.' : true),
+      run: (s, r) => {
+        const t = nextTrick(s); if (!t) return;
+        const sc = r ? r.score : 0.6;
+        const before = s.pet.tricks[t];
+        s.pet.tricks[t] = Math.min(100, before + (20 + 30 * sc) * (1.1 - s.pet.stubborn / 200));
+        s.pet.stubborn = Math.max(10, s.pet.stubborn - 4);
+        s.today.trains++; s.simba.bonheur += 6; weigh(s, 0.03);
+        if (s.pet.tricks[t] >= 100) {
+          note(`🎉 Simba learned “${TRICK_NAMES[t]}”!`, 'good'); snd('fanfare'); burstAt('spark', posOf('simba')[0], 40, 14);
+          memory('trick_' + t, `Trick learned: ${TRICK_NAMES[t]}`, `Simba mastered “${TRICK_NAMES[t]}” after lots of treats.`, '🦴');
+        } else note(`“${TRICK_NAMES[t]}”: ${Math.round(s.pet.tricks[t])}% learned`);
+      } },
+    { room: 'salon', id: 'invites', name: 'Send party invites', desc: 'Who’s coming to Simba’s birthday?', tag: 'maison', dur: 5,
+      verb: 'Writing invitations…', show: (s) => chapterN(s) === 2 && !storyFlag(s, 'invited'),
+      run: () => storyLater('invites') },
+    { room: 'dehors', id: 'cake', name: 'Order the birthday cake', desc: '−$35 · peanut butter, dog-safe.', tag: 'simba', dur: 20,
+      verb: 'Choosing the perfect cake…', sfx: 'coin', show: (s) => chapterN(s) === 2 && !storyFlag(s, 'cake'),
+      avail: (s) => outside(s, (x) => (x.money < 35 ? 'Not enough money ($35).' : true)),
+      run: (s) => { s.money -= 35; s.story.flags.cake = true; note('Cake ordered! Ready on Sunday.', 'good'); } },
+    { room: 'dehors', id: 'gift', name: 'Buy a birthday gift', desc: '−$30 · something squeaky.', tag: 'simba', dur: 25,
+      verb: 'Squeezing every toy in the store…', sfx: 'coin', show: (s) => chapterN(s) === 2 && !storyFlag(s, 'gift'),
+      avail: (s) => outside(s, (x) => (x.money < 30 ? 'Not enough money ($30).' : true)),
+      run: (s) => { s.money -= 30; s.story.flags.gift = true; note('Gift wrapped and hidden in the closet.', 'good'); } },
+    { room: 'dehors', id: 'miawalk', name: 'Walk with Mia', desc: '5 to 8 PM · Simba and Biscuit play together.', tag: 'simba', dur: 40,
+      verb: 'Chatting with Mia while the dogs play…', task: 'promenade', walk: true, sfx: 'bark',
+      show: (s) => storyFlag(s, 'met_mia'),
+      avail: (s) => outside(s, (x) => (x.today.miaWalk ? 'You already walked with Mia today.' : x.time < 17 * 60 || x.time > 20 * 60 ? 'Mia walks between 5 and 8 PM.' : x.pet.sick ? 'Simba needs rest today.' : true)),
+      run: (s) => {
+        s.today.miaWalk = true; s.simba.pipi = 100; s.simba.bonheur += 20; s.nena.moral += 10; s.nena.energie -= 6;
+        s.counters.walks++; weigh(s, -0.05); credit('promenade'); rainCheck(s);
+        s.story.rel.mia = Math.min(10, (s.story.rel.mia || 0) + 1);
+        note('Mia: “' + pick(['Biscuit has a crush on Simba, I swear.', 'Did you try the new café? Dogs get free biscuits!', 'Simba is getting so good on the leash!', 'Same time tomorrow?', 'I started a dog-photo account. Simba is the star.']) + '”', 'good');
+        burstAt('heart', posOf('simba')[0], 45, 8);
+      } },
+    { room: 'dehors', id: 'agility', name: 'Agility practice', desc: 'Get ready for the dog show.', tag: 'simba', dur: 30, mini: 'fetch',
+      verb: 'Jump, run, fetch!', walk: true, show: (s) => chapterN(s) === 4,
+      avail: (s) => outside(s),
+      run: (s, r) => { s.story.flags.practice = (s.story.flags.practice || 0) + 1; s.simba.bonheur += 8 + 10 * (r ? r.score : 0.6); s.simba.pipi = 100; weigh(s, -0.06); note(`Practice ${s.story.flags.practice}/3 done!`, 'good'); } },
+    { room: 'cuisine', id: 'medicine', name: 'Give medicine', desc: 'Morning (before noon) and evening (after 5 PM).', tag: 'simba', dur: 3,
+      verb: 'Hiding the pill in a bit of cheese…', sfx: 'pop', show: (s) => s.pet.sick && storyFlag(s, 'vet_seen'),
+      task: (s) => ((s.time < 12 * 60 && !s.today.medAM) || (s.time >= 17 * 60 && !s.today.medPM) ? 'medicine' : null),
+      avail: (s) => (s.time < 12 * 60 ? (s.today.medAM ? 'Morning dose done. Next one after 5 PM.' : true) : s.time >= 17 * 60 ? (s.today.medPM ? 'Evening dose done. See you tomorrow!' : true) : 'Next dose after 5 PM.'),
+      run: (s) => { if (s.time < 12 * 60) s.today.medAM = true; else s.today.medPM = true; s.pet.meds++; s.simba.bonheur += 3; note(`Medicine ${s.pet.meds}/6 · Simba gobbled the cheese.`); storyEvent('medicine'); } },
   ];
 
   function friendEvent(s) {
@@ -393,7 +468,7 @@
     return h < 11 ? 'Breakfast' : h < 15 ? 'Lunch' : h < 18 ? 'Snack' : 'Dinner';
   }
   const val = (x, s) => (typeof x === 'function' ? x(s) : x);
-  const visibleActions = (room) => ACTIONS.filter((a) => a.room === room && (!a.needs || has(a.needs)));
+  const visibleActions = (room) => ACTIONS.filter((a) => a.room === room && (!a.needs || has(a.needs)) && (!a.show || a.show(S)));
 
   /* ------------------------------------------------------------------ */
   /* Rooms & scenery                                                      */
@@ -703,13 +778,16 @@
     nena.style.left = pos.nena[0] + '%'; nena.style.bottom = pos.nena[1] + '%';
     simba.style.left = pos.simba[0] + '%'; simba.style.bottom = pos.simba[1] + '%';
     nena.classList.toggle('sad', S.nena.moral < 30);
-    simba.classList.toggle('happy', S.simba.bonheur >= 60);
+    simba.classList.toggle('happy', S.simba.bonheur >= 60 && !S.pet.sick);
+    simba.classList.toggle('sick', S.pet.sick);
 
     const d = S.simba;
     const dogNeeds = [[d.pipi, 'Walkies! 🌳'], [d.eau, 'Thirsty… 💧'], [d.ventre, 'Hungry! 🍖'], [d.bonheur, 'Play with me 🎾'], [d.pelage, 'Brush me ✨']]
       .filter(([v]) => v < 30).sort((x, y) => x[0] - y[0]);
     const sb = $('simba-bubble');
     if (busy) sb.hidden = true;
+    else if (beh.bubble) { sb.hidden = false; sb.textContent = beh.bubble; }
+    else if (S.pet.sick) { sb.hidden = false; sb.textContent = 'I don’t feel well 🤒'; }
     else if (S.muddy) { sb.hidden = false; sb.textContent = 'All muddy 🛁'; }
     else if (dogNeeds.length) { sb.hidden = false; sb.textContent = dogNeeds[0][1]; }
     else sb.hidden = true;
@@ -728,6 +806,7 @@
   function isTodo(a) {
     const id = val(a.task, S);
     if (!id) return false;
+    if (id === 'medicine') return true;
     const t = S.today.tasks.find((x) => x.id === id);
     if (!t) return false;
     if (TASKS[id].check) return !TASKS[id].check(S) && S.maison.vaisselle > 0;
@@ -755,7 +834,7 @@
       const tagTxt = { nena: 'Nena', simba: 'Simba', maison: 'Home' }[a.tag];
       return `<button type="button" class="action${ok !== true ? ' locked' : ''}${todo ? ' todo' : ''}" data-action="${a.id}" ${busy ? 'disabled' : ''}>
         <span class="a-top"><span class="a-name">${val(a.name, S)}</span><span class="a-dur">${a.dur ? durTxt(a.dur) : ''}</span></span>
-        <span class="a-desc">${ok === true ? a.desc : ok}</span>
+        <span class="a-desc">${ok === true ? val(a.desc, S) : ok}</span>
         <span class="a-tags"><span class="a-tag ${a.tag}">${tagTxt}</span>${a.mini ? '<span class="a-tag play">Mini-game</span>' : ''}${todo ? '<span class="a-tag todo">To do</span>' : ''}</span>
       </button>`;
     }).join('');
@@ -769,6 +848,7 @@
   }
 
   function render() {
+    renderQuest();
     renderHud(); renderGauges(); renderScene(); renderRooms(); renderActions(); renderFab();
     $('room-label').textContent = ROOMS[S.room].name;
     if (sheet.open) renderSheet();
@@ -779,7 +859,7 @@
   /* Sheets (list, needs, shop, achievements, menu)                  */
   /* ------------------------------------------------------------------ */
   const sheet = { open: false, view: 'tasks', shopCat: 'tenues' };
-  const MENU_TABS = [['tasks', 'Today'], ['needs', 'Needs'], ['shop', 'Shop'], ['achv', 'Achievements'], ['menu', 'Settings']];
+  const MENU_TABS = [['story', 'Story'], ['tasks', 'Today'], ['simba', 'Simba'], ['needs', 'Needs'], ['shop', 'Shop'], ['achv', 'Awards'], ['menu', 'Settings']];
   function openSheet(view) {
     sheet.open = true; sheet.view = view;
     $('sheet-wrap').hidden = false;
@@ -791,13 +871,15 @@
 
   function renderSheet() {
     const v = sheet.view;
-    $('sheet-title').textContent = { tasks: 'Today’s list', needs: 'Needs', shop: 'Shop', achv: 'Achievements', menu: 'Settings' }[v];
+    $('sheet-title').textContent = { story: 'Story', simba: 'Simba', tasks: 'Today’s list', needs: 'Needs', shop: 'Shop', achv: 'Achievements', menu: 'Settings' }[v];
     $('sheet-tabs').innerHTML = MENU_TABS.map(([id, l]) => `<button type="button" class="stab" role="tab" data-view="${id}" aria-selected="${v === id}">${l}</button>`).join('');
     const body = $('sheet-body');
     if (v === 'tasks') body.innerHTML = sheetTasks();
     else if (v === 'needs') body.innerHTML = sheetNeeds();
     else if (v === 'shop') body.innerHTML = sheetShop();
     else if (v === 'achv') body.innerHTML = sheetAchv();
+    else if (v === 'story') body.innerHTML = sheetStory();
+    else if (v === 'simba') body.innerHTML = sheetSimba();
     else body.innerHTML = sheetMenu();
   }
   function sheetTasks() {
@@ -934,13 +1016,13 @@
   }
   let soundFx = true;
   const origPlay = window.Sound ? window.Sound.play : null;
-  if (window.Sound) window.Sound.play = (n) => { if (soundFx) origPlay(n); };
+  if (window.Sound) window.Sound.play = (n, arg) => { if (soundFx) origPlay(n, arg); };
 
   /* ------------------------------------------------------------------ */
   /* Running an action                                                */
   /* ------------------------------------------------------------------ */
   function doAction(id) {
-    if (busy || modalOpen) return;
+    if (busy || modalOpen || storyActive()) return;
     const a = ACTIONS.find((x) => x.id === id);
     if (!a) return;
     const ok = availOf(a);
@@ -951,7 +1033,7 @@
     if (a.mini && window.MiniGames) {
       busy = true;
       window.MiniGames.start(a.mini, {
-        collar: S.collar, outfit: S.outfit,
+        collar: S.collar, outfit: S.outfit, trick: nextTrick(S), stubborn: S.pet.stubborn,
         rain: S.today.weather === 'pluie', snow: S.today.weather === 'neige',
         onEnd: (res) => {
           busy = false;
@@ -995,17 +1077,30 @@
     }
     requestAnimationFrame(frame);
   }
-  function after() { clampAll(); checkAchievements(); render(); save(); }
+  function after() { clampAll(); checkAchievements(); render(); save(); if (!busy && !modalOpen) storyCheck(); }
+  const storyActive = () => !!(window.Story && window.Story.active());
+  const storyCheck = () => window.Story && window.Story.check();
+  const storyEvent = (n) => setTimeout(() => window.Story && window.Story.event(n), 50);
+  const storyLater = (id) => setTimeout(() => window.Story && window.Story.play(id), 50);
 
   /* ------------------------------------------------------------------ */
   /* Direct interactions                                               */
   /* ------------------------------------------------------------------ */
   let petCool = 0;
   function petSimba() {
-    if (busy || modalOpen) return;
+    if (busy || modalOpen || storyActive()) return;
     const now = performance.now();
     if (now - petCool < 450) return;
     petCool = now;
+    if (behTap()) return;
+    const known = learned(S);
+    if (known.length && rnd() < 0.3 && !S.pet.sick) {
+      const t = pick(known);
+      startBeh('trick', `*${TRICK_NAMES[t]}!*`, 2200, t === 'spin' ? 'spin' : t === 'playdead' ? 'belly' : 'trickhop');
+      snd('happy'); burstAt('spark', posOf('simba')[0], 45, 5);
+      S.counters.pets++; checkAchievements();
+      return;
+    }
     const el = $('simba');
     el.classList.remove('petted'); void el.offsetWidth; el.classList.add('petted');
     setTimeout(() => el.classList.remove('petted'), 600);
@@ -1040,7 +1135,7 @@
   /* End of day                                                         */
   /* ------------------------------------------------------------------ */
   function endDay(collapsed) {
-    if (modalOpen) return;
+    if (modalOpen || storyActive()) return;
     const ts = S.today.tasks, done = ts.filter(taskDone);
     const ratio = done.length / ts.length;
     let stars = ratio >= 0.9 ? 3 : ratio >= 0.65 ? 2 : ratio >= 0.35 ? 1 : 0;
@@ -1154,17 +1249,160 @@
         counters: Object.assign(base.counters, data.counters),
         best: Object.assign(base.best, data.best),
         settings: Object.assign(base.settings, data.settings),
+        story: data.story ? Object.assign(base.story, data.story, { rel: Object.assign(base.story.rel, data.story.rel), flags: data.story.flags || {} })
+          : Object.assign(base.story, { base: data.day - 1 }),
+        pet: data.pet ? Object.assign(base.pet, data.pet, { tricks: Object.assign(base.pet.tricks, data.pet.tricks) }) : base.pet,
+        album: data.album || [],
+        today: Object.assign({ trains: 0, medAM: false, medPM: false, miaWalk: false }, data.today),
       });
     } catch (e) { return null; }
   }
+
+
+  /* ------------------------------------------------------------------ */
+  /* Simba's spontaneous behaviors                                       */
+  /* ------------------------------------------------------------------ */
+  const beh = { state: null, bubble: '', until: 0, next: Date.now() + 8000, cls: '' };
+  function startBeh(state, bubble, ms, cls) {
+    endBeh(true);
+    beh.state = state; beh.bubble = bubble; beh.until = Date.now() + ms; beh.cls = cls || '';
+    if (beh.cls) $('simba').classList.add(beh.cls);
+    renderScene();
+  }
+  function endBeh(silent) {
+    if (!beh.state) return;
+    const was = beh.state;
+    if (beh.cls) $('simba').classList.remove(beh.cls);
+    beh.state = null; beh.bubble = ''; beh.cls = '';
+    if (!silent) {
+      if (was === 'sock') { S.nena.moral = clamp(S.nena.moral - 2); toast('Simba hid your sock somewhere. It’s gone forever.'); }
+      renderScene();
+    }
+  }
+  function behTap() {
+    if (!beh.state) return false;
+    const st = beh.state;
+    if (st === 'sock') { S.simba.bonheur = clamp(S.simba.bonheur + 4); S.nena.moral = clamp(S.nena.moral + 3); toast('You got your sock back… slightly damp.', 'good'); snd('happy'); }
+    else if (st === 'belly') { S.simba.bonheur = clamp(S.simba.bonheur + 6); toast('Belly rubs! Simba melts into a puddle of fluff.', 'good'); burstAt('heart', posOf('simba')[0], 50, 8); snd('happy'); }
+    else if (st === 'ball') { S.simba.bonheur = clamp(S.simba.bonheur + 5); S.pet.plays++; toast('You toss the ball. Simba brings it back… eventually.', 'good'); snd('bark'); }
+    else if (st === 'nap') { toast('Simba opens one eye, sighs, and goes back to sleep.'); snd('yawn'); }
+    else if (st === 'whine') { S.simba.bonheur = clamp(S.simba.bonheur + 3); toast('You stroke his head. He leans into your hand.', 'good'); }
+    else return false;
+    S.counters.pets++;
+    endBeh(true); renderScene(); renderGauges(); checkAchievements();
+    return true;
+  }
+  function moveSimba(pct) {
+    const el = $('simba');
+    el.classList.add('walking'); el.style.left = pct + '%';
+    setTimeout(() => el.classList.remove('walking'), 900);
+  }
+  function simbaTick() {
+    if (busy || modalOpen || storyActive() || sheet.open || (window.MiniGames && window.MiniGames.active) || !$('coach').hidden || document.hidden) return;
+    const now = Date.now();
+    if (beh.state && now > beh.until) endBeh();
+    if (beh.state || now < beh.next) return;
+    beh.next = now + 9000 + rnd() * 10000;
+    const d = S.simba, night = nightLevel(S.time) > 0.4;
+    const opts = [];
+    if (S.pet.sick) { opts.push(['nap', 4], ['whine', 2]); }
+    else {
+      opts.push(['wander', 4], ['nap', night ? 5 : 1.5], ['belly', d.bonheur > 50 ? 2 : 0.5], ['scratch', d.pelage < 50 ? 3 : 1], ['follow', 2]);
+      if (S.room !== 'dehors') opts.push(['sock', 1.2], ['ball', d.bonheur < 70 ? 2.5 : 1]);
+      if (d.bonheur > 75) opts.push(['zoomies', 2]);
+      if (learned(S).length) opts.push(['trick', 1.5]);
+    }
+    let tot = opts.reduce((a, o) => a + o[1], 0), r = rnd() * tot, pickB = opts[0][0];
+    for (const [k, w] of opts) { r -= w; if (r <= 0) { pickB = k; break; } }
+    const nx = posOf('nena')[0];
+    if (pickB === 'wander') { let x; do { x = 18 + rnd() * 64; } while (Math.abs(x - nx) < 14); moveSimba(x); }
+    else if (pickB === 'follow') { moveSimba(Math.max(14, Math.min(86, nx + (nx > 50 ? -16 : 16)))); }
+    else if (pickB === 'nap') { startBeh('nap', 'Zzz…', 10000, 'asleep'); }
+    else if (pickB === 'whine') { startBeh('whine', '*soft whine*', 6000, ''); }
+    else if (pickB === 'belly') { startBeh('belly', 'Belly rubs? 🐾', 7000, 'belly'); }
+    else if (pickB === 'scratch') { startBeh('scratch', '*scratch scratch*', 2200, 'scratch'); }
+    else if (pickB === 'sock') { startBeh('sock', 'Stole a sock! 🧦', 9000, 'trickhop'); snd('bark'); }
+    else if (pickB === 'ball') { startBeh('ball', 'Play? 🎾', 8000, ''); }
+    else if (pickB === 'zoomies') { startBeh('zoomies', 'ZOOMIES!', 2600, 'zoomies'); snd('bark'); }
+    else if (pickB === 'trick') { const t = pick(learned(S)); startBeh('trick', `*shows off ${TRICK_NAMES[t]}*`, 2400, t === 'spin' ? 'spin' : 'trickhop'); }
+  }
+  setInterval(simbaTick, 1000);
+
+  /* ------------------------------------------------------------------ */
+  /* Story banner and sheets                                             */
+  /* ------------------------------------------------------------------ */
+  function renderQuest() {
+    const q = $('quest');
+    if (!q || !window.Story) return;
+    const ch = window.Story.chapterOf(S);
+    if (!ch) {
+      $('q-ch').textContent = S.story.ended ? '★' : '—';
+      $('q-txt').textContent = S.story.ended ? 'Season 1 complete · free play' : 'Free play';
+      $('q-prog').textContent = '';
+      return;
+    }
+    const goals = ch.goals, done = goals.filter((g) => g.check(S));
+    const next = goals.find((g) => !g.check(S));
+    const left = ch.days[1] - window.Story.sday(S);
+    $('q-ch').textContent = 'Ch. ' + ch.n;
+    $('q-txt').textContent = next ? next.label + (next.prog ? ' · ' + next.prog(S) : '') : 'All goals ready!';
+    $('q-prog').textContent = left > 0 ? `${left}d left` : 'Today!';
+  }
+  const hearts = (n) => { const h = Math.round((n || 0) / 2); return '♥'.repeat(h) + '♡'.repeat(5 - h); };
+  function sheetStory() {
+    const ch = window.Story.chapterOf(S);
+    const relRow = (who, label) => `<div class="rel"><div class="rel-face">${window.Art.portrait(who, 'happy')}</div><div><b>${label}</b><span class="hearts">${hearts(S.story.rel[who])}</span></div></div>`;
+    let head;
+    if (ch) {
+      const d = window.Story.sday(S) - ch.days[0] + 1;
+      head = `<p class="ch-eyebrow">Chapter ${ch.n} · day ${d} of 7</p><h3 class="ch-title">${ch.title}</h3><p>${ch.blurb}</p>
+        <ul class="tasks">${ch.goals.map((g) => { const ok = g.check(S); return `<li class="task${ok ? ' done' : ''}"><span class="box">${ok ? '✓' : ''}</span><span class="t-label">${g.label}${g.live ? ' <small>(checked on the day)</small>' : ''}</span><span class="t-count">${g.prog ? g.prog(S) : ''}</span></li>`; }).join('')}</ul>`;
+    } else {
+      head = S.story.ended ? `<h3 class="ch-title">Season 1 complete</h3><p>Thank you for taking such good care of Simba. Life goes on in free play: keep collecting memories and achievements!</p>` : '<p>Free play.</p>';
+    }
+    const known = S.story.flags.met_mia;
+    return head + `<h3>Friends</h3><div class="rels">
+      ${known ? relRow('mia', 'Mia & Biscuit') : '<div class="rel locked">??? <small>Walk Simba to meet the neighbors</small></div>'}
+      ${relRow('grandma', 'Grandma Rose')}
+      ${S.story.flags.vet_seen || (S.story.rel.lee || 0) > 0 ? relRow('lee', 'Dr. Lee') : ''}
+      ${(S.story.rel.sam || 0) > 0 || window.Story.sday(S) >= 10 ? relRow('sam', 'Sam (boss)') : ''}
+    </div>`;
+  }
+  function sheetSimba() {
+    const p = S.pet;
+    const w = p.weight;
+    const wTxt = w > 26 ? 'a bit chubby' : w < 20 ? 'a bit thin' : 'ideal';
+    const playful = clamp(20 + p.plays * 6), cuddly = clamp(20 + p.cuddles * 5 + S.counters.pets * 0.4);
+    const obedient = clamp(TRICKS.reduce((a, t) => a + p.tricks[t], 0) / 5), stubborn = p.stubborn;
+    const top = [['a playful goofball', playful], ['a big cuddle bug', cuddly], ['a clever student', obedient], ['a proud, stubborn lion', stubborn]].sort((a, b) => b[1] - a[1])[0][0];
+    const bar = (label, v) => `<div class="need"><span></span><span class="need-name">${label}</span><div class="need-bar"><div class="need-fill" style="width:${Math.round(v)}%;background:var(--amber)"></div></div><span class="need-val">${Math.round(v)}</span></div>`;
+    return `<div class="profile"><div class="profile-pic">${window.Art.simba({ collar: S.collar, eyes: 'open', tongue: true })}</div>
+        <div><h3 class="ch-title">Simba</h3><p>Chow chow · ${p.age} year${p.age > 1 ? 's' : ''} old<br>${w.toFixed(1)} kg (${wTxt}) · ${p.sick ? '🤒 sick' : '💪 healthy'}</p></div></div>
+      <p class="tip">Simba is ${top}.</p>
+      <h3>Personality</h3>${bar('Playful', playful)}${bar('Cuddly', cuddly)}${bar('Obedient', obedient)}${bar('Stubborn', stubborn)}
+      <h3>Tricks</h3>${TRICKS.map((t) => bar(TRICK_NAMES[t] + (p.tricks[t] >= 100 ? ' ✓' : ''), p.tricks[t])).join('')}
+      <h3>Memories · ${S.album.length}</h3>
+      ${S.album.length ? `<div class="album">${S.album.slice().reverse().map((m) => `<div class="memory"><span class="mem-ico">${m.icon}</span><b>${m.title}</b><small>Day ${m.day} · ${m.text}</small></div>`).join('')}</div>` : '<p>No memories yet. They appear as you live your story together.</p>'}`;
+  }
+
+  window.Game = {
+    get S() { return S; },
+    note, toast, after, memory,
+    snd: (n, a) => snd(n, a),
+    money: (n) => { S.money += n; moneyFx(n); },
+    pauseFx: () => {},
+    blocked: () => busy || modalOpen || (window.MiniGames && window.MiniGames.active) || !$('coach').hidden,
+    trickName: (k) => TRICK_NAMES[k],
+  };
 
   /* ------------------------------------------------------------------ */
   /* Real-time loop: 1 s = 1 game minute (×3 when fast)                  */
   /* ------------------------------------------------------------------ */
   let lastFull = 0;
   setInterval(() => {
-    if (modalOpen || busy || !S.speed || sheet.open || !$('coach').hidden || document.hidden) return;
+    if (modalOpen || busy || !S.speed || sheet.open || !$('coach').hidden || document.hidden || storyActive()) return;
     if (!advance(S.speed)) return;
+    if (storyCheck()) return;
     clampAll();
     renderHud(); renderGauges(); renderFab(); flushToasts();
     if (S.time - lastFull >= 5 || S.time < lastFull) {
@@ -1195,6 +1433,7 @@
     const b = e.target.closest('[data-room]');
     if (!b || busy || modalOpen || S.room === b.dataset.room) return;
     S.room = b.dataset.room;
+    endBeh(true);
     snd('tab'); buzz(6);
     ['nena', 'simba'].forEach((id) => { $(id).classList.add('walking'); setTimeout(() => $(id).classList.remove('walking'), 900); });
     const lbl = $('room-label'); lbl.classList.remove('enter'); void lbl.offsetWidth; lbl.classList.add('enter');
@@ -1207,6 +1446,7 @@
   $('nena').addEventListener('click', talkNena);
   $('btn-speed').addEventListener('click', () => { S.speed = S.speed === 0 ? 1 : S.speed === 1 ? 3 : 0; snd('click'); renderHud(); save(); });
   $('btn-menu').addEventListener('click', () => openSheet('menu'));
+  $('quest').addEventListener('click', () => openSheet('story'));
   $('btn-tasks').addEventListener('click', () => openSheet('tasks'));
   $('btn-tasks-top').addEventListener('click', () => openSheet('tasks'));
   $('gauges').addEventListener('click', () => { if (coach.step === 1) { nextCoach(); return; } openSheet('needs'); });
@@ -1226,9 +1466,12 @@
     $('title-screen').hidden = true;
     modalOpen = false;
     if (S.pendingNight) { render(); showNight(S.pendingNight); return; }
-    if (fresh) note('Welcome! Simba is waiting for his breakfast and morning walk.');
     render();
-    if (!S.tutorialDone) setTimeout(startCoach, 600);
+    setTimeout(() => {
+      storyCheck();
+      const waitCoach = () => { if (storyActive()) setTimeout(waitCoach, 500); else if (!S.tutorialDone) startCoach(); };
+      waitCoach();
+    }, 400);
   }
   function showTitle() {
     modalOpen = true;

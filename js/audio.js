@@ -93,12 +93,13 @@ window.Sound = (function () {
     brush() { const t = ctx.currentTime; noise(t, 0.12, 4200, 3, 0.12); },
     swoosh() { const t = ctx.currentTime; noise(t, 0.3, 1200, 0.7, 0.16); },
     splash() { const t = ctx.currentTime; noise(t, 0.4, 600, 0.9, 0.3); },
+    talk(pitch) { const t = ctx.currentTime; note((pitch || 520) * (0.9 + Math.random() * 0.25), t, 0.05, { type: 'triangle', vol: 0.05 }); },
     yawn() { const t = ctx.currentTime; note(420, t, 0.9, { type: 'sine', vol: 0.08, slide: 0.55, attack: 0.2 }); },
   };
 
-  function play(name) {
+  function play(name, arg) {
     if (!ctx || !enabled || !fx[name]) return;
-    try { fx[name](); } catch (e) { /* audio unavailable */ }
+    try { fx[name](arg); } catch (e) { /* audio unavailable */ }
   }
   function setEnabled(v) { enabled = v; if (master) master.gain.setTargetAtTime(v ? 0.9 : 0, ctx.currentTime, 0.05); }
   function setMusic(v) { musicOn = v; if (music) music.gain.setTargetAtTime(v ? 0.16 : 0, ctx.currentTime, 0.3); }

@@ -9,6 +9,9 @@ Plain HTML/CSS/JS, no dependencies, no build step.
 - On a phone: "Add to Home Screen" (Android: in-game Settings → Install the app; iPhone: Safari → Share → Add to Home Screen).
 
 ## Features
+- Story mode: 4 chapters over 4 weeks (Grandma's visit, Simba's birthday, Simba gets sick, the dog show) with an ending, branching dialogue and goals.
+- Characters: Mia & Biscuit the shiba, Grandma Rose, Dr. Lee, Sam, with friendship hearts.
+- A living Simba: 5 tricks to teach (marker-training mini-game), personality, weight and health, spontaneous behaviors (naps, belly-up, stolen socks, zoomies…), memory album.
 - 5 rooms (Bedroom, Bath, Kitchen, Living, Outside), a real-time clock (pause / ×1 / ×3), weekdays and weekends.
 - Nena's needs (food, energy, hygiene, mood), Simba's needs (food, water, potty, coat, joy), home tidiness.
 - 3 touch mini-games: coat brushing, "Fetch!", and a 3-lane walk.
@@ -19,5 +22,5 @@ Plain HTML/CSS/JS, no dependencies, no build step.
 - Autosave in the browser.
 
 ## Files
-`index.html`, `style.css`, `js/art.js` (SVG characters), `js/audio.js`, `js/minigames.js`, `js/game.js`,
+`index.html`, `style.css`, `js/art.js` (SVG characters), `js/audio.js`, `js/minigames.js`, `js/story.js` (chapters and dialogue), `js/game.js`,
 `manifest.webmanifest`, `sw.js` (offline), `icons/`, `assets/`.

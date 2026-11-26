@@ -308,7 +308,86 @@ window.MiniGames = (function () {
     },
   };
 
-  const GAMES = { brush, fetch: fetchGame, walk };
+
+  /* -------------------------------------------------------------- */
+  /* 4. Training: reward at the exact moment (marker training)       */
+  /* -------------------------------------------------------------- */
+  const TRICK_TEXT = { sit: 'Sit!', paw: 'Paw!', down: 'Down!', spin: 'Spin!', playdead: 'Play dead!' };
+  const train = {
+    title: 'Training',
+    hint: 'Say the command, then tap at the exact moment the rings meet to reward Simba with a treat.',
+    duration: 0,
+    init() {
+      this.round = 0; this.max = 6; this.hits = 0; this.perfect = 0;
+      this.trick = this.opts.trick || 'sit';
+      this.stub = this.opts.stubborn || 50;
+      this.newRound();
+      this.msg = ''; this.msgT = 0; this.treat = null; this.done = false;
+    },
+    newRound() {
+      this.r = 1; // shrinking ring progress 1 -> 0
+      this.speed = (0.45 + this.round * 0.06) * (0.85 + this.stub / 250);
+      this.wait = 0.5 + Math.random() * 0.6;
+      this.state = 'wait';
+      this.target = 0.32 + Math.random() * 0.12;
+      this.hop = 0;
+    },
+    pointer(kind) {
+      if (kind !== 'down' || this.state !== 'shrink') return;
+      const d = Math.abs(this.r - this.target);
+      let msg = 'Too early!', good = false;
+      if (this.r < this.target - 0.05) msg = 'Too late!';
+      if (d < 0.025) { msg = 'PERFECT timing!'; this.perfect++; this.hits++; good = true; snd('fanfare'); buzz([15, 30, 15]); }
+      else if (d < 0.06) { msg = 'Good boy!'; this.hits++; good = true; snd('happy'); buzz(12); }
+      else { snd('fail'); }
+      if (good) { this.treat = { t: 0 }; this.hop = 1; snd('bark'); }
+      this.msg = msg; this.msgT = 1.1; this.state = 'result'; this.resT = 0;
+    },
+    update(dt) {
+      this.msgT -= dt; this.hop = Math.max(0, this.hop - dt * 2.2);
+      if (this.treat) { this.treat.t += dt * 1.6; if (this.treat.t > 1) this.treat = null; }
+      if (this.state === 'wait') { this.wait -= dt; if (this.wait <= 0) this.state = 'shrink'; }
+      else if (this.state === 'shrink') {
+        this.r -= this.speed * dt;
+        if (this.r <= 0.12) { this.msg = 'Missed the moment…'; this.msgT = 1.1; this.state = 'result'; this.resT = 0; snd('fail'); }
+      } else if (this.state === 'result') {
+        this.resT += dt;
+        if (this.resT > 1.15) { this.round++; if (this.round >= this.max) { this.done = true; this.state = 'end'; } else this.newRound(); }
+      }
+    },
+    draw() {
+      const g = cx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#ead4d8'); g.addColorStop(1, '#e0c3c8');
+      cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+      cx.fillStyle = '#a8774f'; cx.fillRect(0, H * 0.78, W, H * 0.22);
+      cx.fillStyle = '#e6c38d'; cx.beginPath(); cx.ellipse(W / 2, H * 0.86, W * 0.38, 22, 0, 0, Math.PI * 2); cx.fill();
+      const cxm = W / 2, cym = H * 0.55, R = Math.min(W, H) * 0.42;
+      const sw = Math.min(W * 0.62, 300);
+      const lean = this.state === 'shrink' ? (1 - this.r) : 0;
+      drawImg(this.hop > 0 ? imgs.simbaHappy : imgs.simba, cxm, H * 0.84 - Math.sin(this.hop * Math.PI) * 30 + lean * 8, sw * (1 - lean * 0.06));
+      if (this.state === 'shrink' || this.state === 'wait') {
+        cx.lineWidth = 6; cx.strokeStyle = 'rgba(95,154,87,.9)';
+        cx.beginPath(); cx.arc(cxm, cym, R * this.target, 0, Math.PI * 2); cx.stroke();
+        cx.lineWidth = 3; cx.strokeStyle = 'rgba(95,154,87,.35)';
+        cx.beginPath(); cx.arc(cxm, cym, R * (this.target + 0.025), 0, Math.PI * 2); cx.stroke();
+        cx.beginPath(); cx.arc(cxm, cym, R * Math.max(0, this.target - 0.025), 0, Math.PI * 2); cx.stroke();
+        if (this.state === 'shrink') { cx.lineWidth = 5; cx.strokeStyle = '#c9496f'; cx.beginPath(); cx.arc(cxm, cym, R * this.r, 0, Math.PI * 2); cx.stroke(); }
+      }
+      if (this.treat) {
+        const t = this.treat.t, bx = W * 0.12 + (cxm - W * 0.12) * t, by = H * 0.2 + Math.sin(t * Math.PI) * -60 + t * (H * 0.45);
+        cx.fillStyle = '#fff3dc'; cx.strokeStyle = '#c9a27a'; cx.lineWidth = 2;
+        cx.beginPath(); cx.arc(bx, by, 9, 0, Math.PI * 2); cx.fill(); cx.stroke();
+      }
+      text(TRICK_TEXT[this.trick] || 'Sit!', cxm, H * 0.14, Math.min(44, W / 9), '#ffd36b');
+      if (this.msgT > 0) text(this.msg, cxm, H * 0.26, Math.min(28, W / 15), this.msg.startsWith('PERFECT') ? '#ffd36b' : '#fff');
+      text(`Rep ${Math.min(this.round + 1, this.max)} / ${this.max} · ${this.hits} treats`, cxm, H - 16, 20, '#fff');
+    },
+    finished() { return this.done; },
+    progress() { return `${Math.min(this.round + 1, this.max)}/${this.max}`; },
+    result() { return { score: clamp((this.hits + this.perfect * 0.5) / (this.max * 1.25), 0, 1), label: `${this.hits} good reps · ${this.perfect} perfect` }; },
+  };
+
+  const GAMES = { brush, fetch: fetchGame, walk, train };
 
   /* -------------------------------------------------------------- */
   /* Loop and UI                                                      */
@@ -389,7 +468,7 @@ window.MiniGames = (function () {
     window.addEventListener('keydown', (e) => {
       if (phase !== 'play' || !game) return;
       if (game.key) game.key(e.key);
-      if (e.key === ' ' && game === fetchGame) { e.preventDefault(); game.pointer('down'); }
+      if (e.key === ' ' && (game === fetchGame || game === train)) { e.preventDefault(); game.pointer('down'); }
     });
     window.addEventListener('resize', () => { if (phase !== 'off' && cv) resize(); });
     $('mg-skip').addEventListener('click', () => { if (phase === 'off') return; finish({ score: 0.6, skipped: true, label: 'Nena handles it without the mini-game.' }); });
