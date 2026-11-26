@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nena &amp; Simba</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app" id="app">
+
+  <header class="hud">
+    <div class="brand">
+      <span class="brand-name">Nena <em>&amp;</em> Simba</span>
+    </div>
+    <div class="hud-stats">
+      <div class="chip" title="Jour"><span class="chip-label">Jour</span><b id="hud-day">1</b></div>
+      <div class="chip chip-clock" title="Heure"><span class="chip-label" id="hud-period">Matin</span><b id="hud-time">07:00</b></div>
+      <div class="chip" title="Argent"><span class="chip-label">Porte-monnaie</span><b id="hud-money">60 €</b></div>
+      <div class="chip" title="Portions de croquettes"><span class="chip-label">Croquettes</span><b id="hud-kibble">6</b></div>
+      <div class="chip" title="Repas dans le frigo"><span class="chip-label">Frigo</span><b id="hud-food">4</b></div>
+    </div>
+    <div class="speed" role="group" aria-label="Vitesse du temps">
+      <button id="spd-0" class="spd" type="button" aria-label="Pause">❚❚</button>
+      <button id="spd-1" class="spd" type="button" aria-label="Vitesse normale">▶</button>
+      <button id="spd-3" class="spd" type="button" aria-label="Vitesse rapide">▶▶</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="stage-col">
+      <div class="scene" id="scene">
+        <svg id="scene-bg" class="scene-bg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMax slice" aria-hidden="true"></svg>
+        <div class="night-veil" id="night-veil"></div>
+
+        <div class="actor nena" id="nena">
+          <div class="bubble" id="nena-bubble" hidden></div>
+          <svg viewBox="0 0 120 210" class="sprite" aria-label="Nena">
+            <g class="nena-hair-back">
+              <circle cx="60" cy="52" r="40" fill="#7a3f22"/>
+              <circle cx="26" cy="70" r="20" fill="#7a3f22"/>
+              <circle cx="94" cy="70" r="20" fill="#7a3f22"/>
+              <circle cx="22" cy="96" r="16" fill="#6b351c"/>
+              <circle cx="98" cy="96" r="16" fill="#6b351c"/>
+              <circle cx="30" cy="116" r="12" fill="#6b351c"/>
+              <circle cx="90" cy="116" r="12" fill="#6b351c"/>
+            </g>
+            <!-- corps -->
+            <g class="outfit-pyjama">
+              <rect x="34" y="112" width="52" height="62" rx="20" fill="#f19bb8"/>
+              <rect x="38" y="166" width="18" height="34" rx="8" fill="#e98aab"/>
+              <rect x="64" y="166" width="18" height="34" rx="8" fill="#e98aab"/>
+              <path d="M50 114 L60 128 L70 114" fill="none" stroke="#b5476d" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="60" cy="140" r="2.2" fill="#b5476d"/><circle cx="60" cy="152" r="2.2" fill="#b5476d"/>
+            </g>
+            <g class="outfit-day">
+              <rect x="34" y="112" width="52" height="58" rx="20" fill="#f6d9b8"/>
+              <path d="M40 130 h40" stroke="#e98aab" stroke-width="5"/>
+              <path d="M40 142 h40" stroke="#e98aab" stroke-width="5"/>
+              <rect x="38" y="160" width="18" height="40" rx="7" fill="#4f6d9a"/>
+              <rect x="64" y="160" width="18" height="40" rx="7" fill="#4f6d9a"/>
+              <rect x="36" y="158" width="48" height="12" rx="5" fill="#4f6d9a"/>
+            </g>
+            <ellipse cx="47" cy="202" rx="11" ry="5" fill="#5a3426"/>
+            <ellipse cx="73" cy="202" rx="11" ry="5" fill="#5a3426"/>
+            <!-- bras -->
+            <g class="arms">
+              <rect class="arm-l" x="22" y="118" width="15" height="42" rx="7.5" fill="currentColor"/>
+              <rect class="arm-r" x="83" y="118" width="15" height="42" rx="7.5" fill="currentColor"/>
+              <circle cx="29.5" cy="160" r="7" fill="#f4c4a1"/>
+              <circle cx="90.5" cy="160" r="7" fill="#f4c4a1"/>
+            </g>
+            <!-- tete -->
+            <rect x="53" y="96" width="14" height="18" rx="6" fill="#efb995"/>
+            <ellipse cx="60" cy="72" rx="30" ry="32" fill="#f6caa7"/>
+            <path d="M30 66 C30 34 90 34 90 66 C82 50 70 46 60 52 C50 44 36 50 30 66Z" fill="#7a3f22"/>
+            <circle cx="34" cy="50" r="10" fill="#8a4a28"/><circle cx="50" cy="38" r="11" fill="#8a4a28"/>
+            <circle cx="70" cy="38" r="11" fill="#8a4a28"/><circle cx="86" cy="50" r="10" fill="#8a4a28"/>
+            <path d="M40 63 q6 -4 12 0" stroke="#5a2e18" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+            <path d="M68 63 q6 -4 12 0" stroke="#5a2e18" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+            <g class="eyes-open">
+              <ellipse cx="46" cy="74" rx="4.2" ry="5.2" fill="#3b2016"/>
+              <ellipse cx="74" cy="74" rx="4.2" ry="5.2" fill="#3b2016"/>
+              <circle cx="47.5" cy="72" r="1.5" fill="#fff"/><circle cx="75.5" cy="72" r="1.5" fill="#fff"/>
+            </g>
+            <g class="eyes-closed">
+              <path d="M40 75 q6 5 12 0" stroke="#3b2016" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+              <path d="M68 75 q6 5 12 0" stroke="#3b2016" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+            </g>
+            <ellipse cx="38" cy="86" rx="7" ry="4.5" fill="#f19bb0" opacity=".7"/>
+            <ellipse cx="82" cy="86" rx="7" ry="4.5" fill="#f19bb0" opacity=".7"/>
+            <g fill="#c98b6a"><circle cx="36" cy="82" r="1"/><circle cx="40" cy="84" r="1"/><circle cx="80" cy="82" r="1"/><circle cx="84" cy="84" r="1"/></g>
+            <path class="mouth" d="M53 90 q7 6 14 0" stroke="#b4535f" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <div class="actor simba" id="simba">
+          <div class="bubble" id="simba-bubble" hidden></div>
+          <svg viewBox="0 0 170 135" class="sprite" aria-label="Simba">
+            <!-- queue enroulée sur le dos, typique du chow-chow -->
+            <g class="tail">
+              <circle cx="128" cy="52" r="20" fill="#e38c30"/>
+              <circle cx="136" cy="44" r="13" fill="#f0a54a"/>
+              <circle cx="122" cy="40" r="10" fill="#f0a54a"/>
+            </g>
+            <ellipse cx="104" cy="88" rx="50" ry="34" fill="#e38c30"/>
+            <ellipse cx="104" cy="80" rx="40" ry="22" fill="#ee9f45"/>
+            <rect x="66" y="98" width="20" height="30" rx="9" fill="#de8429"/>
+            <rect x="122" y="98" width="20" height="30" rx="9" fill="#de8429"/>
+            <ellipse cx="76" cy="128" rx="12" ry="6" fill="#f0a54a"/>
+            <ellipse cx="132" cy="128" rx="12" ry="6" fill="#f0a54a"/>
+            <g class="mud" fill="#7a5a3a" opacity=".85">
+              <ellipse cx="96" cy="104" rx="10" ry="6"/><ellipse cx="128" cy="90" rx="8" ry="5"/><ellipse cx="74" cy="122" rx="7" ry="4"/>
+            </g>
+            <!-- crinière -->
+            <g class="mane" fill="#e8952f">
+              <circle cx="56" cy="34" r="16"/><circle cx="36" cy="40" r="15"/><circle cx="24" cy="58" r="15"/>
+              <circle cx="26" cy="80" r="15"/><circle cx="42" cy="96" r="16"/><circle cx="64" cy="98" r="16"/>
+              <circle cx="80" cy="84" r="16"/><circle cx="82" cy="60" r="16"/><circle cx="74" cy="40" r="15"/>
+            </g>
+            <circle cx="52" cy="66" r="31" fill="#f2a94e"/>
+            <!-- oreilles -->
+            <circle cx="30" cy="38" r="10" fill="#c96f1c"/><circle cx="30" cy="38" r="5.5" fill="#8f4e18"/>
+            <circle cx="74" cy="38" r="10" fill="#c96f1c"/><circle cx="74" cy="38" r="5.5" fill="#8f4e18"/>
+            <!-- museau -->
+            <ellipse cx="52" cy="80" rx="17" ry="12" fill="#f7c27c"/>
+            <ellipse cx="52" cy="73" rx="7" ry="5" fill="#2e2730"/>
+            <g class="dog-eyes-open">
+              <path d="M36 62 q5 -3 10 0" stroke="#2e2730" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+              <path d="M58 62 q5 -3 10 0" stroke="#2e2730" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+            </g>
+            <g class="dog-eyes-closed">
+              <path d="M36 61 q5 4 10 0" stroke="#2e2730" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <path d="M58 61 q5 4 10 0" stroke="#2e2730" stroke-width="3" fill="none" stroke-linecap="round"/>
+            </g>
+            <path d="M46 84 q6 4 12 0" stroke="#2e2730" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+            <!-- langue bleue-noire : signe distinctif du chow-chow -->
+            <path class="tongue" d="M48 86 q4 12 8 0Z" fill="#3c3a6b"/>
+          </svg>
+        </div>
+
+        <div class="busy" id="busy" hidden>
+          <div class="busy-card">
+            <p id="busy-label">Nena s'occupe…</p>
+            <div class="busy-track"><div class="busy-fill" id="busy-fill"></div></div>
+            <span id="busy-time" class="busy-time"></span>
+          </div>
+        </div>
+
+        <div class="toasts" id="toasts" aria-live="polite"></div>
+      </div>
+
+      <nav class="rooms" id="rooms" aria-label="Pièces"></nav>
+
+      <div class="actions-wrap">
+        <h2 class="panel-title" id="room-title">Chambre</h2>
+        <div class="actions" id="actions"></div>
+      </div>
+    </section>
+
+    <aside class="side-col">
+      <section class="panel">
+        <h2 class="panel-title">Besoins</h2>
+        <div class="needs">
+          <div class="needs-group">
+            <h3>Nena</h3>
+            <div id="needs-nena"></div>
+          </div>
+          <div class="needs-group">
+            <h3>Simba <small>chow-chow</small></h3>
+            <div id="needs-simba"></div>
+          </div>
+          <div class="needs-group">
+            <h3>Maison</h3>
+            <div id="needs-home"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Liste du jour</h2>
+          <span class="progress-pill" id="tasks-count">0 / 0</span>
+        </div>
+        <ul class="tasks" id="tasks"></ul>
+      </section>
+
+      <section class="panel bond">
+        <div class="panel-head">
+          <h2 class="panel-title">Complicité</h2>
+          <span class="progress-pill" id="bond-stars">0 ★</span>
+        </div>
+        <p class="bond-title" id="bond-title">Nouvelle colocation</p>
+        <div class="bond-track"><div class="bond-fill" id="bond-fill"></div></div>
+        <p class="bond-next" id="bond-next"></p>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<!-- Ecran titre -->
+<div class="modal" id="title-screen">
+  <div class="modal-card title-card">
+    <img src="assets/nena-simba.jpg" alt="Nena et Simba endormis, blottis sous la couette" class="cover">
+    <div class="title-body">
+      <h1>Nena <em>&amp;</em> Simba</h1>
+      <p class="tagline">Une vie à deux, une patte à la fois.</p>
+      <p>Nena vit avec Simba, son chow-chow tout roux. Chaque jour, elle doit s'occuper d'elle <b>et</b> de lui : repas, promenades, brossage de son épais pelage, travail, ménage… et beaucoup de câlins.</p>
+      <ul class="howto">
+        <li>Change de pièce, puis choisis une action. Chaque action prend du temps.</li>
+        <li>Surveille les besoins : un Simba oublié peut faire des bêtises.</li>
+        <li>Coche la liste du jour, puis va dormir avec Simba pour gagner des étoiles.</li>
+      </ul>
+      <div class="title-buttons">
+        <button type="button" class="btn btn-primary" id="btn-continue" hidden>Continuer (jour <span id="continue-day">1</span>)</button>
+        <button type="button" class="btn" id="btn-new">Nouvelle partie</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Fin de journee -->
+<div class="modal" id="night-screen" hidden>
+  <div class="modal-card night-card">
+    <img src="assets/nena-simba.jpg" alt="Nena et Simba dorment ensemble" class="cover cover-night">
+    <div class="title-body">
+      <h2 id="night-title">Bonne nuit !</h2>
+      <p id="night-sub"></p>
+      <div class="stars" id="night-stars" aria-label="Étoiles gagnées"></div>
+      <ul class="summary" id="night-list"></ul>
+      <p class="night-notes" id="night-notes"></p>
+      <div class="title-buttons">
+        <button type="button" class="btn btn-primary" id="btn-next-day">Se réveiller</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation nouvelle partie -->
+<div class="modal" id="confirm-screen" hidden>
+  <div class="modal-card confirm-card">
+    <h2>Recommencer ?</h2>
+    <p>La partie en cours sera effacée.</p>
+    <div class="title-buttons">
+      <button type="button" class="btn btn-primary" id="btn-confirm-yes">Oui, recommencer</button>
+      <button type="button" class="btn" id="btn-confirm-no">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
