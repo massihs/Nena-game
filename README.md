@@ -1,31 +1,18 @@
-# Nena & Simba
+# Nena & Simba — Busy Days
 
-A mobile web app (PWA, installable and playable offline). Tehran, a white 6-floor tower, a 4-bedroom apartment on the 5th floor:
-Nena lives with her family and Simba, her chow chow. Negin (big sister) sleeps all the time, Nasim (little sister) is always angry
-and takes Simba out whenever she wants, Baba Haj Mohsen loves having Simba on his belly and calls when the girls are out late,
-and Maman Fariba cooks and runs the house. Nena has to take care of herself and of Simba.
-Plain HTML/CSS/JS, no dependencies, no build step.
+A cozy time-management game for phones (PWA, installable, plays offline).
+Tehran, a big modern apartment on the 5th floor: Nena takes care of Simba, her chow chow, and her whole family.
 
-## Play
-- Serve the folder over HTTPS (GitHub Pages, Netlify…) or locally: `python3 -m http.server`, then open `http://localhost:8000`.
-- On a phone: "Add to Home Screen" (Android: in-game Settings → Install the app; iPhone: Safari → Share → Add to Home Screen).
+## How to play
+- Every level is a day with a timer. Requests pop up with a patience ring:
+  Simba (food, water, walk, brushing, play), Baba (tea), Maman (help in the kitchen), Nasim (talk), Negin (wake up).
+- Tap things to send Nena: she queues up to 4 actions, carries items (kibble, tea, brush, ball) and works on stations.
+- Fast chains give combos and tips. Missed requests cost hearts and make a mess (fur, puddles, dishes).
+- Reach the score goals for 1 to 3 stars, earn coins, buy upgrades (sneakers, tray, big samovar, robot vacuum…).
+- Short family scenes between days.
 
-## Features
-- Paw Path: an endless treat-sorting puzzle path (always-solvable seeded levels, hidden treats from level 12, undo / extra jar). Every 3 levels unlocks one of 10 abilities that change daily life (faster grooming, brisk walks, super sniffer…).
-- A large, modern apartment drawn in 2D: floor-to-ceiling windows in every room with a live panorama of Tehran, the Alborz and the Milad tower (sky, weather and city lights follow the clock), oak and marble floors, brass details, a Persian rug and a samovar.
-- Story mode: 4 chapters over 4 weeks (Friday family lunch, Simba's birthday, Simba gets sick, road trip to the Caspian Sea in the white 4x4) with an ending, branching dialogue and goals.
-- Family life: eat Maman's lunch and dinner, help her, let Simba nap on Baba's belly, try (and fail) to wake Negin, talk to Nasim; Nasim takes Simba out on her own; Baba calls when Nena is outside after 9 PM.
-- Characters: the family, Mia & Biscuit from the 3rd floor, Dr. Karimi (vet), Mr. Rahimi (boss), with friendship hearts. Iranian week (Saturday to Friday).
-- A living Simba: 5 tricks to teach (marker-training mini-game), personality, weight and health, spontaneous behaviors (naps, belly-up, stolen socks, zoomies…), memory album.
-- 5 rooms (Bedroom, Bath, Kitchen, Living, Outside), a real-time clock (pause / ×1 / ×3), weekdays and weekends.
-- Nena's needs (food, energy, hygiene, mood), Simba's needs (food, water, potty, coat, joy), home tidiness.
-- 3 touch mini-games: coat brushing, "Fetch!", and a 3-lane walk.
-- Daily weather (sun, clouds, rain, snow) that affects gameplay.
-- Shop: outfits for Nena, accessories for Simba, home items with lasting effects.
-- 14 achievements, a bond level, star bonuses, random events (mud, mischief, encounters).
-- Lo-fi music and sound effects generated with Web Audio, vibration, particles, a tutorial.
-- Autosave in the browser.
+## Run
+Serve the folder (`python3 -m http.server`) and open it, or install it from the browser on a phone.
 
 ## Files
-`index.html`, `style.css`, `js/art.js` (SVG characters), `js/audio.js`, `js/minigames.js`, `js/story.js` (chapters and dialogue), `js/puzzle.js` (Paw Path), `js/game.js`,
-`manifest.webmanifest`, `sw.js` (offline), `icons/`, `assets/`.
+`index.html`, `style.css`, `js/rush.js` (game), `js/art.js` (characters), `js/audio.js` (music and sounds), `manifest.webmanifest`, `sw.js`, `icons/`, `assets/`.

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Nena &amp; Simba</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Nena, her family in Tehran and Simba the chow chow. A cozy life sim for your phone.">
+<meta name="description" content="Busy days in Tehran: Nena takes care of Simba the chow chow and her whole family. A cozy time-management game.">
 <meta name="theme-color" content="#262340">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,228 +21,107 @@
 </head>
 <body>
 <div class="backdrop" aria-hidden="true"></div>
+<main class="app">
 
-<div class="app" id="app">
-  <!-- Top bar -->
-  <header class="topbar">
-    <button type="button" class="clock" id="btn-tasks-top" aria-label="Today’s list">
-      <span class="clock-day" id="hud-weekday">Monday · Day 1</span>
-      <span class="clock-time"><b id="hud-time">7:00 AM</b><span class="weather" id="hud-weather">☀️</span></span>
-    </button>
-    <div class="wallet">
-      <span class="coin" aria-hidden="true">$</span><b id="hud-money">60</b>
+  <!-- Title -->
+  <section class="screen title" id="screen-title">
+    <div class="title-art"><img src="assets/nena-simba.jpg" alt="Nena and Simba asleep, snuggled under the duvet"><div class="title-glow"></div></div>
+    <div class="title-panel">
+      <h1>Nena <em>&amp;</em> Simba</h1>
+      <p class="tagline">Busy days in Tehran</p>
+      <p class="lede">Simba is hungry, Baba wants tea, Maman needs help, Nasim is angry and Negin won’t wake up. Can Nena keep everyone happy before the day ends?</p>
+      <button type="button" class="btn btn-primary btn-big" id="btn-play">Play</button>
+      <p class="progress" id="t-progress"></p>
     </div>
-    <div class="tb-buttons">
-      <button type="button" class="icon-btn" id="btn-speed" aria-label="Time speed">▶</button>
-      <button type="button" class="icon-btn puzzle-btn" id="btn-puzzle" aria-label="Paw Path puzzles">
-        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M7 3h4v2a2 2 0 1 0 4 0V3h4v6h-2a2 2 0 1 0 0 4h2v8h-6v-2a2 2 0 1 0-4 0v2H5v-6h2a2 2 0 1 0 0-4H5V3z" fill="currentColor"/></svg>
-      </button>
-      <button type="button" class="icon-btn" id="btn-menu" aria-label="Menu">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-        <span class="badge" id="menu-badge" hidden></span>
-      </button>
-    </div>
-  </header>
-
-  <!-- Gauges -->
-  <button type="button" class="gauges" id="gauges" aria-label="See needs in detail">
-    <div class="g-group" id="g-nena"></div>
-    <div class="g-sep"></div>
-    <div class="g-group" id="g-simba"></div>
-  </button>
-
-  <!-- Story banner -->
-  <button type="button" class="quest" id="quest" aria-label="Story goals">
-    <span class="q-ch" id="q-ch">Ch. 1</span><span class="q-txt" id="q-txt">Meet your neighbor</span><span class="q-prog" id="q-prog"></span>
-  </button>
-
-  <!-- Scene -->
-  <div class="scene" id="scene">
-    <svg id="scene-bg" class="scene-bg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMax slice" aria-hidden="true"></svg>
-    <canvas id="weather-fx" class="weather-fx" aria-hidden="true"></canvas>
-    <div class="night-veil" id="night-veil"></div>
-    <div class="actor nena" id="nena"><div class="bubble" id="nena-bubble" hidden></div><div class="sprite-wrap" id="nena-sprite"></div></div>
-    <div class="actor npc" id="npc" hidden><div class="bubble" id="npc-bubble" hidden></div><div class="sprite-wrap" id="npc-sprite"></div></div>
-    <div class="actor simba" id="simba"><div class="bubble" id="simba-bubble" hidden></div><div class="sprite-wrap" id="simba-sprite"></div></div>
-    <div class="particles" id="particles" aria-hidden="true"></div>
-    <div class="room-label" id="room-label">Bedroom</div>
-    <div class="busy" id="busy" hidden>
-      <div class="busy-card">
-        <p id="busy-label">Nena is busy…</p>
-        <div class="busy-track"><div class="busy-fill" id="busy-fill"></div></div>
-        <span id="busy-time" class="busy-time"></span>
-      </div>
-    </div>
-    <div class="toasts" id="toasts" aria-live="polite"></div>
-    <button type="button" class="tasks-fab" id="btn-tasks" aria-label="Today’s list"><span id="tasks-count">0/0</span></button>
-  </div>
-
-  <!-- Actions -->
-  <section class="tray" aria-labelledby="room-title">
-    <h2 class="sr-only" id="room-title">Actions</h2>
-    <div class="actions" id="actions"></div>
   </section>
 
-  <!-- Rooms -->
-  <nav class="tabbar" id="rooms" aria-label="Rooms"></nav>
-</div>
-
-<!-- Bottom sheet (list, needs, shop, achievements, settings) -->
-<div class="sheet-wrap" id="sheet-wrap" hidden>
-  <div class="sheet-dim" id="sheet-dim"></div>
-  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-    <div class="sheet-grip" aria-hidden="true"></div>
-    <header class="sheet-head">
-      <h2 id="sheet-title">Title</h2>
-      <button type="button" class="icon-btn" id="sheet-close" aria-label="Close">✕</button>
+  <!-- Level map -->
+  <section class="screen map" id="screen-map" hidden>
+    <header class="bar">
+      <button type="button" class="icon-btn" id="m-back" aria-label="Back">‹</button>
+      <h2>Nena’s week</h2>
+      <span class="pill">★ <b id="m-stars">0</b></span>
+      <span class="pill coin">🪙 <b id="m-coins">0</b></span>
     </header>
-    <div class="sheet-tabs" id="sheet-tabs" role="tablist"></div>
-    <div class="sheet-body" id="sheet-body"></div>
+    <div class="levels" id="m-levels"></div>
+    <footer class="map-foot"><button type="button" class="btn btn-primary btn-big" id="m-shop">🛍️ Upgrades</button></footer>
   </section>
-</div>
 
-<!-- Dialogue -->
-<div class="dlg" id="dlg" hidden>
-  <div class="dlg-stage">
-    <div class="dlg-portrait" id="dlg-portrait"></div>
-    <div class="dlg-box">
-      <span class="dlg-name" id="dlg-name">Nena</span>
-      <p class="dlg-text" id="dlg-text"></p>
-      <div class="dlg-choices" id="dlg-choices"></div>
-      <span class="dlg-next" id="dlg-next" aria-hidden="true">Tap ▾</span>
+  <!-- Story -->
+  <section class="screen story" id="screen-story" hidden>
+    <p class="s-day" id="s-day">Day 1</p>
+    <div class="s-card">
+      <div class="s-portrait" id="s-portrait"></div>
+      <div class="s-box"><span class="s-name" id="s-name">Nena</span><p id="s-text"></p><span class="s-tap">Tap to continue ▾</span></div>
     </div>
-  </div>
-  <div class="dlg-card" id="dlg-card" hidden>
-    <p class="dlg-card-t" id="dlg-card-t">Chapter 1</p>
-    <p class="dlg-card-sub" id="dlg-card-sub"></p>
-    <p class="dlg-card-tap">Tap to continue</p>
-  </div>
-</div>
+  </section>
 
-<!-- Paw Path puzzles -->
-<div class="pz" id="pz" hidden>
-  <header class="pz-head">
-    <button type="button" class="icon-btn pz-back" id="pz-close" aria-label="Back">‹</button>
-    <div><h2 id="pz-title">Paw Path</h2><p id="pz-sub"></p></div>
-  </header>
-  <div class="pz-map" id="pz-map">
-    <div class="pz-path" id="pz-path"></div>
-    <section class="pz-abs"><h3>Abilities</h3><div id="pz-abilities"></div></section>
-  </div>
-  <div class="pz-level" id="pz-level" hidden>
-    <div class="pz-jars" id="pz-jars"></div>
-    <div class="pz-tools">
-      <button type="button" class="pz-tool" id="pz-undo">Undo (3)</button>
-      <button type="button" class="pz-tool" id="pz-extra">+1 jar</button>
-      <button type="button" class="pz-tool" id="pz-restart">Restart</button>
-    </div>
-    <p class="pz-help">Tap a jar to pick up the top treats, then tap another jar with the same flavor on top, or an empty one. Fill every jar with a single flavor.</p>
-    <div class="pz-win" id="pz-win" hidden>
-      <div class="pz-win-card">
-        <div class="stars" id="pz-win-stars"></div>
-        <p class="pz-win-t" id="pz-win-t">Purr-fect!</p>
-        <p class="pz-win-reward" id="pz-win-reward"></p>
-        <div class="pz-win-ability" id="pz-win-ability" hidden></div>
-        <div class="title-buttons">
-          <button type="button" class="btn btn-primary" id="pz-next">Next level</button>
-          <button type="button" class="btn" id="pz-tomap">Map</button>
+  <!-- Game -->
+  <section class="screen game" id="screen-game" hidden>
+    <header class="hud">
+      <div class="hud-row">
+        <span class="hud-level" id="g-level">Day 1</span>
+        <span class="hud-time" id="g-time">1:00</span>
+        <button type="button" class="icon-btn" id="g-pause" aria-label="Pause">❚❚</button>
+      </div>
+      <div class="hud-row">
+        <div class="scorebar" aria-label="Score">
+          <div class="scorefill" id="g-fill"></div>
+          <span class="sstar" id="g-star1">★</span><span class="sstar" id="g-star2">★</span><span class="sstar end" id="g-star3">★</span>
         </div>
+        <b class="hud-score" id="g-score">0</b>
+      </div>
+      <div class="hud-row small">
+        <span class="hearts" id="g-hearts">♥♥♥♥♥</span>
+        <span class="combo" id="g-combo"></span>
+        <span class="pill coin">🪙 <b id="g-coins">0</b></span>
+      </div>
+    </header>
+    <div class="stage-wrap" id="stage-wrap"><div class="stage" id="stage"></div><div class="toast" id="toast"></div></div>
+    <footer class="handbar"><span class="hand-label">Holding</span><span class="hand-items" id="g-hand"><em>Empty hands</em></span></footer>
+  </section>
+
+  <!-- Result -->
+  <section class="screen modal" id="screen-result" hidden>
+    <div class="card">
+      <h2 id="r-title">Great day!</h2>
+      <div class="stars" id="r-stars"></div>
+      <ul class="r-lines" id="r-lines"></ul>
+      <p class="r-sub" id="r-sub"></p>
+      <div class="row">
+        <button type="button" class="btn btn-primary" id="r-next">Next day</button>
+        <button type="button" class="btn" id="r-retry">Retry</button>
+        <button type="button" class="btn" id="r-map">Map</button>
       </div>
     </div>
-  </div>
-  <div class="pz-confetti" id="pz-confetti" aria-hidden="true"></div>
-</div>
+  </section>
 
-<!-- Mini-games -->
-<div class="mg" id="mg" hidden>
-  <header class="mg-head">
-    <div><h2 id="mg-title">Mini-game</h2><p id="mg-hint"></p></div>
-    <span class="mg-timer" id="mg-timer"></span>
-  </header>
-  <canvas id="mg-canvas" class="mg-canvas"></canvas>
-  <button type="button" class="btn btn-ghost mg-skip" id="mg-skip">Skip</button>
-  <div class="mg-result" id="mg-result" hidden>
-    <div class="mg-result-card">
-      <p class="mg-verdict" id="mg-verdict">Great!</p>
-      <p class="mg-score" id="mg-score">100 %</p>
-      <p class="mg-detail" id="mg-detail"></p>
-      <button type="button" class="btn btn-primary" id="mg-continue">Continue</button>
+  <!-- Pause -->
+  <section class="screen modal" id="screen-pause" hidden>
+    <div class="card">
+      <h2>Paused</h2>
+      <p class="r-sub">Tip: tap several things in a row, Nena does them in order. Watch the rings around each request!</p>
+      <div class="row col">
+        <button type="button" class="btn btn-primary" id="p-resume">Resume</button>
+        <button type="button" class="btn" id="p-sound">Sound: on</button>
+        <button type="button" class="btn" id="p-quit">Quit to map</button>
+      </div>
     </div>
-  </div>
-</div>
+  </section>
 
-<!-- Title screen -->
-<div class="modal title-screen" id="title-screen">
-  <div class="title-art">
-    <img src="assets/nena-simba.jpg" alt="Nena and Simba asleep, snuggled under the duvet" class="cover">
-    <div class="title-glow"></div>
-    <div class="title-hearts" aria-hidden="true"><span>♥</span><span>♥</span><span>♥</span><span>♥</span><span>♥</span></div>
-  </div>
-  <div class="title-panel">
-    <h1>Nena <em>&amp;</em> Simba</h1>
-    <p class="tagline">A life for two, one paw at a time.</p>
-    <div class="slides" id="slides">
-      <p class="slide">Tehran, a white tower, 5th floor. Nena lives with her family and Simba, her fluffy orange chow chow. Negin sleeps, Nasim sulks, Baba spoils him, Maman runs the house… so Nena takes care of herself <b>and</b> Simba.</p>
-    </div>
-    <div class="title-buttons">
-      <button type="button" class="btn btn-primary btn-big" id="btn-continue" hidden>Continue · day <span id="continue-day">1</span></button>
-      <button type="button" class="btn btn-big" id="btn-new">New game</button>
-    </div>
-    <button type="button" class="install-link" id="btn-install-title" hidden>Install the app on my phone</button>
-  </div>
-</div>
-
-<!-- Tutorial -->
-<div class="coach" id="coach" hidden>
-  <div class="coach-card">
-    <p class="coach-step" id="coach-step">1 / 4</p>
-    <p id="coach-text"></p>
-    <div class="title-buttons">
-      <button type="button" class="btn btn-primary" id="coach-next">Next</button>
-      <button type="button" class="btn btn-ghost" id="coach-skip">Skip</button>
-    </div>
-  </div>
-</div>
-
-<!-- End of day -->
-<div class="modal night-screen" id="night-screen" hidden>
-  <div class="night-card">
-    <div class="night-art"><img src="assets/nena-simba.jpg" alt="Nena and Simba sleeping together" class="cover"><div class="zzz" aria-hidden="true"><span>z</span><span>z</span><span>Z</span></div></div>
-    <div class="night-body">
-      <h2 id="night-title">Good night!</h2>
-      <p id="night-sub"></p>
-      <div class="stars" id="night-stars"></div>
-      <div class="night-gains" id="night-gains"></div>
-      <ul class="summary" id="night-list"></ul>
-      <p class="night-notes" id="night-notes"></p>
-      <button type="button" class="btn btn-primary btn-big" id="btn-next-day">Wake up</button>
-    </div>
-  </div>
-</div>
-
-<!-- Achievement unlocked -->
-<div class="achv-pop" id="achv-pop" hidden>
-  <span class="achv-medal">★</span>
-  <div><small>Achievement unlocked</small><b id="achv-name"></b></div>
-</div>
-
-<!-- Confirm -->
-<div class="modal confirm" id="confirm-screen" hidden>
-  <div class="confirm-card">
-    <h2>Start over?</h2>
-    <p>Your current game will be erased.</p>
-    <div class="title-buttons">
-      <button type="button" class="btn btn-primary" id="btn-confirm-yes">Yes, start over</button>
-      <button type="button" class="btn" id="btn-confirm-no">Cancel</button>
-    </div>
-  </div>
-</div>
+  <!-- Shop -->
+  <section class="screen shop" id="screen-shop" hidden>
+    <header class="bar">
+      <button type="button" class="icon-btn" id="sh-back" aria-label="Back">‹</button>
+      <h2>Upgrades</h2>
+      <span class="pill coin">🪙 <b id="sh-coins">0</b></span>
+    </header>
+    <div class="upgs" id="sh-list"></div>
+  </section>
+</main>
 
 <script src="js/art.js"></script>
 <script src="js/audio.js"></script>
-<script src="js/minigames.js"></script>
-<script src="js/story.js"></script>
-<script src="js/puzzle.js"></script>
-<script src="js/game.js"></script>
+<script src="js/rush.js"></script>
 </body>
 </html>
