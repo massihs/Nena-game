@@ -1,8 +1,8 @@
 /* Service worker: caches the game so it plays offline. */
-const CACHE = 'nena-simba-v6-tehran';
+const CACHE = 'nena-simba-v7-3d';
 const SHELL = [
   './', './index.html', './style.css', './manifest.webmanifest',
-  './js/art.js', './js/audio.js', './js/minigames.js', './js/story.js', './js/puzzle.js', './js/game.js',
+  './js/art.js', './js/audio.js', './js/minigames.js', './js/story.js', './js/puzzle.js', './js/vendor/three.min.js', './js/world3d.js', './js/game.js',
   './assets/nena-simba.jpg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
 ];
 self.addEventListener('install', (e) => {

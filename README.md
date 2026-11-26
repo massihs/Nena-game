@@ -11,6 +11,7 @@ Plain HTML/CSS/JS, no dependencies, no build step.
 - On a phone: "Add to Home Screen" (Android: in-game Settings → Install the app; iPhone: Safari → Share → Add to Home Screen).
 
 ## Features
+- Real-time 3D (Three.js r128, bundled in `js/vendor/`): six modeled rooms and the Tehran street, soft shadows, ACES tone mapping, day/night lighting with lamps, 3D rain and snow, animated 3D characters. Falls back to the 2D illustrated scenes without WebGL, and can be turned off in Settings.
 - Paw Path: an endless treat-sorting puzzle path (always-solvable seeded levels, hidden treats from level 12, undo / extra jar). Every 3 levels unlocks one of 10 abilities that change daily life (faster grooming, brisk walks, super sniffer…).
 - Illustrated scenes with light that follows the clock, wallpaper, wood floors, window light beams, and a framed photo of Nena & Simba.
 - Story mode: 4 chapters over 4 weeks (Friday family lunch, Simba's birthday, Simba gets sick, road trip to the Caspian Sea in the white 4x4) with an ending, branching dialogue and goals.
@@ -27,5 +28,5 @@ Plain HTML/CSS/JS, no dependencies, no build step.
 - Autosave in the browser.
 
 ## Files
-`index.html`, `style.css`, `js/art.js` (SVG characters), `js/audio.js`, `js/minigames.js`, `js/story.js` (chapters and dialogue), `js/puzzle.js` (Paw Path), `js/game.js`,
+`index.html`, `style.css`, `js/art.js` (SVG characters), `js/audio.js`, `js/minigames.js`, `js/story.js` (chapters and dialogue), `js/puzzle.js` (Paw Path), `js/world3d.js` (3D renderer), `js/game.js`,
 `manifest.webmanifest`, `sw.js` (offline), `icons/`, `assets/`.

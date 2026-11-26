@@ -132,7 +132,7 @@
       best: { brush: 0, fetch: 0, walk: 0 },
       achievements: [],
       tutorialDone: false,
-      settings: { sound: true, music: true, haptics: true },
+      settings: { sound: true, music: true, haptics: true, three: true },
       story: { base: 0, seen: [], flags: {}, rel: { fariba: 0, mohsen: 0, negin: 0, nasim: 0, mia: 0, lee: 0, sam: 0 }, ended: false, tmp: 0 },
       family: { out: false, back: 0 },
       pet: { tricks: { sit: 0, paw: 0, down: 0, spin: 0, playdead: 0 }, weight: 23, sick: false, meds: 0, age: 1, stubborn: 60, plays: 0, cuddles: 0 },
@@ -1040,6 +1040,7 @@
     const n = npcNow();
     if (!n) { el.hidden = true; npcKey = ''; return; }
     el.hidden = false;
+    el.dataset.who = n.who;
     const k = n.who + n.mood;
     if (k !== npcKey) { $('npc-sprite').innerHTML = window.Art.person(n.who, { mood: n.mood }); npcKey = k; }
     el.style.left = n.x + '%';
@@ -1047,8 +1048,10 @@
     const b = $('npc-bubble');
     b.hidden = !n.bubble || busy; b.textContent = n.bubble;
   }
+  const use3D = () => !!(window.World3D && window.World3D.ok && S.settings.three !== false);
   function renderScene() {
-    $('scene-bg').innerHTML = DRAW[S.room](S);
+    $('scene').classList.toggle('three', use3D());
+    if (!use3D()) $('scene-bg').innerHTML = DRAW[S.room](S);
     const lvl = S.room === 'dehors' ? nightLevel(S.time) * 0.55 : nightLevel(S.time) * 0.7;
     $('scene').style.setProperty('--nightlvl', lvl.toFixed(2));
     window.Sound && window.Sound.setNight(nightLevel(S.time) > 0.4);
@@ -1064,6 +1067,7 @@
     simba.hidden = away && S.room !== 'dehors';
     if (away && S.room === 'dehors') { simba.style.left = '68%'; }
     renderNpc();
+    if (use3D()) window.World3D.sync(S);
 
     const d = S.simba;
     const dogNeeds = [[d.pipi, 'Walkies! 🌳'], [d.eau, 'Thirsty… 💧'], [d.ventre, 'Hungry! 🍖'], [d.bonheur, 'Play with me 🎾'], [d.pelage, 'Brush me ✨']]
@@ -1255,6 +1259,7 @@
         <button type="button" class="menu-row" data-set="sound" role="switch" aria-checked="${S.settings.sound}"><span>Sound effects</span>${sw(S.settings.sound)}</button>
         <button type="button" class="menu-row" data-set="music" role="switch" aria-checked="${S.settings.music}"><span>Lo-fi music</span>${sw(S.settings.music)}</button>
         <button type="button" class="menu-row" data-set="haptics" role="switch" aria-checked="${S.settings.haptics}"><span>Vibration</span>${sw(S.settings.haptics)}</button>
+        ${window.World3D && window.World3D.ok ? `<button type="button" class="menu-row" data-set="three" role="switch" aria-checked="${S.settings.three !== false}"><span>3D graphics<small>Turn off on older phones to save battery</small></span>${sw(S.settings.three !== false)}</button>` : ''}
         ${installPrompt ? '<button type="button" class="menu-row" data-cmd="install"><span>Install the app<small>Add Nena &amp; Simba to your home screen</small></span><span>⤓</span></button>'
           : '<div class="menu-row"><span>Install on iPhone<small>In Safari: Share button, then “Add to Home Screen”.</small></span></div>'}
         <button type="button" class="menu-row" data-cmd="tutorial"><span>Replay the tutorial</span><span>›</span></button>
@@ -1274,7 +1279,7 @@
     }
     if (t.dataset.item) { buyOrEquip(t.dataset.item); return; }
     if (t.dataset.set) {
-      const k = t.dataset.set; S.settings[k] = !S.settings[k]; applySettings(); snd('click'); save(); renderSheet(); return;
+      const k = t.dataset.set; S.settings[k] = S.settings[k] === false ? true : !S.settings[k]; applySettings(); snd('click'); save(); renderSheet(); if (k === 'three') renderScene(); return;
     }
     const cmd = t.dataset.cmd;
     if (cmd === 'install') doInstall();
@@ -1843,6 +1848,7 @@
   /* ------------------------------------------------------------------ */
   /* Boot                                                                */
   /* ------------------------------------------------------------------ */
+  if (window.World3D) window.World3D.init($('scene'));
   const saved = load();
   if (saved) { $('btn-continue').hidden = false; $('continue-day').textContent = saved.day; S = saved; }
   render();
