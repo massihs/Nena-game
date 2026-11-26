@@ -800,7 +800,7 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 
 /* ---------- Family NPCs ---------- */
 .npc { width: 22%; max-width: 120px; z-index: 3; pointer-events: none; }
-.npc.small { width: 19%; max-width: 104px; }
+.npc.small { width: 22%; max-width: 120px; }
 .npc .sprite { animation: breathe 3.6s ease-in-out infinite; transform-origin: 50% 100%; }
 .zz-door { animation: zzfloat 3s ease-in-out infinite; }
 @keyframes zzfloat { 50% { transform: translateY(-6px); opacity: .7; } }

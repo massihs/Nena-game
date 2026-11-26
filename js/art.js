@@ -14,6 +14,28 @@ window.Art = (function () {
     noeud:   { color: '#4a7bd0', kind: 'bow' },
   };
 
+  /* Nena's hair, modelled on the cover art: big, tousled auburn-chestnut waves. */
+  const NH = { base: '#7d3a1a', mid: '#984f27', dark: '#5a2711', light: '#c4743f' };
+  const NENA_HAIR_BACK = `
+      <path d="M60 14 C29 12 10 35 13 60 C3 72 9 88 5 101 C-1 117 11 127 5 141 C1 155 13 165 9 179 C21 188 34 183 40 170 L80 170 C86 183 99 188 111 179 C107 165 119 155 115 141 C109 127 121 117 115 101 C111 88 117 72 107 60 C110 35 91 12 60 14Z" fill="${NH.dark}"/>
+      <path d="M60 19 C33 18 16 38 18 61 C10 73 15 88 11 100 C6 115 16 125 11 139 C8 151 18 161 15 172 C25 178 34 172 39 162 L81 162 C86 172 95 178 105 172 C102 161 112 151 109 139 C104 125 114 115 109 100 C105 88 110 73 102 61 C104 38 87 18 60 19Z" fill="${NH.base}"/>
+      <g fill="none" stroke-linecap="round">
+        <path d="M17 64 C27 76 13 88 21 100 C29 112 13 124 19 138 C25 150 13 160 19 171" stroke="${NH.mid}" stroke-width="4"/>
+        <path d="M103 64 C93 76 107 88 99 100 C91 112 107 124 101 138 C95 150 107 160 101 171" stroke="${NH.mid}" stroke-width="4"/>
+        <path d="M27 72 C35 84 23 96 29 108 C35 120 23 132 29 144" stroke="${NH.light}" stroke-width="2.2" opacity=".7"/>
+        <path d="M93 72 C85 84 97 96 91 108 C85 120 97 132 91 144" stroke="${NH.light}" stroke-width="2.2" opacity=".7"/>
+      </g>`;
+  const NENA_HAIR_FRONT = `
+      <path d="M27 74 C21 38 45 21 66 24 C89 27 100 46 95 75 C91 60 85 52 75 49 C71 60 58 66 44 66 C37 66 31 69 27 74Z" fill="${NH.base}"/>
+      <path d="M29 52 C29 34 45 25 57 29 C46 34 39 45 41 58Z" fill="${NH.mid}"/>
+      <path d="M41 31 C55 23 77 26 89 41" stroke="${NH.light}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".85"/>
+      <path d="M49 39 C57 48 66 51 72 48" stroke="${NH.mid}" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <path d="M31 60 C18 76 34 88 22 104 C12 118 30 130 20 146 C14 158 26 166 24 173 C35 171 43 160 41 148 C39 134 47 124 41 110 C35 96 47 86 39 72 C37 66 35 62 33 60Z" fill="${NH.mid}"/>
+      <path d="M89 60 C102 76 86 88 98 104 C108 118 90 130 100 146 C106 158 94 166 96 173 C85 171 77 160 79 148 C81 134 73 124 79 110 C85 96 73 86 81 72 C83 66 85 62 87 60Z" fill="${NH.mid}"/>
+      <g fill="none" stroke="${NH.light}" stroke-width="1.9" stroke-linecap="round" opacity=".8">
+        <path d="M33 68 C27 80 37 90 29 102 C23 112 33 122 27 134"/><path d="M87 68 C93 80 83 90 91 102 C97 112 87 122 93 134"/>
+      </g>`;
+
   /* eyes: 'both' (CSS decides), 'open', 'closed' */
   const HL = 'rgba(255,255,255,.22)', SH = 'rgba(60,20,10,.14)';
   function nena(opts) {
@@ -22,7 +44,7 @@ window.Art = (function () {
     const arm = o.dressed ? c.top : '#f4a3c0';
     const ns = o.standalone ? ' xmlns="http://www.w3.org/2000/svg" width="240" height="420"' : '';
     const dress = o.dressed && o.outfit === 'robe';
-    const H1 = '#7b3d20', H2 = '#93502b', H3 = '#5f2c15', SK = '#f8cfae', SK2 = '#efb892';
+    const H1 = '#7a3a1c', H2 = '#92502a', H3 = '#5a2912', HLc = '#b86c3e', SK = '#f8cfae', SK2 = '#efb892';
     const eyesOpen = `<g class="eyes-open">
         <ellipse cx="46" cy="75" rx="5.4" ry="6.6" fill="#3a1d12"/><ellipse cx="74" cy="75" rx="5.4" ry="6.6" fill="#3a1d12"/>
         <ellipse cx="46" cy="76.5" rx="3.6" ry="4.4" fill="#6e3a22"/><ellipse cx="74" cy="76.5" rx="3.6" ry="4.4" fill="#6e3a22"/>
@@ -30,7 +52,7 @@ window.Art = (function () {
         <circle cx="44.2" cy="78.4" r="0.9" fill="#fff" opacity=".8"/><circle cx="72.2" cy="78.4" r="0.9" fill="#fff" opacity=".8"/>
         <path d="M39.5 70.5 q6.5 -5 13 0" stroke="#2a130b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
         <path d="M67.5 70.5 q6.5 -5 13 0" stroke="#2a130b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-        <path d="M39.6 71 l-2.6 -2 M80.4 71 l2.6 -2" stroke="#2a130b" stroke-width="1.8" stroke-linecap="round"/></g>`;
+        <path d="M39.6 71 l-3.2 -1.6 M40.6 69.4 l-2.4 -2.6 M80.4 71 l3.2 -1.6 M79.4 69.4 l2.4 -2.6" stroke="#2a130b" stroke-width="1.6" stroke-linecap="round"/></g>`;
     const eyesClosed = `<g class="eyes-closed">
         <path d="M39 75 q7 6 14 0" stroke="#2a130b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
         <path d="M67 75 q7 6 14 0" stroke="#2a130b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
@@ -64,9 +86,7 @@ window.Art = (function () {
         ${o.outfit === 'cire' ? `<path d="M34 122 q26 -14 52 0" stroke="${c.stripe}" stroke-width="4" fill="none"/><circle cx="60" cy="136" r="2.4" fill="${c.stripe}"/><circle cx="60" cy="150" r="2.4" fill="${c.stripe}"/>` : ''}`;
     }
     return `<svg viewBox="0 0 120 210" class="sprite"${ns}>
-      <g fill="${H3}"><circle cx="22" cy="98" r="17"/><circle cx="98" cy="98" r="17"/><circle cx="28" cy="122" r="13"/><circle cx="92" cy="122" r="13"/><circle cx="36" cy="140" r="9"/><circle cx="84" cy="140" r="9"/></g>
-      <g fill="${H1}"><circle cx="60" cy="52" r="41"/><circle cx="25" cy="72" r="21"/><circle cx="95" cy="72" r="21"/><circle cx="20" cy="96" r="14"/><circle cx="100" cy="96" r="14"/></g>
-      <g fill="none" stroke="${HL}" stroke-width="2.2" stroke-linecap="round"><path d="M14 92 q4 -10 12 -8"/><path d="M96 70 q8 2 10 10"/><path d="M24 118 q2 -8 9 -8"/><path d="M90 116 q6 0 8 7"/></g>
+      ${NENA_HAIR_BACK}
       ${body}
       ${shoes}
       <g class="arms">
@@ -79,13 +99,9 @@ window.Art = (function () {
       <ellipse cx="60" cy="108" rx="10" ry="4" fill="rgba(120,50,30,.18)"/>
       <ellipse cx="60" cy="72" rx="30.5" ry="32.5" fill="${SK}"/>
       <path d="M33 80 q4 18 27 24 q-20 -2 -27 -24z" fill="rgba(230,150,120,.25)"/>
-      <path d="M29 68 C28 33 92 33 91 68 C84 50 72 46 62 52 C52 44 37 49 29 68Z" fill="${H1}"/>
-      <g fill="${H2}"><circle cx="33" cy="51" r="10.5"/><circle cx="48" cy="39" r="11.5"/><circle cx="64" cy="37" r="11"/><circle cx="80" cy="42" r="11"/><circle cx="89" cy="55" r="9.5"/></g>
-      <g fill="none" stroke="${HL}" stroke-width="2" stroke-linecap="round"><path d="M42 34 q6 -4 12 0"/><path d="M60 31 q6 -3 11 1"/><path d="M28 47 q3 -5 8 -5"/></g>
-      <path d="M33 58 q-4 10 -2 20" stroke="${H1}" stroke-width="7" stroke-linecap="round" fill="none"/>
-      <path d="M87 58 q4 10 2 20" stroke="${H1}" stroke-width="7" stroke-linecap="round" fill="none"/>
-      <path d="M39.5 63 q6.5 -4.5 13 -1" stroke="#5a2c17" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-      <path d="M67.5 62 q6.5 -3.5 13 1" stroke="#5a2c17" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      ${NENA_HAIR_FRONT}
+      <path d="M39 63 q7 -5.2 14 -1.2" stroke="#5a2c17" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+      <path d="M67 62 q7 -4 14 1.2" stroke="#5a2c17" stroke-width="3.2" fill="none" stroke-linecap="round"/>
       ${eyes}
       <ellipse cx="37.5" cy="87" rx="7.5" ry="4.8" fill="#f38fae" opacity=".55"/><ellipse cx="82.5" cy="87" rx="7.5" ry="4.8" fill="#f38fae" opacity=".55"/>
       <g fill="#c98466"><circle cx="35" cy="83" r=".95"/><circle cx="39" cy="85.5" r=".95"/><circle cx="36.5" cy="88" r=".8"/><circle cx="85" cy="83" r=".95"/><circle cx="81" cy="85.5" r=".95"/><circle cx="83.5" cy="88" r=".8"/></g>
@@ -173,11 +189,11 @@ window.Art = (function () {
   /* People: head-and-shoulders portraits for dialogue and full-body figures for the scenes.
      mood: happy | neutral | sad | surprised | angry | sleepy */
   const PEOPLE = {
-    nena:    { skin: '#f6caa7', hair: '#7a3f22', hair2: '#8a4a28', style: 'curly', shirt: '#f19bb8', collar: '#b5476d', freckles: true, pants: '#4f6d9a' },
-    nasim:   { skin: '#f3c7a3', hair: '#2a1a14', hair2: '#3a251c', style: 'ponytail', shirt: '#3d3a5c', collar: '#ef5f7f', pants: '#2f2b46', small: true, hoodie: true },
-    negin:   { skin: '#f4cbab', hair: '#5a2f1e', hair2: '#6e3b26', style: 'messy', shirt: '#9cc2d9', collar: '#6f9bb7', pants: '#9cc2d9', mask: true },
-    mohsen:  { skin: '#eebd96', hair: '#c9c6cf', hair2: '#b3afba', style: 'bald', shirt: '#cfe0f0', collar: '#8fa9c4', pants: '#6b6f7e', belly: true, mustache: true, glasses: true },
-    fariba:  { skin: '#f0c19c', hair: '#3a261d', hair2: '#6d5a52', style: 'bun', shirt: '#b5476d', collar: '#8c2f52', pants: '#5a3d6b', apron: true, earrings: '#ffd36b' },
+    nena:    { skin: '#f8cfae', hair: '#7d3a1a', hair2: '#984f27', hl: '#c4743f', style: 'wavy', shirt: '#f4a3c0', collar: '#c9557d', freckles: true, pants: '#4f6d9a' },
+    nasim:   { skin: '#f3c7a3', hair: '#7d4526', hair2: '#8f5430', style: 'ponytail', shirt: '#3d3a5c', collar: '#ef5f7f', pants: '#2f2b46', scale: 0.94, hoodie: true },
+    negin:   { skin: '#f4cbab', hair: '#4a2414', hair2: '#5b2f1c', style: 'messy', shirt: '#9cc2d9', collar: '#6f9bb7', pants: '#9cc2d9', mask: true, scale: 0.86 },
+    mohsen:  { skin: '#eebd96', hair: '#b9b4be', hair2: '#d3cfd7', style: 'gray', shirt: '#dfe9f3', collar: '#8fa9c4', pants: '#4f5566', belly: true, shirtDetails: true },
+    fariba:  { skin: '#f0c19c', hair: '#6b3a20', hair2: '#c99a62', style: 'bob', shirt: '#b5476d', collar: '#8c2f52', pants: '#5a3d6b', apron: true, earrings: '#ffd36b' },
     mia:     { skin: '#8d5a3b', hair: '#1f1612', hair2: '#2c201a', style: 'puff', shirt: '#f2c230', collar: '#d99a00', earrings: '#ffd36b' },
     lee:     { skin: '#e9bf94', hair: '#1c1b22', hair2: '#2b2a33', style: 'short', shirt: '#ffffff', collar: '#cfd8e0', stetho: true, glasses: true },
     sam:     { skin: '#f0c7a0', hair: '#3a2a22', hair2: '#4a362c', style: 'side', shirt: '#4f6d9a', collar: '#3a5480', beard: true },
@@ -188,6 +204,18 @@ window.Art = (function () {
     if (c.style === 'curly') {
       back = `<g fill="${c.hair}"><circle cx="80" cy="66" r="50"/><circle cx="36" cy="92" r="24"/><circle cx="124" cy="92" r="24"/><circle cx="34" cy="122" r="18"/><circle cx="126" cy="122" r="18"/></g>`;
       front = `<path d="M44 66 C44 26 116 26 116 66 C106 48 92 44 80 52 C68 42 52 48 44 66Z" fill="${c.hair}"/><g fill="${c.hair2}"><circle cx="50" cy="44" r="12"/><circle cx="68" cy="32" r="13"/><circle cx="92" cy="32" r="13"/><circle cx="110" cy="44" r="12"/></g>`;
+    } else if (c.style === 'wavy') {
+      const T2 = 'translate(80 76) scale(1.25) translate(-60 -72)';
+      back = `<g transform="${T2}">${NENA_HAIR_BACK}</g>`;
+      front = `<g transform="${T2}">${NENA_HAIR_FRONT}</g>`;
+    } else if (c.style === 'bob') {
+      back = `<path d="M80 30 C44 30 33 58 36 88 C34 108 40 122 35 136 C50 144 62 138 66 128 L94 128 C98 138 110 144 125 136 C120 122 126 108 124 88 C127 58 116 30 80 30Z" fill="${c.hair}"/>`;
+      front = `<path d="M43 78 C41 45 62 32 82 34 C103 36 119 52 117 80 C109 61 97 53 83 52 C71 61 56 65 43 78Z" fill="${c.hair}"/>
+        <g fill="none" stroke="${c.hair2}" stroke-linecap="round" opacity=".75"><path d="M56 42 C50 58 55 74 48 90 C44 104 49 116 45 128" stroke-width="3.2"/><path d="M92 38 C102 52 97 68 107 84 C113 98 109 112 116 126" stroke-width="3.2"/><path d="M72 36 C67 46 70 56 63 68" stroke-width="2.6"/><path d="M104 48 C110 60 108 72 114 86" stroke-width="2.4"/></g>`;
+    } else if (c.style === 'gray') {
+      back = `<ellipse cx="80" cy="58" rx="41" ry="33" fill="${c.hair}"/><path d="M41 74 q-4 -18 4 -30 M119 74 q4 -18 -4 -30" stroke="${c.hair}" stroke-width="12" stroke-linecap="round" fill="none"/>`;
+      front = `<path d="M42 72 Q40 33 80 30 Q120 33 118 72 Q113 52 99 47 Q86 54 70 49 Q55 49 46 61Z" fill="${c.hair2}"/>
+        <g fill="none" stroke="${c.hair}" stroke-width="2" stroke-linecap="round" opacity=".8"><path d="M58 40 q8 -4 16 -2"/><path d="M84 38 q10 0 18 6"/><path d="M50 52 q6 -6 12 -6"/></g>`;
     } else if (c.style === 'puff') {
       back = `<g fill="${c.hair}"><circle cx="80" cy="30" r="30"/><circle cx="50" cy="52" r="22"/><circle cx="110" cy="52" r="22"/></g>`;
       front = `<path d="M46 66 q2 -34 34 -36 q32 2 34 36 q-10 -18 -34 -20 q-24 2 -34 20z" fill="${c.hair2}"/>`;
@@ -221,7 +249,8 @@ window.Art = (function () {
       ? `<path d="M60 76 q6 -6 12 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M88 76 q6 -6 12 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/>`
       : m === 'sleepy' ? `<path d="M59 78 q7 4 14 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M87 78 q7 4 14 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/>`
       : `<ellipse cx="66" cy="76" rx="4.4" ry="${m === 'surprised' ? 6.5 : m === 'angry' ? 4.4 : 5.4}" fill="#2b1a14"/><ellipse cx="94" cy="76" rx="4.4" ry="${m === 'surprised' ? 6.5 : m === 'angry' ? 4.4 : 5.4}" fill="#2b1a14"/><circle cx="67.5" cy="74.5" r="1.6" fill="#fff"/><circle cx="95.5" cy="74.5" r="1.6" fill="#fff"/>`;
-    const bc = c.style === 'bald' ? '#8f8a96' : c.hair;
+    const lashes = c.freckles && m !== 'happy' && m !== 'sleepy' ? '<path d="M59 70 q7 -6 14 0 M87 70 q7 -6 14 0" stroke="#2b1a14" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M59 71 l-4 -2 M101 71 l4 -2" stroke="#2b1a14" stroke-width="1.8" stroke-linecap="round"/>' : '';
+    const bc = c.style === 'gray' ? '#8f8a96' : c.style === 'wavy' ? '#5a2c17' : c.hair;
     const brows = m === 'sad' ? `<path d="M58 64 l14 -4 M102 64 l-14 -4" stroke="${bc}" stroke-width="3" stroke-linecap="round"/>`
       : m === 'angry' ? `<path d="M57 62 l15 6 M103 62 l-15 6" stroke="${bc}" stroke-width="4" stroke-linecap="round"/>`
       : m === 'surprised' ? `<path d="M58 60 q8 -6 14 -2 M88 58 q6 -4 14 2" stroke="${bc}" stroke-width="3" fill="none" stroke-linecap="round"/>`
@@ -232,7 +261,7 @@ window.Art = (function () {
       : m === 'sleepy' ? `<ellipse cx="80" cy="98" rx="4" ry="3" fill="#9c4250"/>`
       : m === 'neutral' ? `<path d="M73 97 h14" stroke="#9c4250" stroke-width="3" stroke-linecap="round"/>`
       : `<path d="M70 94 q10 10 20 0" stroke="#9c4250" stroke-width="3" fill="#fff" stroke-linecap="round"/>`;
-    return `${brows}${eyes}
+    return `${brows}${eyes}${lashes}
       <ellipse cx="56" cy="90" rx="8" ry="5" fill="#f08aa0" opacity="${m === 'angry' ? 0.75 : 0.45}"/><ellipse cx="104" cy="90" rx="8" ry="5" fill="#f08aa0" opacity="${m === 'angry' ? 0.75 : 0.45}"/>
       ${c.freckles ? '<g fill="#c98b6a"><circle cx="54" cy="86" r="1.2"/><circle cx="59" cy="89" r="1.2"/><circle cx="101" cy="86" r="1.2"/><circle cx="106" cy="89" r="1.2"/></g>' : ''}
       ${c.glasses ? '<g fill="none" stroke="#5a4a6a" stroke-width="3"><circle cx="66" cy="76" r="11"/><circle cx="94" cy="76" r="11"/><path d="M77 76 h6"/></g>' : ''}
@@ -257,14 +286,14 @@ window.Art = (function () {
     const c = PEOPLE[who];
     if (!c) return '';
     const hp = headParts(who, mood);
-    const shoulders = c.belly ? 'M8 170 q0 -54 72 -56 q72 2 72 56z' : c.small ? 'M28 170 q2 -44 52 -48 q50 4 52 48z' : 'M18 170 q2 -50 62 -54 q60 4 62 54z';
+    const shoulders = c.belly ? 'M8 170 q0 -54 72 -56 q72 2 72 56z' : (c.scale || 1) < 0.95 ? 'M28 170 q2 -44 52 -48 q50 4 52 48z' : 'M18 170 q2 -50 62 -54 q60 4 62 54z';
     return `<svg viewBox="0 0 160 170" class="portrait-svg" xmlns="http://www.w3.org/2000/svg">
       ${hp.back}
       <path d="${shoulders}" fill="${c.shirt}"/>
       ${c.hoodie ? '<path d="M50 126 q30 22 60 0" stroke="#ef5f7f" stroke-width="4" fill="none"/><path d="M70 132 v20 M90 132 v20" stroke="#fff" stroke-width="3" stroke-linecap="round"/>' : ''}
       ${c.apron ? '<path d="M56 130 h48 v40 h-48z" fill="#fff8ee"/><path d="M56 130 q24 -16 48 0" stroke="#fff8ee" stroke-width="4" fill="none"/>' : ''}
       ${c.stetho ? '<path d="M60 124 q-6 30 20 34 q26 -4 20 -34" stroke="#3a3550" stroke-width="4" fill="none"/><circle cx="80" cy="158" r="6" fill="#9aa3b5"/>' : ''}
-      ${who === 'mohsen' ? '<g fill="#8fa9c4"><circle cx="80" cy="142" r="2.6"/><circle cx="80" cy="158" r="2.6"/></g>' : ''}
+      ${c.shirtDetails ? '<path d="M66 116 l14 16 l14 -16 l-6 -4 l-8 9 l-8 -9z" fill="#ffffff"/><g fill="#8fa9c4"><circle cx="80" cy="142" r="2.6"/><circle cx="80" cy="158" r="2.6"/></g><rect x="98" y="136" width="16" height="14" rx="2" fill="none" stroke="#8fa9c4" stroke-width="2"/>' : ''}
       <path d="M64 118 l16 14 l16 -14" fill="none" stroke="${c.collar}" stroke-width="4" stroke-linecap="round"/>
       ${hp.head}
     </svg>`;
@@ -279,16 +308,18 @@ window.Art = (function () {
     const SH2 = 'rgba(60,20,10,.14)';
     const torso = c.belly
       ? `<path d="M30 124 q0 -14 30 -14 q30 0 30 14 q8 22 0 40 q-6 10 -30 10 q-24 0 -30 -10 q-8 -18 0 -40z" fill="${c.shirt}"/><path d="M74 112 q16 6 16 16 q8 22 0 38 q-4 8 -12 8 q10 -30 -4 -62z" fill="${SH2}"/>
-         <g fill="${c.collar}"><circle cx="60" cy="130" r="1.8"/><circle cx="60" cy="144" r="1.8"/><circle cx="60" cy="158" r="1.8"/></g>`
+         <g fill="${c.collar}"><circle cx="60" cy="130" r="1.8"/><circle cx="60" cy="144" r="1.8"/></g>
+         ${c.shirtDetails ? `<path d="M50 112 l10 11 l10 -11 l-4 -3 l-6 7 l-6 -7z" fill="#ffffff" stroke="${c.collar}" stroke-width="1"/><path d="M60 123 v34" stroke="${c.collar}" stroke-width="1"/><rect x="66" y="126" width="11" height="9" rx="1.5" fill="none" stroke="${c.collar}" stroke-width="1.4"/><rect x="31" y="158" width="58" height="7" rx="3" fill="#3a2a22"/><rect x="56" y="158" width="8" height="7" rx="1" fill="#c9a24a"/>` : ''}`
       : `<path d="M36 128 q0 -16 24 -16 q24 0 24 16 v30 q0 10 -24 10 q-24 0 -24 -10z" fill="${c.shirt}"/><path d="M70 114 q14 4 14 14 v28 q0 8 -10 10 q8 -20 -4 -52z" fill="${SH2}"/>`;
     const legs = `<rect x="${c.belly ? 38 : 40}" y="162" width="17" height="38" rx="7" fill="${c.pants}"/><rect x="${c.belly ? 65 : 63}" y="162" width="17" height="38" rx="7" fill="${c.pants}"/>
+      ${c.shirtDetails ? `<path d="M46 168 v30 M73 168 v30" stroke="rgba(255,255,255,.2)" stroke-width="1.4"/>` : ''}
       <ellipse cx="47" cy="202" rx="11" ry="5" fill="${who === 'mohsen' || who === 'fariba' ? '#7a6a5e' : '#3a3550'}"/><ellipse cx="73" cy="202" rx="11" ry="5" fill="${who === 'mohsen' || who === 'fariba' ? '#7a6a5e' : '#3a3550'}"/>`;
     const armL = c.belly ? 'M30 122 q-14 8 -12 26 v10 q1 6 7 6 q7 0 7 -6 v-12 q0 -10 4 -16z' : 'M37 120 q-12 6 -12 22 v14 q0 6 6 6 q7 0 7 -6 v-12 q0 -10 5 -14z';
     const armR = c.belly ? 'M90 122 q14 8 12 26 v10 q-1 6 -7 6 q-7 0 -7 -6 v-12 q0 -10 -4 -16z' : 'M83 120 q12 6 12 22 v14 q0 6 -6 6 q-7 0 -7 -6 v-12 q0 -10 -5 -14z';
     const extras = (c.apron ? '<path d="M46 124 h28 v42 q-14 6 -28 0z" fill="#fff8ee"/><path d="M48 124 q12 -10 24 0" stroke="#fff8ee" stroke-width="2.6" fill="none"/><path d="M50 150 h20" stroke="#ef8fb0" stroke-width="3"/>' : '')
       + (c.hoodie ? '<path d="M44 118 q16 12 32 0" stroke="#ef5f7f" stroke-width="3" fill="none"/><rect x="48" y="146" width="24" height="10" rx="4" fill="rgba(0,0,0,.15)"/>' : '')
       + (c.mask ? '<g fill="#fff" opacity=".8"><circle cx="48" cy="140" r="1.6"/><circle cx="72" cy="150" r="1.6"/><circle cx="56" cy="160" r="1.4"/></g>' : '');
-    const scale = c.small ? 0.92 : 1;
+    const scale = c.scale || 1;
     return `<svg viewBox="0 0 120 210" class="sprite">
       <g transform="translate(${60 - 60 * scale} ${210 - 210 * scale}) scale(${scale})">
       <g transform="translate(60 72) scale(.82) translate(-80 -76)">${hp.back}</g>
