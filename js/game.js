@@ -18,7 +18,7 @@
   /* ------------------------------------------------------------------ */
   /* Data                                                                */
   /* ------------------------------------------------------------------ */
-  const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const WEEKDAYS = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   const weekday = (d) => WEEKDAYS[(d - 1) % 7];
   const isWeekend = (d) => (d - 1) % 7 >= 5;
 
@@ -68,7 +68,7 @@
     const uniq = [...new Set(ids)];
     return {
       tasks: uniq.map((id) => ({ id, done: 0, need: TASKS[id].need || 1 })),
-      treats: 0, accidents: 0, mischief: 0, pets: 0, coffee: 0, trains: 0, medAM: false, medPM: false, miaWalk: false,
+      treats: 0, accidents: 0, mischief: 0, pets: 0, coffee: 0, trains: 0, medAM: false, medPM: false, miaWalk: false, nasimWalk: false, babaCall: false, babaCall2: 0, babaToast: false, momLunch: false, momDinner: false, helpMom: 0, nasimTalk: false, babaNap: false, neginRel: false,
       weather: day === 1 ? 'soleil' : rollWeather(),
     };
   }
@@ -106,7 +106,8 @@
     { id: 'all_tricks', name: 'Circus star', desc: 'Teach Simba all 5 tricks.', test: (s) => Object.values(s.pet.tricks).every((v) => v >= 100) },
     { id: 'mia_friend', name: 'Neighbors for life', desc: 'Reach 5 hearts with Mia.', test: (s) => (s.story.rel.mia || 0) >= 10 },
     { id: 'season', name: 'Season 1 complete', desc: 'Finish the story.', test: (s) => s.story.ended },
-    { id: 'best_show', name: 'Best in Show', desc: 'Win first place at the dog show.', test: (s) => s.story.flags.show === 1 },
+    { id: 'best_show', name: 'Road trippers', desc: 'Have a perfect trip to the Caspian Sea.', test: (s) => s.story.flags.trip === 1 },
+    { id: 'family_glue', name: 'Family glue', desc: 'Reach 3 hearts with Maman, Baba, Negin and Nasim.', test: (s) => ['fariba', 'mohsen', 'negin', 'nasim'].every((k) => (s.story.rel[k] || 0) >= 6) },
   ];
 
   const BONDS = [
@@ -132,7 +133,8 @@
       achievements: [],
       tutorialDone: false,
       settings: { sound: true, music: true, haptics: true },
-      story: { base: 0, seen: [], flags: {}, rel: { mia: 0, grandma: 0, lee: 0, sam: 0 }, ended: false, tmp: 0 },
+      story: { base: 0, seen: [], flags: {}, rel: { fariba: 0, mohsen: 0, negin: 0, nasim: 0, mia: 0, lee: 0, sam: 0 }, ended: false, tmp: 0 },
+      family: { out: false, back: 0 },
       pet: { tricks: { sit: 0, paw: 0, down: 0, spin: 0, playdead: 0 }, weight: 23, sick: false, meds: 0, age: 1, stubborn: 60, plays: 0, cuddles: 0 },
       album: [],
       puzzle: { level: 1, stars: {}, perks: [] },
@@ -219,6 +221,11 @@
       S.today.mischief++;
       note(pick(betises) + ' He’s bored!', 'bad'); snd('bark');
     }
+    const fam = S.family;
+    if (fam.out && S.time >= fam.back) nasimReturn();
+    if (S.room === 'dehors' && S.time >= 21 * 60 && !S.today.babaCall) { S.today.babaCall = true; setTimeout(() => babaCall(false), 60); }
+    if (S.room === 'dehors' && S.today.babaCall2 > 0 && S.time >= S.today.babaCall2) { S.today.babaCall2 = -1; setTimeout(() => babaCall(true), 60); }
+    if (S.time >= 22 * 60 && !S.today.babaToast) { S.today.babaToast = true; note('📞 Baba has called Nasim 4 times. She’s not answering. He’s grumbling at the TV.'); }
     if (n.energie <= 0 || S.time >= COLLAPSE_AT) { endDay(true); return false; }
     return true;
   }
@@ -247,6 +254,8 @@
     S.album.push({ id, title, text, icon, day: S.day });
     note('📸 New memory: ' + title, 'good');
   }
+  const relUp = (who, n) => { S.story.rel[who] = Math.max(0, Math.min(10, (S.story.rel[who] || 0) + n)); };
+  const babaHome = () => !(S.time >= 9 * 60 && S.time < 12 * 60 && !isWeekend(S.day));
   const outside = (s, extra) => (!s.dressed ? 'Nena is still in her pajamas!' : extra ? extra(s) : true);
   function rainCheck(s) {
     if (s.today.weather === 'pluie' && s.outfit !== 'cire') { s.nena.hygiene -= 10; note('Nena got soaked… a raincoat would help.'); }
@@ -343,7 +352,7 @@
     { room: 'salon', id: 'travail', name: 'Work from home (2 h)', desc: '+$45 · 8 AM to 7 PM.', tag: 'nena', dur: 120,
       verb: 'Nena works on her laptop…', task: 'travail', working: true,
       avail: (s) => (isWeekend(s.day) ? 'It’s the weekend, time off!' : s.time < 8 * 60 || s.time > 19 * 60 ? 'The office is closed.' : s.nena.energie < 20 ? 'Nena is too tired.' : true),
-      run: (s) => { s.money += 45; s.nena.energie -= 12; s.nena.moral -= 5; s.simba.bonheur -= (s.pet.sick && storyFlag(s, 'mia_help')) ? 0 : 8; credit('travail'); moneyFx(45); } },
+      run: (s) => { s.money += 45; s.nena.energie -= 12; s.nena.moral -= 5; s.simba.bonheur -= (s.pet.sick && storyFlag(s, 'family_help')) ? 0 : 8; credit('travail'); moneyFx(45); } },
     { room: 'salon', id: 'balle', name: 'Play ball', desc: 'You throw, Simba fetches… sometimes.', tag: 'simba', dur: 15, mini: 'fetch',
       verb: 'Throw, run, fetch!', task: 'jouer',
       run: (s, r) => {
@@ -424,10 +433,10 @@
     { room: 'salon', id: 'invites', name: 'Send party invites', desc: 'Who’s coming to Simba’s birthday?', tag: 'maison', dur: 5,
       verb: 'Writing invitations…', show: (s) => chapterN(s) === 2 && !storyFlag(s, 'invited'),
       run: () => storyLater('invites') },
-    { room: 'dehors', id: 'cake', name: 'Order the birthday cake', desc: '−$35 · peanut butter, dog-safe.', tag: 'simba', dur: 20,
+    { room: 'dehors', id: 'cake', name: 'Cake ingredients for Maman', desc: '−$20 · carrots, eggs, saffron.', tag: 'simba', dur: 20,
       verb: 'Choosing the perfect cake…', sfx: 'coin', show: (s) => chapterN(s) === 2 && !storyFlag(s, 'cake'),
-      avail: (s) => outside(s, (x) => (x.money < 35 ? 'Not enough money ($35).' : true)),
-      run: (s) => { s.money -= 35; s.story.flags.cake = true; note('Cake ordered! Ready on Sunday.', 'good'); } },
+      avail: (s) => outside(s, (x) => (x.money < 20 ? 'Not enough money ($20).' : true)),
+      run: (s) => { s.money -= 20; s.story.flags.cake = true; note('Maman: “Leave the rest to me, azizam.”', 'good'); } },
     { room: 'dehors', id: 'gift', name: 'Buy a birthday gift', desc: '−$30 · something squeaky.', tag: 'simba', dur: 25,
       verb: 'Squeezing every toy in the store…', sfx: 'coin', show: (s) => chapterN(s) === 2 && !storyFlag(s, 'gift'),
       avail: (s) => outside(s, (x) => (x.money < 30 ? 'Not enough money ($30).' : true)),
@@ -443,15 +452,65 @@
         note('Mia: “' + pick(['Biscuit has a crush on Simba, I swear.', 'Did you try the new café? Dogs get free biscuits!', 'Simba is getting so good on the leash!', 'Same time tomorrow?', 'I started a dog-photo account. Simba is the star.']) + '”', 'good');
         burstAt('heart', posOf('simba')[0], 45, 8);
       } },
-    { room: 'dehors', id: 'agility', name: 'Agility practice', desc: 'Get ready for the dog show.', tag: 'simba', dur: 30, mini: 'fetch',
-      verb: 'Jump, run, fetch!', walk: true, show: (s) => chapterN(s) === 4,
+    { room: 'dehors', id: 'agility', name: 'Load the white 4x4', desc: 'Bags, kuku sandwiches, Simba’s beach towel.', tag: 'maison', dur: 25,
+      verb: 'Playing Tetris with suitcases…', show: (s) => chapterN(s) === 4 && (s.story.flags.practice || 0) < 3,
       avail: (s) => outside(s),
-      run: (s, r) => { s.story.flags.practice = (s.story.flags.practice || 0) + 1; s.simba.bonheur += 8 + 10 * (r ? r.score : 0.6); s.simba.pipi = 100; weigh(s, -0.06); note(`Practice ${s.story.flags.practice}/3 done!`, 'good'); } },
+      run: (s) => { s.story.flags.practice = (s.story.flags.practice || 0) + 1; s.nena.energie -= 4; relUp('mohsen', 1); note(`4x4 loaded ${s.story.flags.practice}/3 · Baba: “Not like that! Like THIS.”`, 'good'); } },
     { room: 'cuisine', id: 'medicine', name: 'Give medicine', desc: 'Morning (before noon) and evening (after 5 PM).', tag: 'simba', dur: 3,
       verb: 'Hiding the pill in a bit of cheese…', sfx: 'pop', show: (s) => s.pet.sick && storyFlag(s, 'vet_seen'),
       task: (s) => ((s.time < 12 * 60 && !s.today.medAM) || (s.time >= 17 * 60 && !s.today.medPM) ? 'medicine' : null),
       avail: (s) => (s.time < 12 * 60 ? (s.today.medAM ? 'Morning dose done. Next one after 5 PM.' : true) : s.time >= 17 * 60 ? (s.today.medPM ? 'Evening dose done. See you tomorrow!' : true) : 'Next dose after 5 PM.'),
       run: (s) => { if (s.time < 12 * 60) s.today.medAM = true; else s.today.medPM = true; s.pet.meds++; s.simba.bonheur += 3; note(`Medicine ${s.pet.meds}/6 · Simba gobbled the cheese.`); storyEvent('medicine'); } },
+    // Family: Maman Fariba, Baba Mohsen, Negin and Nasim
+    { room: 'cuisine', id: 'momfood', name: (s) => (s.time < 17 * 60 ? 'Maman’s lunch' : 'Maman’s dinner'), tag: 'nena', dur: 30,
+      desc: (s) => (s.time < 17 * 60 ? 'Ghormeh sabzi and saffron rice. Free!' : 'Kuku sabzi, bread and yogurt. Free!'),
+      verb: 'The whole family eats together…', task: 'repas', sfx: 'pop',
+      avail: (s) => {
+        const lunch = s.time >= 12.5 * 60 && s.time <= 15 * 60, dinner = s.time >= 19 * 60 && s.time <= 21.5 * 60;
+        if (!lunch && !dinner) return 'Maman serves lunch 12:30–3 PM and dinner 7–9:30 PM.';
+        if ((lunch && s.today.momLunch) || (dinner && s.today.momDinner)) return 'You already ate. Maman insists you eat more anyway.';
+        return true;
+      },
+      run: (s) => {
+        if (s.time < 17 * 60) s.today.momLunch = true; else s.today.momDinner = true;
+        s.nena.faim += 55; s.nena.moral += 8; s.maison.vaisselle += 1; credit('repas'); relUp('fariba', 1);
+        note('Maman: “' + pick(['Eat, eat! You’re too thin.', 'Did Simba eat? Did YOU eat?', 'Your father wants more rice. Again.', 'Negin is still asleep? Vay, this girl…', 'Take some tahdig, the crispy part is for you.']) + '”', 'good');
+      } },
+    { room: 'cuisine', id: 'helpmom', name: 'Help Maman', desc: 'Dishes, sweeping and chopping herbs together.', tag: 'maison', dur: 25,
+      verb: 'Chopping herbs with Maman…', sfx: 'water',
+      avail: (s) => (s.today.helpMom >= 2 ? 'Maman: “Enough, go rest, azizam.”' : s.time < 8 * 60 || s.time > 22 * 60 ? 'Maman is resting.' : true),
+      run: (s) => {
+        s.today.helpMom++; s.maison.proprete += 15; s.maison.vaisselle = 0; s.nena.moral += 4; s.nena.energie -= 4;
+        s.story.flags.helpMom = (s.story.flags.helpMom || 0) + 1; relUp('fariba', 1);
+        note('Maman: “' + pick(['Thank you, azizam. You’re my right hand.', 'If only your sisters helped like you…', 'Chop the herbs finer, like this. Good!', 'Put the samovar on, your father wants tea.']) + '”', 'good');
+      } },
+    { room: 'salon', id: 'babanap', name: 'Simba on Baba’s belly', desc: 'Baba’s favorite thing in the world.', tag: 'simba', dur: 20,
+      verb: 'Simba snores on Baba’s belly…', sfx: 'happy',
+      avail: (s) => (!babaHome() ? 'Baba took the white sedan to the bazaar (back at noon).' : s.today.babaNap ? 'Simba already napped on Baba today.' : true),
+      run: (s) => {
+        s.today.babaNap = true; s.simba.bonheur += 25; s.nena.moral += 6; relUp('mohsen', 1); burstAt('heart', 82, 40, 12);
+        note('Baba: “' + pick(['This dog understands me better than the TV.', 'Look, he snores like me!', 'Don’t tell your mother, I gave him a little piece of cheese.', 'My lion, my little lion…']) + '”', 'good');
+      } },
+    { room: 'hall', id: 'wakenegin', name: 'Wake up Negin', desc: 'Knock on the “Do not wake” door.', tag: 'nena', dur: 3,
+      verb: 'Knock knock knock…', sfx: 'click',
+      run: (s) => {
+        s.story.flags.negin_try = (s.story.flags.negin_try || 0) + 1;
+        if (!s.today.neginRel) { s.today.neginRel = true; relUp('negin', 1); }
+        if (storyFlag(s, 'family_help') && rnd() < 0.35) { s.simba.eau = 100; note('Negin actually gets up, fills Simba’s water bowl… and goes back to bed.', 'good'); return; }
+        note(pick(['Negin: “Mmmph… five more minutes…” (She said that two hours ago.)', 'Negin: “I’m not asleep, I’m resting my eyes.”', 'A pillow hits the door. That’s a no.', 'Negin: “Is the house on fire? No? Then goodnight.”', 'Negin mumbles something about a dream with a giant kebab.']));
+      } },
+    { room: 'hall', id: 'neginfeed', name: 'Ask Negin to feed Simba', desc: 'Spoiler: it never works.', tag: 'nena', dur: 2,
+      verb: 'Negotiating through the door…', sfx: 'click',
+      run: () => note(pick(['Negin: “Simba is YOUR dog.” (He’s everyone’s dog.)', 'Negin: “I fed him last year. Your turn.”', 'Negin: “Tell Simba I love him. From here. Under the blanket.”', 'Negin pretends to snore. Very loudly. Very badly.'])) },
+    { room: 'hall', id: 'talknasim', name: 'Talk to Nasim', desc: 'Careful, she bites.', tag: 'nena', dur: 10,
+      verb: 'Knocking on the KEEP OUT door…', sfx: 'click',
+      avail: (s) => (s.family.out ? 'Nasim is out with Simba.' : s.today.nasimTalk ? 'Nasim slammed her door. Try tomorrow.' : true),
+      run: (s) => {
+        s.today.nasimTalk = true; relUp('nasim', 1);
+        const soft = (s.story.rel.nasim || 0) >= 5;
+        note(soft ? pick(['Nasim: “…Can I brush Simba later? Just because.”', 'Nasim shows you 37 photos of Simba. She’s smiling. Don’t mention it.', 'Nasim: “Okay, he’s the best dog. Happy now?”'])
+          : pick(['Nasim: “What? I’m busy.” (She’s on her phone.)', 'Nasim: “Leave me alone! …Is Simba okay though?”', 'Nasim: “I walked him yesterday. Don’t thank me. Seriously, don’t.”', 'Nasim: “Ugh, FINE. Five seconds. Bye.”']));
+      } },
   ];
 
   function friendEvent(s) {
@@ -479,6 +538,7 @@
   /* ------------------------------------------------------------------ */
   const ROOMS = {
     chambre: { name: 'Bedroom', icon: '🛏️', nena: [44, 6], simba: [70, 5] },
+    hall:    { name: 'Hallway', icon: '🚪', nena: [24, 6], simba: [46, 5] },
     sdb:     { name: 'Bath', icon: '🛁', nena: [56, 6], simba: [78, 5] },
     cuisine: { name: 'Kitchen', icon: '🍳', nena: [36, 6], simba: [68, 5] },
     salon:   { name: 'Living', icon: '🛋️', nena: [64, 7], simba: [34, 6] },
@@ -569,9 +629,51 @@
   const lampGlow = (s, x, y, r) => (nightLevel(s.time) > 0.25 ? `<circle cx="${x}" cy="${y}" r="${r}" fill="url(#sc-glow)"/>` : '');
   const dogBed = (x, y) => `<g><ellipse cx="${x}" cy="${y + 8}" rx="76" ry="14" fill="rgba(0,0,0,.14)"/><ellipse cx="${x}" cy="${y}" rx="72" ry="24" fill="#b5476d"/><ellipse cx="${x}" cy="${y - 6}" rx="58" ry="15" fill="#f3c6d5"/><path d="M${x - 50} ${y - 4} q50 14 100 0" stroke="#e7a8bf" stroke-width="3" fill="none"/></g>`;
   const rug = (cx, cy, rx, ry, c1, c2) => `<ellipse cx="${cx}" cy="${cy + 4}" rx="${rx + 4}" ry="${ry + 3}" fill="rgba(0,0,0,.1)"/><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c1}"/><ellipse cx="${cx}" cy="${cy}" rx="${rx * 0.78}" ry="${ry * 0.7}" fill="none" stroke="${c2}" stroke-width="4" stroke-dasharray="2 8" stroke-linecap="round"/><ellipse cx="${cx}" cy="${cy}" rx="${rx * 0.5}" ry="${ry * 0.42}" fill="${c2}" opacity=".5"/>`;
+  const persianRug = (cx, cy, w, h) => {
+    const x0 = cx - w / 2, y0 = cy - h / 2;
+    let o = `<polygon points="${x0 + 40},${y0} ${x0 + w - 40},${y0} ${x0 + w},${y0 + h} ${x0},${y0 + h}" fill="#8c1f30"/>`;
+    o += `<polygon points="${x0 + 52},${y0 + 6} ${x0 + w - 52},${y0 + 6} ${x0 + w - 14},${y0 + h - 6} ${x0 + 14},${y0 + h - 6}" fill="none" stroke="#1f2a5a" stroke-width="7"/>`;
+    o += `<polygon points="${x0 + 66},${y0 + 14} ${x0 + w - 66},${y0 + 14} ${x0 + w - 30},${y0 + h - 14} ${x0 + 30},${y0 + h - 14}" fill="#a8293c"/>`;
+    o += `<ellipse cx="${cx}" cy="${cy}" rx="${w * 0.2}" ry="${h * 0.3}" fill="#f0d9a8"/><ellipse cx="${cx}" cy="${cy}" rx="${w * 0.13}" ry="${h * 0.2}" fill="#1f2a5a"/><ellipse cx="${cx}" cy="${cy}" rx="${w * 0.05}" ry="${h * 0.08}" fill="#f0d9a8"/>`;
+    o += `<path d="M${cx - w * 0.32} ${cy} l14 -8 l14 8 l-14 8z M${cx + w * 0.32} ${cy} l-14 -8 l-14 8 l14 8z" fill="#f0d9a8"/>`;
+    for (let i = 0; i < 16; i++) o += `<path d="M${x0 + 4 + i * (w - 8) / 15} ${y0 + h} v6" stroke="#f4ead9" stroke-width="2"/>`;
+    return o;
+  };
+  const samovar = (x, y) => `<g><ellipse cx="${x}" cy="${y + 2}" rx="26" ry="4" fill="rgba(0,0,0,.15)"/><rect x="${x - 14}" y="${y - 8}" width="28" height="8" rx="3" fill="#b9a46a"/>
+    <path d="M${x - 18} ${y - 8} q-4 -30 6 -44 h24 q10 14 6 44z" fill="#d9c27a"/><path d="M${x - 10} ${y - 48} q10 -10 20 0" fill="#c9b06a"/>
+    <path d="M${x - 12} ${y - 44} q-2 24 4 34" stroke="#fff6cc" stroke-width="4" fill="none" opacity=".7"/><rect x="${x + 16}" y="${y - 22}" width="10" height="4" rx="2" fill="#a88f52"/>
+    <path d="M${x - 9} ${y - 62} h18 l-3 12 h-12z" fill="#e05b7b"/><circle cx="${x}" cy="${y - 64}" r="3" fill="#c9496f"/>
+    <path d="M${x + 34} ${y} h10 l-2 -14 h-6z" fill="rgba(200,90,40,.75)" stroke="#e8e0d0" stroke-width="1.5"/><path d="M${x + 50} ${y} h10 l-2 -14 h-6z" fill="rgba(200,90,40,.75)" stroke="#e8e0d0" stroke-width="1.5"/></g>`;
   const vignette = '<rect width="800" height="450" fill="url(#sc-vig)"/>';
 
   const DRAW = {
+    hall(s) {
+      const negZ = '<text x="0" y="0" font-family="Baloo 2, sans-serif" font-weight="800" font-size="22" fill="#7a7fb8">z</text>';
+      const door = (x, color, sign, extra) => `<g>
+        <rect x="${x - 6}" y="104" width="112" height="226" rx="4" fill="#e6d3bd"/>
+        <rect x="${x}" y="110" width="100" height="220" rx="3" fill="${color}"/>
+        <rect x="${x + 10}" y="122" width="80" height="86" rx="3" fill="rgba(0,0,0,.06)"/><rect x="${x + 10}" y="218" width="80" height="100" rx="3" fill="rgba(0,0,0,.06)"/>
+        <circle cx="${x + 84}" cy="224" r="5" fill="#d9b25c"/><rect x="${x + 80}" y="222" width="14" height="4" rx="2" fill="#d9b25c"/>
+        ${sign}${extra || ''}</g>`;
+      const runner = (() => {
+        let o = '<polygon points="230,338 570,338 640,450 160,450" fill="#8c1f30"/><polygon points="244,344 556,344 616,444 184,444" fill="none" stroke="#1f2a5a" stroke-width="8"/>';
+        o += '<polygon points="262,352 538,352 590,436 210,436" fill="#a8293c"/><ellipse cx="400" cy="392" rx="70" ry="24" fill="#f0d9a8"/><ellipse cx="400" cy="392" rx="46" ry="15" fill="#1f2a5a"/><ellipse cx="400" cy="392" rx="20" ry="7" fill="#f0d9a8"/>';
+        for (let i = 0; i < 9; i++) o += `<path d="M${180 + i * 55} 448 v6" stroke="#f4ead9" stroke-width="2"/>`;
+        return o;
+      })();
+      return `${sceneDefs(s, '#f4e6d3', '#e9d5bd', '#c69a6e', '#a37650')}
+        ${wallpaper('rgba(255,255,255,.2)')}
+        ${woodFloor()}
+        ${door(70, '#f3c6d5', '<rect x="84" y="140" width="72" height="44" rx="6" fill="#fff8ee" transform="rotate(-4 120 162)"/><text x="120" y="158" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="11" fill="#7a5c4e" transform="rotate(-4 120 162)">NENA</text><path d="M108 172 q4 -6 8 0 q4 -6 8 0 q-8 10 -8 10 q0 0 -8 -10z" fill="#e05b7b" transform="rotate(-4 120 162)"/>', '')}
+        ${door(250, '#bcd6e6', '<rect x="262" y="136" width="76" height="52" rx="6" fill="#fff8ee"/><text x="300" y="156" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="10" fill="#4a5a8a">NEGIN</text><text x="300" y="174" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="800" font-size="9" fill="#4a5a8a">DO NOT WAKE</text>',
+          `<g class="zz-door"><g transform="translate(340 120)">${negZ}</g><g transform="translate(352 98) scale(1.3)">${negZ}</g><g transform="translate(366 72) scale(1.6)">${negZ}</g></g>`)}
+        ${door(430, '#3d3a5c', '<rect x="442" y="132" width="76" height="58" rx="4" fill="#ef5f7f" transform="rotate(5 480 161)"/><text x="480" y="154" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="11" fill="#fff" transform="rotate(5 480 161)">KEEP OUT!</text><text x="480" y="176" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="10" fill="#fff" transform="rotate(5 480 161)">NASIM 😠</text>', '<circle cx="460" cy="290" r="9" fill="#ffd36b"/><circle cx="492" cy="270" r="7" fill="#7fe0b4"/>')}
+        ${door(610, '#d8c3a5', '<rect x="626" y="138" width="68" height="40" rx="4" fill="#fff8ee"/><text x="660" y="162" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="10" fill="#7a5c4e">MAMAN · BABA</text>', '')}
+        <g><rect x="726" y="250" width="64" height="80" rx="4" fill="#8a5a3c"/><rect x="732" y="272" width="52" height="4" fill="#6d4630"/><rect x="732" y="300" width="52" height="4" fill="#6d4630"/>
+          <ellipse cx="744" cy="268" rx="8" ry="3" fill="#ef8fb0"/><ellipse cx="764" cy="268" rx="8" ry="3" fill="#ef8fb0"/><ellipse cx="746" cy="296" rx="8" ry="3" fill="#6b6f7e"/><ellipse cx="766" cy="296" rx="8" ry="3" fill="#6b6f7e"/></g>
+        ${runner}
+        ${fluff(s)}${vignette}`;
+    },
     chambre(s) {
       const made = s.maison.lit, lamp = nightLevel(s.time) > 0.3;
       return `${sceneDefs(s, '#f1ddcb', '#e5c9b2', '#c08d63', '#9c6a44')}
@@ -664,7 +766,7 @@
         <rect x="92" y="250" width="348" height="92" fill="#a8744d"/>
         <rect x="86" y="238" width="360" height="16" rx="5" fill="#efe3cf"/><rect x="86" y="238" width="360" height="5" rx="2.5" fill="#fff7ea"/>
         ${[0, 1, 2].map((i) => `<rect x="${104 + i * 112}" y="264" width="100" height="70" rx="6" fill="#b98157"/><rect x="${146 + i * 112}" y="272" width="16" height="4" rx="2" fill="#e8c38f"/>`).join('')}
-        <rect x="320" y="224" width="70" height="16" rx="6" fill="#c9cfd3"/>${dishes}
+        <rect x="320" y="224" width="70" height="16" rx="6" fill="#c9cfd3"/>${dishes}${samovar(260, 238)}
         <g><path d="M128 214 h40 q4 0 4 4 v20 h-48 v-20 q0 -4 4 -4z" fill="#e05b7b"/><path d="M172 222 q12 0 12 8" stroke="#e05b7b" stroke-width="4" fill="none"/><rect x="142" y="206" width="12" height="8" rx="2" fill="#c9496f"/></g>
         ${has('cafe') ? '<rect x="196" y="200" width="36" height="40" rx="6" fill="#3a3550"/><rect x="204" y="222" width="18" height="14" rx="3" fill="#fff"/><circle cx="214" cy="210" r="3" fill="#7ee08a"/>' : ''}
         <rect x="462" y="190" width="120" height="152" rx="16" fill="#f7f4ef"/><rect x="462" y="190" width="120" height="152" rx="16" fill="url(#sc-gloss)" opacity=".25"/>
@@ -694,7 +796,7 @@
         <rect x="600" y="40" width="96" height="290" rx="4" fill="#8f5f3f"/><rect x="606" y="46" width="84" height="278" fill="#6d4630"/>
         ${[0, 1, 2, 3].map((r) => `<rect x="606" y="${132 + r * 46}" width="84" height="6" fill="#8f5f3f"/>`).join('')}${books}
         <g><rect x="634" y="250" width="30" height="20" rx="4" fill="#fffaf2"/><path d="M640 256 q9 -8 18 0" stroke="#e05b7b" stroke-width="3" fill="none"/></g>
-        ${rug(380, 404, 250, 32, '#e6c38d', '#fff2d9')}
+        ${persianRug(380, 400, 460, 70)}
         <rect x="470" y="226" width="110" height="8" rx="3" fill="#7c533a"/><rect x="478" y="234" width="8" height="96" fill="#7c533a"/><rect x="564" y="234" width="8" height="96" fill="#7c533a"/><rect x="478" y="290" width="94" height="6" fill="#7c533a"/>
         <rect x="478" y="160" width="94" height="62" rx="6" fill="#2f2b46"/><rect x="484" y="166" width="82" height="50" rx="3" fill="${tv ? '#9fd0e8' : '#3d3a5c'}"/>
         ${tv ? '<path d="M490 206 l14 -16 l10 10 l8 -8 l18 14z" fill="#7fbb5e"/><circle cx="550" cy="180" r="6" fill="#ffd36b"/>' : '<path d="M488 170 l30 20" stroke="rgba(255,255,255,.12)" stroke-width="6"/>'}
@@ -717,45 +819,76 @@
     },
     dehors(s) {
       const [a, b] = skyColor(s.time);
-      const night = nightLevel(s.time) > 0.4, w = s.today.weather, snow = w === 'neige';
-      let far = '', mid = '';
-      const xs = [[40, 120, 80], [110, 160, 70], [176, 100, 60], [230, 190, 90], [316, 130, 70], [380, 210, 84], [458, 150, 100], [552, 180, 70], [616, 120, 90], [700, 160, 80]];
-      xs.forEach(([x, h, wd], i) => {
-        far += `<rect x="${x}" y="${250 - h}" width="${wd}" height="${h}" fill="${night ? '#24233f' : ['#b9c6d6', '#a9b8cb', '#c3cedb'][i % 3]}"/>`;
-        if (snow) far += `<rect x="${x}" y="${246 - h}" width="${wd}" height="7" rx="3" fill="#fff"/>`;
-        for (let wy = 256 - h; wy < 240; wy += 18) for (let wx = x + 8; wx < x + wd - 8; wx += 16)
-          far += `<rect x="${wx}" y="${wy}" width="7" height="9" fill="${night ? ((wx + wy) % 3 ? '#ffcf73' : '#33324f') : 'rgba(255,255,255,.55)'}"/>`;
+      const night = nightLevel(s.time) > 0.4, w = s.today.weather, snow = w === 'neige', rain = w === 'pluie';
+      const sedanHome = !(s.time >= 9 * 60 && s.time < 12 * 60 && !isWeekend(s.day));
+      // Alborz range with snowy peaks
+      const ridge = 'M0 210 L60 170 L110 190 L170 120 L220 160 L270 110 L330 150 L390 95 L450 140 L500 118 L560 160 L620 105 L690 150 L740 128 L800 165 V260 H0Z';
+      const snowCaps = 'M150 140 L170 120 L190 136 L178 132 L168 142Z M250 128 L270 110 L292 128 L280 124 L270 134Z M368 116 L390 95 L414 116 L400 112 L390 124 L380 112Z M600 124 L620 105 L642 124 L630 120 L620 130Z M482 134 L500 118 L516 132 L504 130Z';
+      let city = '';
+      const bl = [[230, 70, 46], [282, 96, 40], [326, 60, 52], [384, 110, 38], [430, 76, 50], [560, 88, 44], [610, 64, 56], [672, 100, 40], [716, 72, 60]];
+      bl.forEach(([x, h, wd], i) => {
+        city += `<rect x="${x}" y="${300 - h}" width="${wd}" height="${h}" fill="${night ? '#2a2946' : ['#c9d2de', '#b7c3d2', '#d4dbe5'][i % 3]}"/>`;
+        for (let wy = 306 - h; wy < 292; wy += 14) for (let wx = x + 6; wx < x + wd - 6; wx += 11)
+          city += `<rect x="${wx}" y="${wy}" width="5" height="7" fill="${night ? ((wx * 3 + wy) % 5 ? '#ffcf73' : '#34334f') : 'rgba(255,255,255,.6)'}"/>`;
       });
-      const leaves = snow ? '#eef3f6' : night ? '#2c4a2e' : '#5f9a4c', leaves2 = snow ? '#ffffff' : night ? '#355a35' : '#77b25c';
-      const tree = (x, y, r) => `<g><ellipse cx="${x}" cy="${y + r * 2.2}" rx="${r * 0.9}" ry="${r * 0.18}" fill="rgba(0,0,0,.15)"/><rect x="${x - 7}" y="${y}" width="14" height="${r * 2.2}" fill="#7a5233"/>
-        <circle cx="${x}" cy="${y - 4}" r="${r}" fill="${leaves}"/><circle cx="${x - r * 0.6}" cy="${y + r * 0.3}" r="${r * 0.65}" fill="${leaves}"/><circle cx="${x + r * 0.6}" cy="${y + r * 0.25}" r="${r * 0.6}" fill="${leaves}"/>
-        <circle cx="${x - r * 0.25}" cy="${y - r * 0.3}" r="${r * 0.45}" fill="${leaves2}"/></g>`;
-      let tufts = '';
-      if (!snow) for (let i = 0; i < 26; i++) { const x = (i * 61) % 800, y = 300 + ((i * 37) % 140); if (y > 340 && y < 400) continue; tufts += `<path d="M${x} ${y} l-3 -9 M${x} ${y} l0 -11 M${x} ${y} l3 -9" stroke="${night ? '#2f4a2c' : '#5f9a4c'}" stroke-width="2" stroke-linecap="round"/>`; }
-      let flowers = '';
-      if (!snow && !night) for (let i = 0; i < 9; i++) { const x = 60 + i * 86, y = 420 + (i % 3) * 8; flowers += `<circle cx="${x}" cy="${y}" r="4" fill="${['#ef8fb0', '#ffd36b', '#fff'][i % 3]}"/><circle cx="${x}" cy="${y}" r="1.6" fill="#e8b73a"/>`; }
+      // the family tower: 6 floors, they live on the 5th
+      let tower = `<rect x="18" y="58" width="190" height="290" fill="${night ? '#3a3858' : '#f2ece2'}"/><rect x="18" y="58" width="190" height="10" fill="${night ? '#2f2d4a' : '#ddd3c4'}"/>`;
+      for (let f = 0; f < 6; f++) {
+        const y = 300 - f * 44;
+        tower += `<rect x="26" y="${y + 30}" width="174" height="5" fill="${night ? '#2f2d4a' : '#d8cdbc'}"/>`;
+        for (let k = 0; k < 4; k++) {
+          const lit = night ? ((f + k) % 3 !== 0) : false;
+          const home = f === 4 && k === 1;
+          tower += `<rect x="${34 + k * 42}" y="${y}" width="30" height="26" rx="2" fill="${home && night ? '#ffd27a' : lit ? '#ffcf73' : night ? '#24233c' : '#a9c4d8'}"/>`;
+          if (home) tower += `<circle cx="${49 + k * 42}" cy="${y + 20}" r="5" fill="#e38c30"/><circle cx="${46 + k * 42}" cy="${y + 16}" r="2.4" fill="#e38c30"/><circle cx="${52 + k * 42}" cy="${y + 16}" r="2.4" fill="#e38c30"/>`;
+        }
+        tower += `<rect x="${30 + 42}" y="${y + 24}" width="38" height="4" fill="${night ? '#55537a' : '#bfb3a2'}"/>`;
+      }
+      tower += `<rect x="90" y="300" width="46" height="48" rx="3" fill="${night ? '#ffd27a' : '#7d553d'}"/><rect x="80" y="294" width="66" height="8" rx="3" fill="${night ? '#2f2d4a' : '#c4b6a2'}"/>`;
+      const milad = `<g fill="${night ? '#2a2946' : '#8d9bb0'}"><rect x="514" y="94" width="8" height="206"/><ellipse cx="518" cy="132" rx="22" ry="12"/><rect x="500" y="124" width="36" height="16" rx="6"/><rect x="516" y="54" width="4" height="44"/><path d="M496 300 l22 -60 l22 60z"/></g>
+        ${night ? '<g fill="#ffcf73"><circle cx="506" cy="132" r="2"/><circle cx="518" cy="134" r="2"/><circle cx="530" cy="132" r="2"/><circle cx="518" cy="56" r="2.4" fill="#ff6b6b"/></g>' : ''}`;
+      const chenar = (x, y, r) => `<g><rect x="${x - 7}" y="${y}" width="14" height="${r * 2}" fill="#d9cdb4"/><path d="M${x - 7} ${y + 10} h7 v8 h-7z M${x} ${y + r} h7 v10 h-7z M${x - 7} ${y + r * 1.5} h6 v8 h-6z" fill="#a49478"/>
+        <circle cx="${x}" cy="${y - 6}" r="${r}" fill="${snow ? '#f2f5f8' : night ? '#2c4a2e' : '#6aa04c'}"/><circle cx="${x - r * 0.65}" cy="${y + 4}" r="${r * 0.6}" fill="${snow ? '#ffffff' : night ? '#2f4f31' : '#5f9a4c'}"/><circle cx="${x + r * 0.6}" cy="${y}" r="${r * 0.62}" fill="${snow ? '#ffffff' : night ? '#355a35' : '#7fbb5e'}"/></g>`;
+      const car4x4 = `<g><ellipse cx="540" cy="350" rx="80" ry="7" fill="rgba(0,0,0,.2)"/>
+        <rect x="470" y="300" width="146" height="44" rx="8" fill="#f7f7f5"/><path d="M488 300 l14 -30 h88 l14 30z" fill="#f2f2f0"/>
+        <path d="M500 298 l10 -22 h32 v22z M548 298 v-22 h36 l10 22z" fill="${night ? '#2c3150' : '#9fc3dc'}"/>
+        ${snow ? '<rect x="492" y="262" width="104" height="8" rx="4" fill="#fff"/>' : ''}
+        <rect x="466" y="318" width="10" height="10" rx="2" fill="#ffcf73"/><rect x="608" y="316" width="10" height="12" rx="2" fill="#e05b5b"/>
+        <circle cx="620" cy="318" r="12" fill="#2f2b36"/><circle cx="620" cy="318" r="6" fill="#c9cfd3"/>
+        <circle cx="500" cy="344" r="14" fill="#2f2b36"/><circle cx="500" cy="344" r="6" fill="#c9cfd3"/><circle cx="590" cy="344" r="14" fill="#2f2b36"/><circle cx="590" cy="344" r="6" fill="#c9cfd3"/>
+        <path d="M478 312 h128" stroke="#dcdcd8" stroke-width="2"/><rect x="520" y="306" width="12" height="3" rx="1.5" fill="#bfc4c9"/></g>`;
+      const sedan = sedanHome ? `<g><ellipse cx="700" cy="350" rx="78" ry="6" fill="rgba(0,0,0,.18)"/>
+        <path d="M628 330 q0 -16 18 -18 l20 -22 h62 l24 22 q22 2 22 18 v12 h-146z" fill="#f7f7f5"/>
+        <path d="M672 308 l10 -14 h24 v14z M712 308 v-14 h14 l14 14z" fill="${night ? '#2c3150' : '#9fc3dc'}"/>
+        ${snow ? '<path d="M668 290 h62 l6 6 h-74z" fill="#fff"/>' : ''}
+        <circle cx="660" cy="344" r="12" fill="#2f2b36"/><circle cx="660" cy="344" r="5" fill="#c9cfd3"/><circle cx="742" cy="344" r="12" fill="#2f2b36"/><circle cx="742" cy="344" r="5" fill="#c9cfd3"/>
+        <rect x="626" y="326" width="8" height="6" rx="2" fill="#ffcf73"/><rect x="766" y="324" width="8" height="8" rx="2" fill="#e05b5b"/></g>` : '';
+      let tiles = '';
+      for (let x = 0; x < 800; x += 50) tiles += `<path d="M${x} 372 L${x - 30 + (x - 400) * 0.2} 450" stroke="rgba(0,0,0,.07)" stroke-width="2"/>`;
+      for (const y of [392, 420]) tiles += `<path d="M0 ${y} H800" stroke="rgba(0,0,0,.07)" stroke-width="2"/>`;
       return `<defs><linearGradient id="skyOut" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient>
-          <linearGradient id="grassG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${snow ? '#f4f7fa' : night ? '#3d5a39' : w === 'pluie' ? '#79a85a' : '#9ccb72'}"/><stop offset="1" stop-color="${snow ? '#dfe6ec' : night ? '#2c4229' : w === 'pluie' ? '#5f8c45' : '#77ad55'}"/></linearGradient>
+          <linearGradient id="mtn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${night ? '#3a3a62' : '#9aa6c0'}"/><stop offset="1" stop-color="${night ? '#2a2a48' : '#c7cfdf'}"/></linearGradient>
           <radialGradient id="sc-glow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".7"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient>
           <radialGradient id="sunG"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#ffe08a" stop-opacity=".6"/><stop offset="1" stop-color="#ffe08a" stop-opacity="0"/></radialGradient></defs>
         <rect width="800" height="450" fill="url(#skyOut)"/>
-        ${night ? Array.from({ length: 22 }, (_, i) => `<circle cx="${(i * 97) % 800}" cy="${(i * 53) % 150}" r="${i % 4 ? 1.2 : 2}" fill="#fff" opacity=".8"/>`).join('') + '<circle cx="600" cy="70" r="26" fill="#fff3c9"/><circle cx="612" cy="62" r="24" fill="' + a + '"/>'
-          : w === 'soleil' ? '<circle cx="600" cy="72" r="80" fill="url(#sunG)"/><circle cx="600" cy="72" r="28" fill="#ffe9a0"/>' : ''}
-        ${!night ? `<g fill="#fff" opacity="${w === 'pluie' ? 0.75 : 0.9}"><ellipse cx="220" cy="74" rx="66" ry="20"/><ellipse cx="258" cy="60" rx="42" ry="22"/><ellipse cx="190" cy="64" rx="30" ry="16"/><ellipse cx="470" cy="106" rx="52" ry="14"/><ellipse cx="498" cy="96" rx="30" ry="14"/></g>` : ''}
-        ${w === 'pluie' ? '<rect width="800" height="260" fill="#6b7a8e" opacity=".25"/>' : ''}
-        ${far}
-        <rect y="248" width="800" height="202" fill="url(#grassG)"/>
-        <g opacity=".9">${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((i) => `<rect x="${i * 60}" y="256" width="5" height="34" fill="#fff8ee"/>`).join('')}<rect x="0" y="262" width="800" height="5" fill="#fff8ee"/><rect x="0" y="278" width="800" height="5" fill="#fff8ee"/></g>
-        ${tree(150, 196, 46)}${tree(660, 210, 40)}${tree(470, 230, 26)}
-        <path d="M0 362 q400 -64 800 0 v44 q-400 -64 -800 0z" fill="${night ? '#6b5d4d' : snow ? '#e6ebef' : '#e8d4ab'}"/>
-        <path d="M0 362 q400 -64 800 0" stroke="${night ? '#5a4d3f' : '#cdb588'}" stroke-width="3" fill="none"/>
-        ${tufts}${flowers}
-        <g><ellipse cx="572" cy="336" rx="60" ry="6" fill="rgba(0,0,0,.14)"/><rect x="520" y="298" width="104" height="10" rx="4" fill="#9a6b44"/><rect x="520" y="280" width="104" height="8" rx="4" fill="#9a6b44"/><rect x="520" y="268" width="104" height="8" rx="4" fill="#9a6b44"/>
-          <rect x="528" y="308" width="7" height="26" fill="#5a3d27"/><rect x="608" y="308" width="7" height="26" fill="#5a3d27"/></g>
-        ${night ? '<circle cx="333" cy="196" r="70" fill="url(#sc-glow)"/>' : ''}
-        <rect x="330" y="200" width="6" height="150" fill="#3a3a4c"/><rect x="322" y="186" width="22" height="16" rx="4" fill="#3a3a4c"/><rect x="326" y="190" width="14" height="10" rx="2" fill="${night ? '#ffe3a3' : '#d9d9e0'}"/>
-        ${w === 'pluie' ? '<ellipse cx="250" cy="420" rx="38" ry="9" fill="#7d9fb3" opacity=".75"/><ellipse cx="560" cy="434" rx="28" ry="7" fill="#7d9fb3" opacity=".75"/>' : ''}
-        ${snow ? '<g><circle cx="720" cy="392" r="22" fill="#fff"/><circle cx="720" cy="360" r="15" fill="#fff"/><circle cx="715" cy="356" r="2" fill="#333"/><circle cx="725" cy="356" r="2" fill="#333"/><path d="M720 361 l10 2 l-10 2z" fill="#e57f22"/></g>' : ''}`;
+        ${night ? Array.from({ length: 18 }, (_, i) => `<circle cx="${(i * 97 + 40) % 800}" cy="${(i * 37) % 90 + 8}" r="${i % 4 ? 1.1 : 1.8}" fill="#fff" opacity=".8"/>`).join('') + '<circle cx="680" cy="56" r="22" fill="#fff3c9"/><circle cx="690" cy="50" r="20" fill="' + a + '"/>'
+          : w === 'soleil' ? '<circle cx="680" cy="60" r="70" fill="url(#sunG)"/><circle cx="680" cy="60" r="24" fill="#ffe9a0"/>' : ''}
+        ${!night ? `<g fill="#fff" opacity="${rain ? 0.7 : 0.85}"><ellipse cx="300" cy="60" rx="56" ry="16"/><ellipse cx="330" cy="50" rx="34" ry="16"/><ellipse cx="580" cy="80" rx="44" ry="12"/></g>` : ''}
+        <path d="${ridge}" fill="url(#mtn)"/><path d="${snowCaps}" fill="#fff" opacity="${night ? 0.6 : 0.95}"/>
+        ${rain ? '<rect width="800" height="300" fill="#6b7a8e" opacity=".25"/>' : ''}
+        ${milad}${city}
+        <rect x="0" y="296" width="800" height="62" fill="${night ? '#3a3a48' : snow ? '#e8ecf0' : '#7c7f8a'}"/>
+        <path d="M0 326 H800" stroke="${night ? '#5a5a68' : '#f4f4f4'}" stroke-width="3" stroke-dasharray="26 22"/>
+        ${tower}
+        ${car4x4}${sedan}
+        <rect x="0" y="356" width="800" height="14" fill="#9a9488"/><rect x="0" y="358" width="800" height="8" fill="${rain ? '#7aa6c2' : snow ? '#eef3f6' : '#8fb2c4'}"/>
+        <rect x="0" y="370" width="800" height="80" fill="${snow ? '#f1f4f7' : night ? '#6d6a66' : '#d8cfc2'}"/>${tiles}
+        ${chenar(250, 250, 36)}${chenar(430, 262, 30)}${chenar(770, 250, 36)}
+        ${night ? '<circle cx="340" cy="250" r="80" fill="url(#sc-glow)"/>' : ''}
+        <rect x="337" y="250" width="6" height="122" fill="#3a3a4c"/><path d="M340 250 q0 -16 18 -16" stroke="#3a3a4c" stroke-width="5" fill="none"/><rect x="352" y="232" width="18" height="8" rx="3" fill="${night ? '#ffe3a3' : '#d9d9e0'}"/>
+        <g><rect x="640" y="380" width="44" height="54" rx="4" fill="#2f6f9e"/><text x="662" y="404" text-anchor="middle" font-family="Nunito, sans-serif" font-size="9" font-weight="800" fill="#fff">کوچه</text><text x="662" y="420" text-anchor="middle" font-family="Nunito, sans-serif" font-size="8" font-weight="800" fill="#fff">Narges</text><rect x="660" y="434" width="4" height="16" fill="#555"/></g>
+        ${rain ? '<ellipse cx="250" cy="430" rx="38" ry="8" fill="#9db7c8" opacity=".8"/><ellipse cx="560" cy="440" rx="26" ry="6" fill="#9db7c8" opacity=".8"/>' : ''}
+        ${snow ? '<g><circle cx="720" cy="420" r="18" fill="#fff"/><circle cx="720" cy="394" r="12" fill="#fff"/><circle cx="716" cy="391" r="1.8" fill="#333"/><circle cx="724" cy="391" r="1.8" fill="#333"/><path d="M720 395 l8 2 l-8 2z" fill="#e57f22"/></g>' : ''}`;
     },
   };
 
@@ -889,6 +1022,31 @@
     if (spriteKeys.simba !== sk) { $('simba-sprite').innerHTML = window.Art.simba({ collar: S.collar, muddy: S.muddy }); spriteKeys.simba = sk; }
   }
 
+  function npcNow() {
+    const t = S.time, r = S.room;
+    if (r === 'cuisine' && t >= 8 * 60 && t <= 22 * 60) {
+      const lunch = t >= 12.5 * 60 && t <= 15 * 60 && !S.today.momLunch, dinner = t >= 19 * 60 && t <= 21.5 * 60 && !S.today.momDinner;
+      return { who: 'fariba', x: 86, mood: 'happy', bubble: lunch ? 'Lunch is ready! 🍚' : dinner ? 'Dinner is ready! 🍲' : '' };
+    }
+    if (r === 'salon' && babaHome()) return { who: 'mohsen', x: 86, mood: 'happy', bubble: S.today.babaNap ? '' : 'Simba jan, come to Baba!' };
+    if (r === 'dehors' && S.family.out) return { who: 'nasim', x: 86, mood: 'angry', bubble: 'Don’t look at me. 😠' };
+    if (r === 'hall' && !S.family.out && t >= 9 * 60 && t <= 23 * 60) return { who: 'nasim', x: 78, mood: 'angry', bubble: '' };
+    return null;
+  }
+  let npcKey = '';
+  function renderNpc() {
+    const el = $('npc');
+    if (!el) return;
+    const n = npcNow();
+    if (!n) { el.hidden = true; npcKey = ''; return; }
+    el.hidden = false;
+    const k = n.who + n.mood;
+    if (k !== npcKey) { $('npc-sprite').innerHTML = window.Art.person(n.who, { mood: n.mood }); npcKey = k; }
+    el.style.left = n.x + '%';
+    el.classList.toggle('small', n.who === 'nasim');
+    const b = $('npc-bubble');
+    b.hidden = !n.bubble || busy; b.textContent = n.bubble;
+  }
   function renderScene() {
     $('scene-bg').innerHTML = DRAW[S.room](S);
     const lvl = S.room === 'dehors' ? nightLevel(S.time) * 0.55 : nightLevel(S.time) * 0.7;
@@ -902,6 +1060,10 @@
     nena.classList.toggle('sad', S.nena.moral < 30);
     simba.classList.toggle('happy', S.simba.bonheur >= 60 && !S.pet.sick);
     simba.classList.toggle('sick', S.pet.sick);
+    const away = S.family.out;
+    simba.hidden = away && S.room !== 'dehors';
+    if (away && S.room === 'dehors') { simba.style.left = '68%'; }
+    renderNpc();
 
     const d = S.simba;
     const dogNeeds = [[d.pipi, 'Walkies! 🌳'], [d.eau, 'Thirsty… 💧'], [d.ventre, 'Hungry! 🍖'], [d.bonheur, 'Play with me 🎾'], [d.pelage, 'Brush me ✨']]
@@ -934,7 +1096,11 @@
     if (TASKS[id].check) return !TASKS[id].check(S) && S.maison.vaisselle > 0;
     return t.done < t.need;
   }
-  const availOf = (a) => (a.avail ? a.avail(S) : true);
+  const NO_SIMBA_OK = ['eau', 'gamelle', 'cake', 'gift', 'croquettes', 'medicine'];
+  const availOf = (a) => {
+    if (S.family && S.family.out && a.tag === 'simba' && !NO_SIMBA_OK.includes(a.id)) return S.room === 'dehors' ? 'Nasim has Simba. She says: “MY walk.”' : 'Simba is out with Nasim.';
+    return a.avail ? a.avail(S) : true;
+  };
   const roomHasTodo = (room) => visibleActions(room).some((a) => isTodo(a) && availOf(a) === true);
 
   function renderRooms() {
@@ -1189,6 +1355,7 @@
       else finish();
     }
     function finish() {
+      if (a.room === 'dehors' && rnd() < 0.15 && S.time < 20 * 60) note('📞 Baba: “' + pick(BABA_DAY) + '”');
       $('busy').hidden = true;
       nena.classList.remove('working', 'walking', 'asleep');
       simba.classList.remove('walking', 'asleep');
@@ -1309,7 +1476,7 @@
     S.simba.pipi = clamp(S.simba.pipi - 55, 15);
     S.simba.bonheur = clamp(S.simba.bonheur + 5);
     S.maison.lit = false; S.maison.linge += 1; S.maison.proprete = clamp(S.maison.proprete - 8);
-    S.dressed = false; S.room = 'chambre';
+    S.dressed = false; S.room = 'chambre'; S.family.out = false;
     S.today = makeDay(S.day);
     if (S.muddy) addTask('bain');
     S.pendingNight = null;
@@ -1377,11 +1544,61 @@
         pet: data.pet ? Object.assign(base.pet, data.pet, { tricks: Object.assign(base.pet.tricks, data.pet.tricks) }) : base.pet,
         album: data.album || [],
         puzzle: Object.assign({ level: 1, stars: {}, perks: [] }, data.puzzle),
-        today: Object.assign({ trains: 0, medAM: false, medPM: false, miaWalk: false }, data.today),
+        today: Object.assign({ trains: 0, medAM: false, medPM: false, miaWalk: false, nasimWalk: false, babaCall: false, babaCall2: 0, babaToast: false, momLunch: false, momDinner: false, helpMom: 0, nasimTalk: false, babaNap: false, neginRel: false }, data.today),
+        family: Object.assign({ out: false, back: 0 }, data.family),
       });
     } catch (e) { return null; }
   }
 
+
+  /* ------------------------------------------------------------------ */
+  /* Family life: Nasim's walks, Baba's calls                            */
+  /* ------------------------------------------------------------------ */
+  function nasimTake() {
+    const f = S.family;
+    f.out = true; f.back = S.time + 60 + Math.floor(rnd() * 50);
+    S.today.nasimWalk = true;
+    endBeh(true);
+    note('😠 Nasim grabbed the leash and took Simba out. Without asking.', 'bad');
+    snd('swoosh');
+    storyEvent('nasim');
+    render();
+  }
+  function nasimReturn() {
+    const f = S.family, d = S.simba;
+    f.out = false;
+    d.pipi = 100; d.bonheur = clamp(d.bonheur + 8);
+    S.counters.walks++; credit('promenade');
+    const r = rnd();
+    if (r < 0.22) { S.muddy = true; addTask('bain'); note('Nasim brought Simba back covered in mud: “He jumped in the jub. Not my fault.”', 'bad'); }
+    else if (r < 0.37) { weigh(S, 0.2); note('Nasim: “I gave him half my sandwich. He looked hungry.” (He always looks hungry.)'); }
+    else note(pick(['Nasim brought Simba back. “He had fun. Don’t make it weird.”', 'Nasim: “Here’s your dog.” She’s almost smiling.', 'Nasim is back with Simba, and 200 photos on her phone.']), 'good');
+    relUp('nasim', 1);
+  }
+  function familyTick() {
+    if (busy || modalOpen || storyActive() || pzOpen()) return;
+    const f = S.family, d = S.simba;
+    if (!f.out && !S.today.nasimWalk && S.time >= 10 * 60 && S.time <= 19 * 60 && d.pipi < 65 && !S.pet.sick && rnd() < 0.006) nasimTake();
+  }
+  const BABA_DAY = ['Where are you? Did you eat?', 'Is Simba wearing his collar? Good.', 'Buy sangak bread on the way back!', 'Your sisters don’t answer, so I call you.', 'Don’t let Simba eat things from the street!'];
+  function babaCall(second) {
+    if (!window.Story) return;
+    const steps = second ? [
+      { n: '📞 Baba is calling. Again.' },
+      { s: 'mohsen', phone: true, m: 'angry', t: 'NENA! Thirty minutes! Your mother is worried, I’m worried, even the doorman is worried! I’m coming down with the car!' },
+      { n: 'Nena hurries back up to the 5th floor. Baba is waiting in the doorway in his slippers.' },
+      { do: () => { relUp('mohsen', -1); S.nena.moral = clamp(S.nena.moral - 3); S.room = 'hall'; } },
+    ] : [
+      { n: '📞 Baba is calling…' },
+      { s: 'mohsen', phone: true, m: 'neutral', t: pick(['Nena jan, where are you? It’s dark already!', 'Baba, it’s 9 PM. Where are you? Is Simba with you? Did you eat?', 'Hello? Nena? I called Nasim, she didn’t answer. I called Negin, she was asleep. Where are YOU?']) },
+      { choice: [
+        { t: '“Coming home now, Baba!”', do: () => { relUp('mohsen', 1); S.today.babaCall2 = -1; S.room = 'hall'; }, then: [{ s: 'mohsen', phone: true, t: 'Good girl. Your mother made tea. Walk carefully!' }] },
+        { t: '“Five more minutes!”', do: () => { S.today.babaCall2 = S.time + 30; }, then: [{ s: 'mohsen', phone: true, m: 'angry', t: 'Five minutes! I’m counting! In my day we were home before dinner!' }] },
+      ] },
+    ];
+    window.Story.run(steps, () => after());
+  }
+  setInterval(familyTick, 1000);
 
   /* ------------------------------------------------------------------ */
   /* Simba's spontaneous behaviors                                       */
@@ -1422,7 +1639,7 @@
     setTimeout(() => el.classList.remove('walking'), 900);
   }
   function simbaTick() {
-    if (busy || modalOpen || storyActive() || sheet.open || pzOpen() || (window.MiniGames && window.MiniGames.active) || !$('coach').hidden || document.hidden) return;
+    if (S.family.out || busy || modalOpen || storyActive() || sheet.open || pzOpen() || (window.MiniGames && window.MiniGames.active) || !$('coach').hidden || document.hidden) return;
     const now = Date.now();
     if (beh.state && now > beh.until) endBeh();
     if (beh.state || now < beh.next) return;
@@ -1485,11 +1702,11 @@
       head = S.story.ended ? `<h3 class="ch-title">Season 1 complete</h3><p>Thank you for taking such good care of Simba. Life goes on in free play: keep collecting memories and achievements!</p>` : '<p>Free play.</p>';
     }
     const known = S.story.flags.met_mia;
-    return head + `<h3>Friends</h3><div class="rels">
-      ${known ? relRow('mia', 'Mia & Biscuit') : '<div class="rel locked">??? <small>Walk Simba to meet the neighbors</small></div>'}
-      ${relRow('grandma', 'Grandma Rose')}
-      ${S.story.flags.vet_seen || (S.story.rel.lee || 0) > 0 ? relRow('lee', 'Dr. Lee') : ''}
-      ${(S.story.rel.sam || 0) > 0 || window.Story.sday(S) >= 10 ? relRow('sam', 'Sam (boss)') : ''}
+    return head + `<h3>Family & friends</h3><div class="rels">
+      ${relRow('fariba', 'Maman Fariba')}${relRow('mohsen', 'Baba · Haj Mohsen')}${relRow('negin', 'Negin (big sister)')}${relRow('nasim', 'Nasim (little sister)')}
+      ${known ? relRow('mia', 'Mia & Biscuit · 3rd floor') : '<div class="rel locked">??? <small>Walk Simba to meet the neighbors</small></div>'}
+      ${S.story.flags.vet_seen || (S.story.rel.lee || 0) > 0 ? relRow('lee', 'Dr. Karimi (vet)') : ''}
+      ${(S.story.rel.sam || 0) > 0 || window.Story.sday(S) >= 10 ? relRow('sam', 'Mr. Rahimi (boss)') : ''}
     </div>`;
   }
   function sheetSimba() {

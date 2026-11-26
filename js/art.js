@@ -170,17 +170,20 @@ window.Art = (function () {
     </svg>`;
   }
 
-  /* Head-and-shoulders portraits for dialogue. mood: happy | neutral | sad | surprised */
+  /* People: head-and-shoulders portraits for dialogue and full-body figures for the scenes.
+     mood: happy | neutral | sad | surprised | angry | sleepy */
   const PEOPLE = {
-    nena:    { skin: '#f6caa7', hair: '#7a3f22', hair2: '#8a4a28', style: 'curly', shirt: '#f19bb8', collar: '#b5476d', freckles: true },
+    nena:    { skin: '#f6caa7', hair: '#7a3f22', hair2: '#8a4a28', style: 'curly', shirt: '#f19bb8', collar: '#b5476d', freckles: true, pants: '#4f6d9a' },
+    nasim:   { skin: '#f3c7a3', hair: '#2a1a14', hair2: '#3a251c', style: 'ponytail', shirt: '#3d3a5c', collar: '#ef5f7f', pants: '#2f2b46', small: true, hoodie: true },
+    negin:   { skin: '#f4cbab', hair: '#5a2f1e', hair2: '#6e3b26', style: 'messy', shirt: '#9cc2d9', collar: '#6f9bb7', pants: '#9cc2d9', mask: true },
+    mohsen:  { skin: '#eebd96', hair: '#c9c6cf', hair2: '#b3afba', style: 'bald', shirt: '#cfe0f0', collar: '#8fa9c4', pants: '#6b6f7e', belly: true, mustache: true, glasses: true },
+    fariba:  { skin: '#f0c19c', hair: '#3a261d', hair2: '#6d5a52', style: 'bun', shirt: '#b5476d', collar: '#8c2f52', pants: '#5a3d6b', apron: true, earrings: '#ffd36b' },
     mia:     { skin: '#8d5a3b', hair: '#1f1612', hair2: '#2c201a', style: 'puff', shirt: '#f2c230', collar: '#d99a00', earrings: '#ffd36b' },
-    grandma: { skin: '#f3d1b8', hair: '#d9d6df', hair2: '#c3bfcc', style: 'bun', shirt: '#8c6bb1', collar: '#6c4f92', glasses: true },
-    lee:     { skin: '#e9bf94', hair: '#1c1b22', hair2: '#2b2a33', style: 'short', shirt: '#ffffff', collar: '#cfd8e0', stetho: true },
-    sam:     { skin: '#f0c7a0', hair: '#b4562a', hair2: '#c66a3a', style: 'side', shirt: '#4f6d9a', collar: '#3a5480', beard: true },
+    lee:     { skin: '#e9bf94', hair: '#1c1b22', hair2: '#2b2a33', style: 'short', shirt: '#ffffff', collar: '#cfd8e0', stetho: true, glasses: true },
+    sam:     { skin: '#f0c7a0', hair: '#3a2a22', hair2: '#4a362c', style: 'side', shirt: '#4f6d9a', collar: '#3a5480', beard: true },
   };
-  function bust(who, mood) {
-    const c = PEOPLE[who];
-    if (!c) return '';
+
+  function hairParts(c) {
     let back = '', front = '';
     if (c.style === 'curly') {
       back = `<g fill="${c.hair}"><circle cx="80" cy="66" r="50"/><circle cx="36" cy="92" r="24"/><circle cx="124" cy="92" r="24"/><circle cx="34" cy="122" r="18"/><circle cx="126" cy="122" r="18"/></g>`;
@@ -188,9 +191,20 @@ window.Art = (function () {
     } else if (c.style === 'puff') {
       back = `<g fill="${c.hair}"><circle cx="80" cy="30" r="30"/><circle cx="50" cy="52" r="22"/><circle cx="110" cy="52" r="22"/></g>`;
       front = `<path d="M46 66 q2 -34 34 -36 q32 2 34 36 q-10 -18 -34 -20 q-24 2 -34 20z" fill="${c.hair2}"/>`;
+    } else if (c.style === 'ponytail') {
+      back = `<ellipse cx="80" cy="58" rx="40" ry="34" fill="${c.hair}"/><path d="M104 30 q40 -6 34 40 q-4 30 -20 44 q8 -34 -14 -60z" fill="${c.hair}"/><circle cx="106" cy="34" r="7" fill="${c.collar}"/>`;
+      front = `<path d="M43 68 q0 -40 38 -40 q36 0 38 38 q-14 -20 -40 -20 q-18 0 -36 22z" fill="${c.hair2}"/><path d="M52 50 q20 -14 44 -6" stroke="rgba(255,255,255,.18)" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+    } else if (c.style === 'messy') {
+      back = `<ellipse cx="80" cy="60" rx="44" ry="38" fill="${c.hair}"/><circle cx="80" cy="22" r="20" fill="${c.hair}"/><path d="M66 10 l-6 -8 M92 8 l6 -8 M80 4 v-8" stroke="${c.hair}" stroke-width="5" stroke-linecap="round"/>
+        <path d="M38 80 q-8 30 4 50 M122 80 q8 30 -4 50" stroke="${c.hair}" stroke-width="12" stroke-linecap="round" fill="none"/>`;
+      front = `<path d="M43 66 q2 -38 37 -38 q35 0 37 38 q-8 -10 -18 -14 q-6 10 -20 6 q-12 8 -24 -2 q-6 4 -12 10z" fill="${c.hair2}"/>
+        ${c.mask ? '<path d="M44 48 q36 -14 72 0 v12 q-36 -12 -72 0z" fill="#ef8fb0"/><g fill="#fff"><circle cx="64" cy="50" r="2"/><circle cx="96" cy="50" r="2"/></g>' : ''}`;
     } else if (c.style === 'bun') {
       back = `<circle cx="80" cy="22" r="18" fill="${c.hair}"/><ellipse cx="80" cy="56" rx="42" ry="34" fill="${c.hair}"/>`;
-      front = `<path d="M44 62 q4 -30 36 -32 q32 2 36 32 q-14 -16 -36 -16 q-22 0 -36 16z" fill="${c.hair2}"/>`;
+      front = `<path d="M44 62 q4 -30 36 -32 q32 2 36 32 q-14 -16 -36 -16 q-22 0 -36 16z" fill="${c.hair}"/><path d="M84 30 q18 4 26 20" stroke="${c.hair2}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+    } else if (c.style === 'bald') {
+      back = `<path d="M42 70 q-4 -26 8 -34 M118 70 q4 -26 -8 -34" stroke="${c.hair}" stroke-width="14" stroke-linecap="round" fill="none"/>`;
+      front = `<path d="M44 72 q-2 -16 6 -26 M116 72 q2 -16 -6 -26" stroke="${c.hair2}" stroke-width="9" stroke-linecap="round" fill="none"/><ellipse cx="76" cy="44" rx="14" ry="5" fill="rgba(255,255,255,.25)"/>`;
     } else if (c.style === 'short') {
       back = `<ellipse cx="80" cy="54" rx="40" ry="32" fill="${c.hair}"/>`;
       front = `<path d="M42 64 q0 -36 38 -36 q38 0 38 36 q-6 -14 -20 -16 q-10 10 -40 8 q-10 2 -16 8z" fill="${c.hair2}"/>`;
@@ -198,36 +212,94 @@ window.Art = (function () {
       back = `<ellipse cx="80" cy="54" rx="38" ry="30" fill="${c.hair}"/>`;
       front = `<path d="M42 62 q2 -34 40 -34 q34 2 36 30 q-20 -16 -50 -12 q-14 4 -26 16z" fill="${c.hair2}"/>`;
     }
+    return { back, front };
+  }
+
+  function face(c, mood) {
     const m = mood || 'happy';
     const eyes = m === 'happy'
       ? `<path d="M60 76 q6 -6 12 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M88 76 q6 -6 12 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/>`
-      : `<ellipse cx="66" cy="76" rx="4.4" ry="${m === 'surprised' ? 6.5 : 5.4}" fill="#2b1a14"/><ellipse cx="94" cy="76" rx="4.4" ry="${m === 'surprised' ? 6.5 : 5.4}" fill="#2b1a14"/><circle cx="67.5" cy="74" r="1.6" fill="#fff"/><circle cx="95.5" cy="74" r="1.6" fill="#fff"/>`;
-    const brows = m === 'sad'
-      ? `<path d="M58 64 l14 -4 M102 64 l-14 -4" stroke="${c.hair}" stroke-width="3" stroke-linecap="round"/>`
-      : m === 'surprised' ? `<path d="M58 60 q8 -6 14 -2 M88 58 q6 -4 14 2" stroke="${c.hair}" stroke-width="3" fill="none" stroke-linecap="round"/>`
-      : `<path d="M58 64 q7 -4 14 0 M88 64 q7 -4 14 0" stroke="${c.hair}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+      : m === 'sleepy' ? `<path d="M59 78 q7 4 14 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M87 78 q7 4 14 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/>`
+      : `<ellipse cx="66" cy="76" rx="4.4" ry="${m === 'surprised' ? 6.5 : m === 'angry' ? 4.4 : 5.4}" fill="#2b1a14"/><ellipse cx="94" cy="76" rx="4.4" ry="${m === 'surprised' ? 6.5 : m === 'angry' ? 4.4 : 5.4}" fill="#2b1a14"/><circle cx="67.5" cy="74.5" r="1.6" fill="#fff"/><circle cx="95.5" cy="74.5" r="1.6" fill="#fff"/>`;
+    const bc = c.style === 'bald' ? '#8f8a96' : c.hair;
+    const brows = m === 'sad' ? `<path d="M58 64 l14 -4 M102 64 l-14 -4" stroke="${bc}" stroke-width="3" stroke-linecap="round"/>`
+      : m === 'angry' ? `<path d="M57 62 l15 6 M103 62 l-15 6" stroke="${bc}" stroke-width="4" stroke-linecap="round"/>`
+      : m === 'surprised' ? `<path d="M58 60 q8 -6 14 -2 M88 58 q6 -4 14 2" stroke="${bc}" stroke-width="3" fill="none" stroke-linecap="round"/>`
+      : `<path d="M58 64 q7 -4 14 0 M88 64 q7 -4 14 0" stroke="${bc}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
     const mouth = m === 'sad' ? `<path d="M72 98 q8 -6 16 0" stroke="#9c4250" stroke-width="3" fill="none" stroke-linecap="round"/>`
+      : m === 'angry' ? `<path d="M71 100 q9 -8 18 0" stroke="#9c4250" stroke-width="3.4" fill="none" stroke-linecap="round"/>`
       : m === 'surprised' ? `<ellipse cx="80" cy="98" rx="5" ry="6" fill="#9c4250"/>`
+      : m === 'sleepy' ? `<ellipse cx="80" cy="98" rx="4" ry="3" fill="#9c4250"/>`
       : m === 'neutral' ? `<path d="M73 97 h14" stroke="#9c4250" stroke-width="3" stroke-linecap="round"/>`
       : `<path d="M70 94 q10 10 20 0" stroke="#9c4250" stroke-width="3" fill="#fff" stroke-linecap="round"/>`;
-    return `<svg viewBox="0 0 160 170" class="portrait-svg" xmlns="http://www.w3.org/2000/svg">
-      ${back}
-      <path d="M18 170 q2 -50 62 -54 q60 4 62 54z" fill="${c.shirt}"/>
-      ${c.stetho ? '<path d="M60 124 q-6 30 20 34 q26 -4 20 -34" stroke="#3a3550" stroke-width="4" fill="none"/><circle cx="80" cy="158" r="6" fill="#9aa3b5"/>' : ''}
-      ${who === 'grandma' ? '<g fill="#fff"><circle cx="80" cy="140" r="3"/><circle cx="80" cy="156" r="3"/></g>' : ''}
-      <path d="M64 118 l16 14 l16 -14" fill="none" stroke="${c.collar}" stroke-width="4" stroke-linecap="round"/>
-      <rect x="70" y="100" width="20" height="22" rx="8" fill="${c.skin}" style="filter:brightness(.93)"/>
-      <ellipse cx="80" cy="76" rx="36" ry="40" fill="${c.skin}"/>
-      ${c.beard ? `<path d="M46 84 q4 34 34 36 q30 -2 34 -36 q-8 16 -34 18 q-26 -2 -34 -18z" fill="${c.hair}"/>` : ''}
-      ${front}
-      ${brows}${eyes}
-      <ellipse cx="56" cy="90" rx="8" ry="5" fill="#f08aa0" opacity=".45"/><ellipse cx="104" cy="90" rx="8" ry="5" fill="#f08aa0" opacity=".45"/>
+    return `${brows}${eyes}
+      <ellipse cx="56" cy="90" rx="8" ry="5" fill="#f08aa0" opacity="${m === 'angry' ? 0.75 : 0.45}"/><ellipse cx="104" cy="90" rx="8" ry="5" fill="#f08aa0" opacity="${m === 'angry' ? 0.75 : 0.45}"/>
       ${c.freckles ? '<g fill="#c98b6a"><circle cx="54" cy="86" r="1.2"/><circle cx="59" cy="89" r="1.2"/><circle cx="101" cy="86" r="1.2"/><circle cx="106" cy="89" r="1.2"/></g>' : ''}
       ${c.glasses ? '<g fill="none" stroke="#5a4a6a" stroke-width="3"><circle cx="66" cy="76" r="11"/><circle cx="94" cy="76" r="11"/><path d="M77 76 h6"/></g>' : ''}
+      ${c.mustache ? `<path d="M64 92 q8 -8 16 -2 q8 -6 16 2 q-8 6 -16 2 q-8 4 -16 -2z" fill="${c.hair}"/>` : ''}
       ${c.earrings ? `<circle cx="44" cy="94" r="4" fill="${c.earrings}"/><circle cx="116" cy="94" r="4" fill="${c.earrings}"/>` : ''}
-      ${mouth}
+      ${m === 'angry' ? '<path d="M118 40 l6 -6 M122 48 l8 -2 M114 34 l2 -8" stroke="#e04a4a" stroke-width="3" stroke-linecap="round"/>' : ''}
+      ${m === 'sleepy' ? '<text x="116" y="40" font-family="Baloo 2, sans-serif" font-weight="800" font-size="18" fill="#7a7fb8">z</text>' : ''}
+      ${mouth}`;
+  }
+
+  function headParts(who, mood) {
+    const c = PEOPLE[who];
+    const h = hairParts(c);
+    const head = `<rect x="70" y="100" width="20" height="22" rx="8" fill="${c.skin}" style="filter:brightness(.93)"/>
+      <ellipse cx="80" cy="76" rx="36" ry="40" fill="${c.skin}"/>
+      ${c.beard ? `<path d="M46 84 q4 34 34 36 q30 -2 34 -36 q-8 16 -34 18 q-26 -2 -34 -18z" fill="${c.hair}"/>` : ''}
+      ${h.front}${face(c, mood)}`;
+    return { back: h.back, head };
+  }
+
+  function bust(who, mood) {
+    const c = PEOPLE[who];
+    if (!c) return '';
+    const hp = headParts(who, mood);
+    const shoulders = c.belly ? 'M8 170 q0 -54 72 -56 q72 2 72 56z' : c.small ? 'M28 170 q2 -44 52 -48 q50 4 52 48z' : 'M18 170 q2 -50 62 -54 q60 4 62 54z';
+    return `<svg viewBox="0 0 160 170" class="portrait-svg" xmlns="http://www.w3.org/2000/svg">
+      ${hp.back}
+      <path d="${shoulders}" fill="${c.shirt}"/>
+      ${c.hoodie ? '<path d="M50 126 q30 22 60 0" stroke="#ef5f7f" stroke-width="4" fill="none"/><path d="M70 132 v20 M90 132 v20" stroke="#fff" stroke-width="3" stroke-linecap="round"/>' : ''}
+      ${c.apron ? '<path d="M56 130 h48 v40 h-48z" fill="#fff8ee"/><path d="M56 130 q24 -16 48 0" stroke="#fff8ee" stroke-width="4" fill="none"/>' : ''}
+      ${c.stetho ? '<path d="M60 124 q-6 30 20 34 q26 -4 20 -34" stroke="#3a3550" stroke-width="4" fill="none"/><circle cx="80" cy="158" r="6" fill="#9aa3b5"/>' : ''}
+      ${who === 'mohsen' ? '<g fill="#8fa9c4"><circle cx="80" cy="142" r="2.6"/><circle cx="80" cy="158" r="2.6"/></g>' : ''}
+      <path d="M64 118 l16 14 l16 -14" fill="none" stroke="${c.collar}" stroke-width="4" stroke-linecap="round"/>
+      ${hp.head}
     </svg>`;
   }
+
+  /* Full-body figure for scenes (same 120×210 frame as Nena). */
+  function person(who, opts) {
+    const c = PEOPLE[who];
+    if (!c) return '';
+    const o = Object.assign({ mood: 'happy' }, opts || {});
+    const hp = headParts(who, o.mood);
+    const SH2 = 'rgba(60,20,10,.14)';
+    const torso = c.belly
+      ? `<path d="M30 124 q0 -14 30 -14 q30 0 30 14 q8 22 0 40 q-6 10 -30 10 q-24 0 -30 -10 q-8 -18 0 -40z" fill="${c.shirt}"/><path d="M74 112 q16 6 16 16 q8 22 0 38 q-4 8 -12 8 q10 -30 -4 -62z" fill="${SH2}"/>
+         <g fill="${c.collar}"><circle cx="60" cy="130" r="1.8"/><circle cx="60" cy="144" r="1.8"/><circle cx="60" cy="158" r="1.8"/></g>`
+      : `<path d="M36 128 q0 -16 24 -16 q24 0 24 16 v30 q0 10 -24 10 q-24 0 -24 -10z" fill="${c.shirt}"/><path d="M70 114 q14 4 14 14 v28 q0 8 -10 10 q8 -20 -4 -52z" fill="${SH2}"/>`;
+    const legs = `<rect x="${c.belly ? 38 : 40}" y="162" width="17" height="38" rx="7" fill="${c.pants}"/><rect x="${c.belly ? 65 : 63}" y="162" width="17" height="38" rx="7" fill="${c.pants}"/>
+      <ellipse cx="47" cy="202" rx="11" ry="5" fill="${who === 'mohsen' || who === 'fariba' ? '#7a6a5e' : '#3a3550'}"/><ellipse cx="73" cy="202" rx="11" ry="5" fill="${who === 'mohsen' || who === 'fariba' ? '#7a6a5e' : '#3a3550'}"/>`;
+    const armL = c.belly ? 'M30 122 q-14 8 -12 26 v10 q1 6 7 6 q7 0 7 -6 v-12 q0 -10 4 -16z' : 'M37 120 q-12 6 -12 22 v14 q0 6 6 6 q7 0 7 -6 v-12 q0 -10 5 -14z';
+    const armR = c.belly ? 'M90 122 q14 8 12 26 v10 q-1 6 -7 6 q-7 0 -7 -6 v-12 q0 -10 -4 -16z' : 'M83 120 q12 6 12 22 v14 q0 6 -6 6 q-7 0 -7 -6 v-12 q0 -10 -5 -14z';
+    const extras = (c.apron ? '<path d="M46 124 h28 v42 q-14 6 -28 0z" fill="#fff8ee"/><path d="M48 124 q12 -10 24 0" stroke="#fff8ee" stroke-width="2.6" fill="none"/><path d="M50 150 h20" stroke="#ef8fb0" stroke-width="3"/>' : '')
+      + (c.hoodie ? '<path d="M44 118 q16 12 32 0" stroke="#ef5f7f" stroke-width="3" fill="none"/><rect x="48" y="146" width="24" height="10" rx="4" fill="rgba(0,0,0,.15)"/>' : '')
+      + (c.mask ? '<g fill="#fff" opacity=".8"><circle cx="48" cy="140" r="1.6"/><circle cx="72" cy="150" r="1.6"/><circle cx="56" cy="160" r="1.4"/></g>' : '');
+    const scale = c.small ? 0.92 : 1;
+    return `<svg viewBox="0 0 120 210" class="sprite">
+      <g transform="translate(${60 - 60 * scale} ${210 - 210 * scale}) scale(${scale})">
+      <g transform="translate(60 72) scale(.82) translate(-80 -76)">${hp.back}</g>
+      ${legs}${torso}${extras}
+      <path d="${armL}" fill="${c.shirt}"/><path d="${armR}" fill="${c.shirt}"/>
+      <circle cx="${c.belly ? 25 : 31}" cy="162" r="6.5" fill="${c.skin}"/><circle cx="${c.belly ? 95 : 89}" cy="162" r="6.5" fill="${c.skin}"/>
+      <g transform="translate(60 72) scale(.82) translate(-80 -76)">${hp.head}</g>
+      </g>
+    </svg>`;
+  }
+
   function portrait(who, mood) {
     if (who === 'simba') return simba({ eyes: mood === 'sad' ? 'closed' : 'open', tongue: mood === 'happy' ? true : false }).replace('class="sprite"', 'class="portrait-svg dog"');
     if (who === 'biscuit') return simba({ palette: 'shiba', eyes: 'open', tongue: true }).replace('class="sprite"', 'class="portrait-svg dog"');
@@ -240,5 +312,5 @@ window.Art = (function () {
     return im;
   }
 
-  return { nena, simba, portrait, toImage, OUTFITS, COLLARS };
+  return { nena, simba, portrait, person, toImage, OUTFITS, COLLARS };
 })();

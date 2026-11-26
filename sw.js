@@ -1,5 +1,5 @@
 /* Service worker: caches the game so it plays offline. */
-const CACHE = 'nena-simba-v5-pawpath';
+const CACHE = 'nena-simba-v6-tehran';
 const SHELL = [
   './', './index.html', './style.css', './manifest.webmanifest',
   './js/art.js', './js/audio.js', './js/minigames.js', './js/story.js', './js/puzzle.js', './js/game.js',

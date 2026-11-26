@@ -797,6 +797,14 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 .action { box-shadow: 0 2px 6px -3px rgba(63, 42, 34, 0.25); }
 .gauges { box-shadow: 0 4px 12px -8px rgba(63, 42, 34, 0.4); }
 
+
+/* ---------- Family NPCs ---------- */
+.npc { width: 22%; max-width: 120px; z-index: 3; pointer-events: none; }
+.npc.small { width: 19%; max-width: 104px; }
+.npc .sprite { animation: breathe 3.6s ease-in-out infinite; transform-origin: 50% 100%; }
+.zz-door { animation: zzfloat 3s ease-in-out infinite; }
+@keyframes zzfloat { 50% { transform: translateY(-6px); opacity: .7; } }
+
 @media (max-height: 640px) {
   .quest { margin-top: 4px; padding-block: 3px; }
   .gauge small { display: none; }
