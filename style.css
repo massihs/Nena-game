@@ -722,3 +722,19 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 .fam, .chal, .troph, .day { border: 0; box-shadow: 0 3px 0 #e4d2b8; }
 .troph.got { box-shadow: 0 3px 0 #e0b84a; }
 @media (prefers-reduced-motion: reduce) { .edge.need, .rtab.need { animation: none; } }
+
+/* ---- mini challenges ---- */
+.mini { position: absolute; left: 8px; bottom: 10px; z-index: 7; display: flex; align-items: center; gap: 8px; max-width: 64%; padding: 6px 10px 6px 6px; border-radius: 16px; background: rgba(38,35,64,.9); color: #fff; box-shadow: 0 6px 14px -6px rgba(0,0,0,.5), inset 0 0 0 1.5px rgba(255,217,138,.5); pointer-events: none; }
+.mini.in { animation: miniIn .35s cubic-bezier(.3,1.5,.5,1); }
+@keyframes miniIn { from { transform: translateX(-120%); } }
+.mc-i { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 11px; display: grid; place-items: center; font-size: 1.2rem; background: linear-gradient(#f585ab, #c9496f); }
+.mc-t { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mc-t small { font-size: .55rem; font-weight: 900; letter-spacing: .1em; color: var(--lamp); }
+.mc-t b { font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-bar { display: block; height: 5px; border-radius: 99px; background: rgba(255,255,255,.15); overflow: hidden; }
+.mc-bar i { display: block; height: 100%; background: linear-gradient(90deg, #7fe0b4, #f2c230); border-radius: 99px; }
+.mc-p { font-style: normal; font-family: var(--font-display); font-weight: 800; font-size: 1rem; color: var(--lamp); min-width: 28px; text-align: right; }
+.mini.win { box-shadow: 0 0 0 3px #7fe0b4, 0 0 18px rgba(127,224,180,.6); animation: bump .3s; }
+.mini.win .mc-p { color: #7fe0b4; }
+.mini.lose { opacity: .6; }
+.mini.lose .mc-p { color: #ff8a8a; }

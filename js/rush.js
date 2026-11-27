@@ -257,7 +257,7 @@
     if (cfg.mod && cfg.mod.hearts) { G.hearts = cfg.mod.hearts; G.maxHearts = cfg.mod.hearts; }
     if (cfg.mod && cfg.mod.zoom) G.zoomT = 6;
     Object.keys(hudCache).forEach((k) => delete hudCache[k]);
-    G.tabsBuilt = '';
+    G.tabsBuilt = ''; G.mc = null; G.miniT = null; G.miniN = 0; G.miniWon = 0; $('g-mini').hidden = true;
     G.giftT = (n >= 4 && (cfg.place === 'home' || cfg.place === 'clap')) || cfg.challenge ? 22 + rnd() * 30 : null;
     G.frStart = {}; FRIENDS.forEach((f) => { G.frStart[f.id] = friendLv(f.id); });
     if (G.boosts.heart) { G.hearts++; G.maxHearts++; }
@@ -526,6 +526,7 @@
     if (r.type === 'insta') { removeReq(r); toast('Pourya: “Okay… I’ll ask next time!” 😏', '', 1500); return; }
     removeReq(r);
     G.hearts--; G.failed++; G.combo = 0;
+    if (G.mc && G.mc.m.k === 'nomiss') miniEnd(false);
     snd('fail'); buzz(60); shake();
     renderObj();
     const [x, y] = anchorOf(r.who);
@@ -556,6 +557,7 @@
     G.stats.tips += tip; G.stats.maxCombo = Math.max(G.stats.maxCombo, G.combo);
     G.stats.type[r.type] = (G.stats.type[r.type] || 0) + 1;
     track('req'); track('req_' + r.type); addFriend(r.who, perfect);
+    miniHit('serve'); if (r.who === 'simba') miniHit('simba'); else if (r.who !== 'nena') miniHit('family'); if (perfect) miniHit('perfect');
     if (G.combo === 5) track('combo5');
     if (G.combo === 8) track('combo8');
     if (r.type === 'walk') G.stats.walk++;
@@ -1095,6 +1097,52 @@
   /* ------------------------------------------------------------------ */
   /* Main loop                                                           */
   /* ------------------------------------------------------------------ */
+  // mini challenges: short timed goals that pop up during the day
+  const MINIS = [
+    { k: 'serve', icon: '⚡', label: (n) => `Serve ${n} requests`, n: [3, 4], t: 30 },
+    { k: 'simba', icon: '🐾', label: (n) => `Help Simba ${n} times`, n: [2, 3], t: 30, ok: () => !!G.simba },
+    { k: 'family', icon: '👨‍👩‍👧', label: (n) => `Help the family ${n} times`, n: [2], t: 32, ok: () => G.cfg.types.filter((t) => REQ[t].who !== 'simba').length >= 2 },
+    { k: 'perfect', icon: '✨', label: (n) => `${n} “Perfect!” serves`, n: [2], t: 30 },
+    { k: 'combo', icon: '🔥', label: (n) => `Reach a ×${n} combo`, n: [3], t: 25 },
+    { k: 'nomiss', icon: '🛡️', label: () => 'No miss for 30 s', n: [1], t: 30 },
+    { k: 'clean', icon: '🧹', label: () => 'Clean up all the mess', n: [1], t: 22, ok: () => G.furs.length >= 2 },
+  ];
+  function miniTick(dt) {
+    if (G.n < 3 && G.n < 900) return;
+    const el = $('g-mini');
+    if (!G.mc) {
+      G.miniT = (G.miniT == null ? 14 : G.miniT) - dt;
+      if (G.miniT > 0 || (!G.cfg.endless && G.time < 18) || G.intro) return;
+      const pool = MINIS.filter((m) => !m.ok || m.ok());
+      const m = pick(pool), n = pick(m.n);
+      G.mc = { m, n, p: 0, t: m.t, max: m.t };
+      G.miniN = (G.miniN || 0) + 1;
+      el.innerHTML = `<span class="mc-i">${m.icon}</span><span class="mc-t"><small>MINI CHALLENGE</small><b>${m.label(n)}</b><i class="mc-bar"><i></i></i></span><em class="mc-p"></em>`;
+      el.hidden = false; el.classList.remove('win', 'lose'); void el.offsetWidth; el.classList.add('in');
+      snd('tab');
+    }
+    const c = G.mc;
+    c.t -= dt;
+    if (c.m.k === 'combo') c.p = Math.max(c.p, G.combo);
+    if (c.m.k === 'clean') c.p = G.furs.length === 0 ? 1 : 0;
+    el.querySelector('.mc-bar i').style.width = Math.max(0, (c.t / c.max) * 100).toFixed(1) + '%';
+    el.querySelector('.mc-p').textContent = c.m.k === 'nomiss' ? `${Math.ceil(Math.max(0, c.t))}s` : `${Math.min(c.p, c.n)}/${c.n}`;
+    if (c.m.k === 'nomiss' ? c.t <= 0 : c.p >= c.n) miniEnd(true);
+    else if (c.t <= 0) miniEnd(false);
+  }
+  function miniHit(k) { if (G.mc && G.mc.m.k === k) G.mc.p++; }
+  function miniEnd(win) {
+    const el = $('g-mini');
+    if (win) {
+      const pts = 150 + 50 * Math.min(4, G.n > 900 ? 4 : Math.floor(G.n / 4)), coins = 8;
+      G.score += pts; G.coins += coins; G.miniWon = (G.miniWon || 0) + 1; track('mini');
+      el.classList.add('win'); el.querySelector('.mc-p').textContent = '✓';
+      toast(`⚡ Mini challenge complete! +${pts} · +${coins} 🪙`, 'combo', 1600); snd('fanfare'); buzz([20, 30, 20]);
+      floatText(G.nena.x, G.nena.y - 170, `+${pts}`, 'perfect');
+    } else { el.classList.add('lose'); el.querySelector('.mc-p').textContent = '✗'; snd('pop'); }
+    G.mc = null; G.miniT = 26 + rnd() * 14;
+    setTimeout(() => { if (!G || G.mc) return; el.hidden = true; el.classList.remove('in', 'win', 'lose'); }, 1300);
+  }
   // surprise events: blackout, Aunt Mahin, VIPs, the witches, Simba the thief
   function eventTick(dt) {
     const c = G.cfg, mod = c.mod || {};
@@ -1209,6 +1257,7 @@
     if (G.zoomT <= 0) { zoomies(); if (G.zoomT <= 0) G.zoomT = (G.cfg.mod && G.cfg.mod.zoom) || 28 + rnd() * 12; }
     eventTick(dt);
     photoTick(dt);
+    miniTick(dt);
     if (G.cfg.endless) { G.elapsed += dt; G.time = 99999; }
     if (!G.cfg.endless && !G.rushHour && G.time <= 15) { G.rushHour = true; $('g-rush').hidden = false; toast('⏰ Rush hour! Points ×1.5', 'combo', 1800); snd('fanfare'); }
     if (G.time <= 5 && Math.ceil(G.time) !== G.lastTick) { G.lastTick = Math.ceil(G.time); snd('click'); }
@@ -1393,6 +1442,7 @@
     save.coins += earned;
     if (!lost) { track('day'); if (stars === 3) track('perfect'); if (G.failed === 0) track('nohit'); }
     const ups = FRIENDS.filter((f) => friendLv(f.id) > (G.frStart[f.id] || 0));
+    if (G.miniN) extra += `<li class="${G.miniWon ? 'ok' : 'ko'}"><span>⚡ Mini challenges</span><b>${G.miniWon}/${G.miniN}</b></li>`;
     ups.forEach((f) => { extra += `<li class="ok"><span>❤️ ${f.name}: ${FR_TITLES[friendLv(f.id)]}!</span><b>new scene</b></li>`; });
     G.pendingScene = null;
     const ch = !c.endless && !c.challenge && chapterOf(G.n);
@@ -1486,6 +1536,7 @@
     { id: 'sort3', icon: '🧪', name: 'Colour genius', desc: 'Solve all 3 Color Sorts in a day', test: (t) => (t.sort3 || 0) >= 1, r: 60 },
     { id: 'admirer', icon: '💐', name: 'Leave me alone, Jesus!', desc: 'Turn Jesus down 5 times', test: (t) => (t.gift || 0) >= 5, r: 60 },
     { id: 'nails', icon: '💅', name: 'Nail day', desc: 'Have your nails done with Leila', test: (t) => (t.nails || 0) >= 1, r: 30 },
+    { id: 'mini10', icon: '⚡', name: 'Challenge accepted', desc: 'Win 10 mini challenges', test: (t) => (t.mini || 0) >= 10, r: 70 },
     { id: 'cuddle10', icon: '🦁', name: 'Baba’s lion', desc: 'Put Simba on Baba’s belly 10 times', test: (t) => (t.req_cuddle || 0) >= 10, r: 60 },
   ];
   const MISSIONS = [
@@ -1495,6 +1546,7 @@
     { k: 'req', n: 80, label: 'Complete 80 requests', r: 150 }, { k: 'combo5', n: 5, label: 'Reach a ×5 combo 5 times', r: 120 },
     { k: 'photo', n: 2, label: 'Take 2 Simba photos', r: 100 }, { k: 'req_bread', n: 5, label: 'Buy 5 sangak breads', r: 80 },
     { k: 'gift', n: 3, label: 'Turn Jesus down 3 times', r: 90 },
+    { k: 'mini', n: 6, label: 'Win 6 mini challenges', r: 100 },
     { k: 'challenge', n: 2, label: 'Finish 2 daily challenges', r: 150 }, { k: 'req_cuddle', n: 4, label: 'Put Simba on Baba’s belly 4 times', r: 90 },
   ];
   const DAILY = [20, 30, 40, 50, 60, 80, 150];
