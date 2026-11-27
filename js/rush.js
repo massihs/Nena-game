@@ -32,6 +32,8 @@
   if (save.collar === undefined) save.collar = null;
   save.endless = save.endless || 0;
   save.journey = save.journey || { date: '', sec: 0, got: [] };
+  save.xp = save.xp || 0; save.plv = save.plv || 1; save.stickers = save.stickers || {}; save.sets = save.sets || {};
+  save.wheel = save.wheel || { date: '', used: false, extra: 0 }; save.freeB = save.freeB || {}; save.dq = save.dq || { date: '', base: {}, claimed: false };
   save.wellness = save.wellness || {};
   save.games = save.games || { tricksBest: 0, tahdigBest: 0, tricksDay: '', tahdigDay: '' };
   const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* */ } };
@@ -768,7 +770,7 @@
     G.coins += tip;
     G.stats.tips += tip; G.stats.maxCombo = Math.max(G.stats.maxCombo, G.combo);
     G.stats.type[r.type] = (G.stats.type[r.type] || 0) + 1;
-    track('req'); track('req_' + r.type); addFriend(r.who, perfect);
+    track('req'); track('req_' + r.type); addFriend(r.who, perfect); gainXP(perfect ? 3 : 2);
     miniHit('serve'); if (r.who === 'simba') miniHit('simba'); else if (r.who !== 'nena') miniHit('family'); if (perfect) miniHit('perfect');
     if (G.combo === 5) track('combo5');
     if (G.combo === 8) track('combo8');
@@ -1739,6 +1741,11 @@
     G.pendingScene = null;
     const ch = !c.endless && !c.challenge && chapterOf(G.n);
     if (stars > 0 && ch && ch.to === G.n && !save.chapters[ch.title]) { save.chapters[ch.title] = 1; G.pendingScene = ch; extra += `<li class="ok"><span>📖 ${ch.title} complete!</span><b>▶</b></li>`; }
+    let chips = '';
+    if (!lost) { const xp = 20 + 10 * stars; gainXP(xp); chips += `<span class="rc">⭐ +${xp} XP · Lv ${save.plv}<i class="xpbar"><i style="width:${Math.round(save.xp / xpNeed(save.plv) * 100)}%"></i></i></span>`; }
+    if (stars === 3 && !c.endless) { save.wheel.extra = (save.wheel.extra || 0) + 1; chips += '<span class="rc">🎡 +1 spin</span>'; }
+    if (stars > 0 && !c.endless) { const got = dropStickers(stars === 3 ? 2 : 1); chips += `<span class="rc">🎴 ${got.map((g) => `<i class="stk mini${g.dup ? ' dup' : ''}">${g.ico}</i>`).join('')}</span>`; }
+    $('r-rewards').innerHTML = chips; $('r-rewards').hidden = !chips;
     if (stars > 0 && !c.endless && !c.challenge) {
       save.stars[G.n] = Math.max(save.stars[G.n] || 0, stars);
       save.best[G.n] = Math.max(save.best[G.n] || 0, final);
@@ -1842,6 +1849,8 @@
     { id: 'tree', icon: '🌳', name: 'Tree hugger', desc: 'Hug a tree for good energy', test: (t) => (t.tree || 0) >= 1, r: 40 },
     { id: 'hair3', icon: '💇‍♀️', name: 'Salon Maman', desc: '3 stars in Hair day', test: () => (save.games.hairBest || 0) >= 3, r: 60 },
     { id: 'journey', icon: '🗺️', name: 'Full journey', desc: 'Complete a 30-minute daily journey', test: (t) => (t.journey || 0) >= 1, r: 80 },
+    { id: 'lv10', icon: '⭐', name: 'Level 10', desc: 'Reach player level 10', test: () => save.plv >= 10, r: 100 },
+    { id: 'set1', icon: '🎴', name: 'Collector', desc: 'Complete a sticker set', test: (t) => (t.set || 0) >= 1, r: 80 },
     { id: 'cuddle10', icon: '🦁', name: 'Baba’s lion', desc: 'Put Simba on Baba’s belly 10 times', test: (t) => (t.req_cuddle || 0) >= 10, r: 60 },
   ];
   const MISSIONS = [
@@ -1922,16 +1931,16 @@
   const dailyReady = () => save.daily.last !== today();
   const sortLeft = () => (save.sortd.date === today() ? 3 - save.sortd.done.filter(Boolean).length : 3);
   const chalReady = () => save.chal.date !== today() || !save.chal.done;
-  const missionsReady = () => weekMissions().some((m, i) => !save.week.claimed[i] && (save.week.prog[m.k] || 0) >= m.n);
+  const missionsReady = () => (!save.dq.claimed && dailyQuests().every((q) => dqProg(q) >= q.n)) || weekMissions().some((m, i) => !save.week.claimed[i] && (save.week.prog[m.k] || 0) >= m.n);
   const scenesNew = () => FRIENDS.some((f) => { for (let l = 1; l <= friendLv(f.id); l++) if (!save.scenes[f.id + l]) return true; return false; });
 
   /* ---- hub on the map ---- */
   function renderHub() {
     const items = [
       ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
-      ['missions', '📋', 'Missions', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
+      ['missions', '📋', 'Quests', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
       ['nails', '💅', 'Nail day', nailsReady() ? '!' : ''], ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
-      ['zen', '🧘', 'Zen', save.wellness.zen !== today() ? '!' : ''], ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
+      ['wheel', '🎡', 'Wheel', spinsLeft() || ''], ['stickers', '🎴', 'Stickers', `${Object.keys(save.stickers).length}/${STICKERS.length}`], ['zen', '🧘', 'Zen', save.wellness.zen !== today() ? '!' : ''], ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
     ];
     renderJourney();
     $('m-hub').innerHTML = items.map(([id, ico, name, b]) => `<button type="button" class="hub-btn" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^\d+\/\d+$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
@@ -1942,9 +1951,10 @@
   let sheetKind = '';
   function openSheet(kind) {
     if (kind === 'zen') { openZen(); return; }
+    if (kind === 'wheel') { openWheel(); return; }
     if (kind === 'nails') { startNailDay(); return; }
     sheetKind = kind;
-    const T = { games: '🎮 Mini-games', settings: '⚙️ Settings', daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Weekly missions', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
+    const T = { stickers: '🎴 Sticker album', games: '🎮 Mini-games', settings: '⚙️ Settings', daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Quests', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
     $('sh2-title').textContent = T[kind] || '';
     $('sh2-coins').textContent = save.coins;
     $('sh2-body').innerHTML = SHEETS[kind]();
@@ -1952,6 +1962,7 @@
   }
   const bar = (v, n) => `<span class="pbar"><i style="width:${Math.min(100, (v / n) * 100)}%"></i></span>`;
   const SHEETS = {
+    stickers: () => `<p class="sh-lede">Win stickers by finishing days (2 for a perfect day) and on the wheel. Complete a set for a big reward!</p>` + STICKER_SETS.map((set) => { const own = set.items.filter((it) => save.stickers[it[0]]).length; return `<h4 class="sh-h">${set.ico} ${set.name} <small>${own}/${set.items.length}${save.sets[set.id] ? ' · ✓ +100 🪙' : ' · reward 100 🪙'}</small></h4><div class="stk-grid">${set.items.map(([id, ico, name]) => save.stickers[id] ? `<div class="stk${save.stickers[id] > 1 ? ' many' : ''}"><i>${ico}</i><small>${name}</small>${save.stickers[id] > 1 ? `<em>×${save.stickers[id]}</em>` : ''}</div>` : '<div class="stk locked"><i>?</i><small>???</small></div>').join('')}</div>`; }).join(''),
     games: () => {
       const g = save.games, card = (act, ico, name, desc, best, daily) => `<div class="row-card game-card"><span class="rc-i">${ico}</span><span class="rc-t"><b>${name}</b><small>${desc}</small><small class="best">${best}${daily ? ' · <em>daily bonus +20 🪙</em>' : ''}</small></span><button type="button" class="btn btn-primary" data-act="${act}">Play</button></div>`;
       return card('play-tricks', '🐾', 'Simba’s tricks', 'Watch Simba’s tricks, then repeat them in the same order.', `Best: ${g.tricksBest || 0} tricks`, g.tricksDay !== today())
@@ -1987,7 +1998,10 @@
       return `<div class="chal"><span class="chal-i">🎯</span><h3>${c.name}</h3><p>${c.desc}</p><small>Get at least 1 star · reward 60 🪙 + 15 per star</small></div>
         <button type="button" class="btn btn-primary btn-big" data-act="challenge">${done ? 'Play again (no reward)' : 'Start the challenge'}</button>${done ? '<p class="sh-done">✓ Done today!</p>' : ''}`;
     },
-    missions: () => `<p class="sh-lede">New missions every week.</p>` + weekMissions().map((m, i) => { const v = save.week.prog[m.k] || 0, ok = v >= m.n, got = save.week.claimed[i]; return `<div class="row-card${got ? ' done' : ''}"><span class="rc-i">📋</span><span class="rc-t"><b>${m.label}</b>${bar(v, m.n)}<small>${Math.min(v, m.n)}/${m.n} · +${m.r} 🪙</small></span>${got ? '<b class="ok">✓</b>' : `<button type="button" class="btn ${ok ? 'btn-primary' : ''}" data-act="claim-mission" data-i="${i}" ${ok ? '' : 'disabled'}>Claim</button>`}</div>`; }).join(''),
+    missions: () => { const Q = dailyQuests(), dq = save.dq; return `<h4 class="sh-h">☀️ Today’s quests</h4>` + Q.map((q) => { const v = Math.min(q.n, dqProg(q)); return `<div class="row-card${v >= q.n ? ' done' : ''}"><span class="rc-i">${q.ico}</span><span class="rc-t"><b>${q.label}</b>${bar(v, q.n)}<small>${v}/${q.n}</small></span>${v >= q.n ? '<b class="ok">✓</b>' : ''}</div>`; }).join('')
+      + (dq.claimed ? '<p class="sh-done">✓ Daily chest opened. New quests tomorrow!</p>' : `<button type="button" class="btn ${Q.every((q) => dqProg(q) >= q.n) ? 'btn-primary' : ''} btn-big" data-act="dq-claim" ${Q.every((q) => dqProg(q) >= q.n) ? '' : 'disabled'}>🎁 Daily chest · 60 🪙 + 🎡 spin</button>`)
+      + '<h4 class="sh-h">📅 This week</h4>' + weekMissions().map((m, i) => { const v = save.week.prog[m.k] || 0, ok = v >= m.n, got = save.week.claimed[i]; return `<div class="row-card${got ? ' done' : ''}"><span class="rc-i">📋</span><span class="rc-t"><b>${m.label}</b>${bar(v, m.n)}<small>${Math.min(v, m.n)}/${m.n} · +${m.r} 🪙</small></span>${got ? '<b class="ok">✓</b>' : `<button type="button" class="btn ${ok ? 'btn-primary' : ''}" data-act="claim-mission" data-i="${i}" ${ok ? '' : 'disabled'}>Claim</button>`}</div>`; }).join(''); },
+    missionsOld: () => `<p class="sh-lede">New missions every week.</p>` + weekMissions().map((m, i) => { const v = save.week.prog[m.k] || 0, ok = v >= m.n, got = save.week.claimed[i]; return `<div class="row-card${got ? ' done' : ''}"><span class="rc-i">📋</span><span class="rc-t"><b>${m.label}</b>${bar(v, m.n)}<small>${Math.min(v, m.n)}/${m.n} · +${m.r} 🪙</small></span>${got ? '<b class="ok">✓</b>' : `<button type="button" class="btn ${ok ? 'btn-primary' : ''}" data-act="claim-mission" data-i="${i}" ${ok ? '' : 'disabled'}>Claim</button>`}</div>`; }).join(''),
     family: () => FRIENDS.map((f) => {
       const lv = friendLv(f.id), pts = save.friend[f.id] || 0, next = FR_LV[lv + 1];
       const scenes = [1, 2, 3, 4].map((l) => `<button type="button" class="scene-b${l <= lv ? '' : ' locked'}${l <= lv && !save.scenes[f.id + l] ? ' new' : ''}" data-act="scene" data-f="${f.id}" data-l="${l}" ${l <= lv ? '' : 'disabled'}>${l <= lv ? '▶' : '🔒'} ${l}</button>`).join('');
@@ -2011,6 +2025,8 @@
     if (act === 'play-tahdig') { openTahdig(); return; }
     if (act === 'go-sort') { openSheet('sort'); return; }
     if (act === 'go-nails') { startNailDay(); return; }
+    if (act === 'dq-claim') { save.dq.claimed = true; save.coins += 60; save.wheel.extra = (save.wheel.extra || 0) + 1; persist(); snd('fanfare'); confetti(); toast('🎁 Daily chest: +60 🪙 and a wheel spin!', 'combo', 2000); openSheet('missions'); return; }
+    if (act === 'stk-close') { openSheet('stickers'); return; }
     if (act === 'set') { const k = b.dataset.k; save[k] = save[k] === false; persist(); wake(); $('p-sound').textContent = save.sound !== false ? 'Sound: on' : 'Sound: off'; }
     else if (act === 'howto') { showHowTo(); return; }
     else if (act === 'reset-hints') { const keep = save.seen._rooms; save.seen = {}; if (!keep) delete save.seen._rooms; persist(); toast('💡 Hints will show again', '', 1300); }
@@ -2151,6 +2167,7 @@
     const coins = Math.min(40, score * 3) + (daily && score > 0 ? 20 : 0);
     if (score > (save.games.tricksBest || 0)) save.games.tricksBest = score;
     if (daily && score > 0) save.games.tricksDay = today();
+    track('game'); gainXP(10);
     save.coins += coins; save.friend.simba = (save.friend.simba || 0) + (score >= 3 ? 1 : 0); persist(); checkAch();
     snd(score >= 5 ? 'win' : 'lose');
     tkSay(score ? `Oops! ${score} trick${score > 1 ? 's' : ''} in a row. +${coins} 🪙` : 'Oops! Wrong trick. Try again!');
@@ -2212,6 +2229,7 @@
     const coins = TD.pts * 2 + (daily && TD.pts > 0 ? 20 : 0);
     if (TD.pts > (save.games.tahdigBest || 0)) save.games.tahdigBest = TD.pts;
     if (daily && TD.pts > 0) save.games.tahdigDay = today();
+    track('game'); gainXP(10);
     save.coins += coins; save.friend.fariba = (save.friend.fariba || 0) + (TD.pts >= 9 ? 1 : 0); persist(); checkAch();
     setTimeout(() => { if (!TD) return; tdSay(TD.pts >= 13 ? `Perfect! You are a real tahdig queen! +${coins} 🪙` : TD.pts >= 8 ? `Very good, azizam! ${TD.pts}/15 · +${coins} 🪙` : `Practice makes perfect! ${TD.pts}/15 · +${coins} 🪙`); snd(TD.pts >= 8 ? 'win' : 'lose'); $('td-go').textContent = 'Play again'; $('td-best').textContent = `Best: ${save.games.tahdigBest}/15`; }, 900);
   }
@@ -2220,7 +2238,7 @@
   const JOURNEY = [{ m: 5, c: 20, ico: '🎁' }, { m: 10, c: 40, ico: '🎁' }, { m: 20, c: 70, ico: '💎' }, { m: 30, c: 150, ico: '👑', outfit: 'zen' }];
   let lastInput = Date.now(), jReadyShown = -1;
   document.addEventListener('pointerdown', () => { lastInput = Date.now(); }, true);
-  const ACTIVE = ['screen-game', 'screen-tricks', 'screen-tahdig', 'screen-sort', 'screen-nails', 'screen-zen', 'screen-hair', 'screen-tree'];
+  const ACTIVE = ['screen-game', 'screen-tricks', 'screen-tahdig', 'screen-sort', 'screen-nails', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel'];
   function journeyToday() { if (save.journey.date !== today()) save.journey = { date: today(), sec: 0, got: [] }; return save.journey; }
   setInterval(() => {
     if (document.hidden || Date.now() - lastInput > 60000) return;
@@ -2233,7 +2251,7 @@
   }, 1000);
   function renderJourney() {
     const J = journeyToday(), min = J.sec / 60, pct = Math.min(100, (min / 30) * 100);
-    $('m-journey').innerHTML = `<div class="jr-top"><b>🗺️ Today’s journey</b><span>${Math.floor(min)}/30 min</span></div>
+    $('m-journey').innerHTML = `<div class="jr-top"><b>🗺️ Journey</b><span class="lvp">⭐ Lv ${save.plv} <i class="xpbar"><i style="width:${Math.round(save.xp / xpNeed(save.plv) * 100)}%"></i></i></span><span>${Math.floor(min)}/30 min</span></div>
       <div class="jr-bar"><i style="width:${pct.toFixed(1)}%"></i>${JOURNEY.map((j, i) => { const ok = J.sec >= j.m * 60, got = J.got[i]; return `<button type="button" class="jr-chest${got ? ' got' : ok ? ' ready' : ''}" data-chest="${i}" style="left:${(j.m / 30) * 100}%" ${ok && !got ? '' : 'disabled'}><span>${got ? '✓' : j.ico}</span><small>${j.m}′</small></button>`; }).join('')}</div>`;
   }
   function openChest(i) {
@@ -2295,6 +2313,7 @@
     const pct = Math.round((ZN.score / Math.max(1, ZN.total)) * 100), first = save.wellness.zen !== today();
     const coins = first ? 15 + Math.round(pct / 4) : 0;
     if (first) { save.wellness.zen = today(); save.coins += coins; track('zen'); }
+    track('game'); gainXP(10);
     persist(); checkAch(); snd('bell');
     $('zn-btn').classList.remove('hold'); $('zn-btn').hidden = true;
     $('zn-cue').textContent = `${pct}% calm`; $('zn-ring').className = 'zn-ring done';
@@ -2414,6 +2433,7 @@
     const coins = 8 * stars + (first && stars ? 20 : 0);
     if (stars > (save.games.hairBest || 0)) save.games.hairBest = stars;
     if (first && stars) save.wellness.hair = today();
+    track('game'); gainXP(10);
     save.coins += coins; save.friend.fariba = (save.friend.fariba || 0) + stars; persist(); checkAch();
     snd(stars >= 2 ? 'win' : 'lose'); $('hd-dryer').classList.remove('on');
     $('hd-nena').innerHTML = A.portrait('nena', stars >= 2 ? 'happy' : 'neutral');
@@ -2421,6 +2441,104 @@
     if (stars === 3) confettiOn($('screen-hair'));
     $('hd-go').hidden = false; $('hd-go').textContent = 'Again';
   }
+
+  /* ---- Player level (XP) ---- */
+  const xpNeed = (l) => 40 + 40 * l;
+  function gainXP(n) {
+    save.xp += n;
+    while (save.xp >= xpNeed(save.plv)) {
+      save.xp -= xpNeed(save.plv); save.plv++;
+      const c = 25 + 10 * save.plv; save.coins += c;
+      if (save.plv % 2 === 0) save.wheel.extra = (save.wheel.extra || 0) + 1;
+      setTimeout(() => { toast(`⭐ Level ${save.plv}! +${c} 🪙${save.plv % 2 === 0 ? ' + 🎡 spin' : ''}`, 'combo', 2200); snd('fanfare'); }, 300);
+    }
+    persist();
+  }
+  /* ---- Daily quests ---- */
+  const DQ_POOL = [
+    { k: 'pet', n: 3, ico: '🐶', label: 'Pet Simba 3 times' }, { k: 'day', n: 1, ico: '🌅', label: 'Finish a day' }, { k: 'game', n: 1, ico: '🎮', label: 'Play a mini-game' },
+    { k: 'req', n: 15, ico: '⚡', label: 'Complete 15 requests' }, { k: 'perfect', n: 1, ico: '⭐', label: 'Get 3 stars on a day' }, { k: 'mini', n: 2, ico: '🔥', label: 'Win 2 mini challenges' },
+    { k: 'zen', n: 1, ico: '🧘', label: 'Meditate once' }, { k: 'req_food', n: 3, ico: '🍖', label: 'Feed Simba 3 times' }, { k: 'req_tea', n: 2, ico: '☕', label: 'Serve Baba 2 teas' }, { k: 'photo', n: 1, ico: '📸', label: 'Take a Simba photo' },
+  ];
+  function dailyQuests() {
+    if (save.dq.date !== today()) save.dq = { date: today(), base: Object.assign({}, save.tot), claimed: false };
+    const r = seeded(dayNum() * 13 + 5), pool = DQ_POOL.slice(), out = [];
+    out.push(pool.splice(1, 1)[0]);   // always: finish a day
+    while (out.length < 3) out.push(pool.splice(Math.floor(r() * pool.length), 1)[0]);
+    return out;
+  }
+  const dqProg = (q) => (save.tot[q.k] || 0) - (save.dq.base[q.k] || 0);
+  /* ---- Stickers ---- */
+  const STICKER_SETS = [
+    { id: 'family', ico: '👨‍👩‍👧', name: 'The family', items: [['s_nena', '👧', 'Nena'], ['s_baba', '👴', 'Baba'], ['s_maman', '👩‍🍳', 'Maman'], ['s_nasim', '😤', 'Nasim'], ['s_negin', '😴', 'Negin'], ['s_aunt', '🎁', 'Aunt Mahin']] },
+    { id: 'simba', ico: '🦁', name: 'Simba', items: [['s_lion', '🦁', 'Little lion'], ['s_ball', '🎾', 'Ball'], ['s_bone', '🦴', 'Golden bone'], ['s_blankie', '🧸', 'Blankie'], ['s_bath', '🛁', 'Bath time'], ['s_biscuit', '🐕', 'Biscuit']] },
+    { id: 'tehran', ico: '🏙️', name: 'Tehran', items: [['s_milad', '🗼', 'Milad tower'], ['s_alborz', '🏔️', 'Alborz'], ['s_sangak', '🫓', 'Sangak'], ['s_juice', '🧃', 'Juice'], ['s_car', '🚙', 'White 4×4'], ['s_tea', '🍵', 'Chai']] },
+    { id: 'clap', ico: '🏮', name: 'CLAP', items: [['s_lantern', '🏮', 'Lantern'], ['s_hookah', '💨', 'Hookah'], ['s_mochi', '🍡', 'Mochi'], ['s_pourya', '📸', 'Pourya'], ['s_witch', '🔮', 'The witches'], ['s_bamboo', '🎋', 'Bamboo']] },
+  ];
+  const STICKERS = STICKER_SETS.flatMap((s) => s.items);
+  function dropStickers(n) {
+    const got = [];
+    for (let i = 0; i < n; i++) {
+      const missing = STICKERS.filter((x) => !save.stickers[x[0]]);
+      const st = missing.length && rnd() < 0.7 ? pick(missing) : pick(STICKERS);
+      const dup = !!save.stickers[st[0]];
+      save.stickers[st[0]] = (save.stickers[st[0]] || 0) + 1;
+      if (dup) save.coins += 5;
+      got.push({ id: st[0], ico: st[1], name: st[2], dup });
+    }
+    STICKER_SETS.forEach((set) => { if (!save.sets[set.id] && set.items.every((it) => save.stickers[it[0]])) { save.sets[set.id] = 1; save.coins += 100; track('set'); setTimeout(() => { toast(`🎴 Set complete: ${set.name}! +100 🪙`, 'combo', 2400); snd('win'); }, 900); } });
+    persist();
+    return got;
+  }
+  /* ---- Lucky wheel ---- */
+  const WHEEL = [
+    { ico: '🪙', label: '20', w: 22, give: () => { save.coins += 20; return '+20 🪙'; } },
+    { ico: '⏱️', label: '+15s', w: 12, give: () => { save.freeB.time = (save.freeB.time || 0) + 1; return 'Free booster: +15 seconds ⏱️'; } },
+    { ico: '🎴', label: '×3', w: 14, give: () => { const g = dropStickers(3); return `Sticker pack: ${g.map((x) => x.ico).join(' ')}`; } },
+    { ico: '🪙', label: '50', w: 18, give: () => { save.coins += 50; return '+50 🪙'; } },
+    { ico: '☕', label: 'Coffee', w: 12, give: () => { save.freeB.coffee = (save.freeB.coffee || 0) + 1; return 'Free booster: morning coffee ☕'; } },
+    { ico: '🪙', label: '100', w: 10, give: () => { save.coins += 100; return '+100 🪙'; } },
+    { ico: '💗', label: 'Heart', w: 10, give: () => { save.freeB.heart = (save.freeB.heart || 0) + 1; return 'Free booster: extra heart 💗'; } },
+    { ico: '💎', label: '250', w: 2, give: () => { save.coins += 250; return 'JACKPOT! +250 🪙 💎'; } },
+  ];
+  const spinsLeft = () => (save.wheel.date !== today() || !save.wheel.used ? 1 : 0) + (save.wheel.extra || 0);
+  let wheelRot = 0, spinning = false;
+  function openWheel() {
+    const seg = 360 / WHEEL.length, cols = ['#ef8fb0', '#ffd36b', '#86aaff', '#7fe0b4', '#c48bff', '#ffb36b', '#ff8fa8', '#2c2850'];
+    const R = 140, c = 150, arc = (i) => { const a0 = (i * seg - 90) * Math.PI / 180, a1 = ((i + 1) * seg - 90) * Math.PI / 180; return `M${c} ${c} L${(c + R * Math.cos(a0)).toFixed(1)} ${(c + R * Math.sin(a0)).toFixed(1)} A${R} ${R} 0 0 1 ${(c + R * Math.cos(a1)).toFixed(1)} ${(c + R * Math.sin(a1)).toFixed(1)}Z`; };
+    $('wh-wheel').innerHTML = `<svg viewBox="0 0 300 300"><circle cx="150" cy="150" r="148" fill="#fff"/>${WHEEL.map((w, i) => { const mid = (i + 0.5) * seg; return `<path d="${arc(i)}" fill="${cols[i]}" stroke="#fff" stroke-width="3"/><g transform="rotate(${mid} 150 150)"><text x="150" y="52" text-anchor="middle" font-size="28">${w.ico}</text><text x="150" y="80" text-anchor="middle" font-size="15" font-family="Baloo 2, sans-serif" font-weight="800" fill="${i === 7 ? '#ffd36b' : '#3f2a22'}">${w.label}</text></g>`; }).join('')}<circle cx="150" cy="150" r="22" fill="#c9496f" stroke="#fff" stroke-width="5"/></svg>`;
+    $('wh-wheel').style.transition = 'none'; $('wh-wheel').style.transform = `rotate(${wheelRot}deg)`;
+    $('wh-res').textContent = ''; whButton(); show('screen-wheel');
+  }
+  function whButton() { const n = spinsLeft(); $('wh-spin').disabled = !n || spinning; $('wh-spin').textContent = n ? `SPIN! (${n} left)` : 'No spins left · come back tomorrow'; $('wh-how').textContent = 'Free spin every day · +1 for each perfect day, every 2 levels and the daily quest chest'; }
+  function spinWheel() {
+    if (spinning || !spinsLeft()) return;
+    if (save.wheel.date !== today() || !save.wheel.used) save.wheel = { date: today(), used: true, extra: save.wheel.extra || 0 }; else save.wheel.extra--;
+    persist(); spinning = true; whButton(); snd('click');
+    let tot = WHEEL.reduce((a, w) => a + w.w, 0), x = rnd() * tot, i = 0;
+    while (x > WHEEL[i].w) { x -= WHEEL[i].w; i++; }
+    const seg = 360 / WHEEL.length, center = (i + 0.5) * seg + (rnd() - 0.5) * seg * 0.6;
+    const cur = ((wheelRot % 360) + 360) % 360;
+    wheelRot += 360 * 5 + ((360 - center - cur) % 360 + 360) % 360;
+    const w = $('wh-wheel'); w.style.transition = 'transform 4s cubic-bezier(.15,.85,.25,1)'; w.style.transform = `rotate(${wheelRot}deg)`;
+    let ticks = 0; const tk = setInterval(() => { if (++ticks > 22) clearInterval(tk); else snd('tick'); }, 170);
+    setTimeout(() => { spinning = false; const msg = WHEEL[i].give(); persist(); $('wh-res').textContent = `🎉 ${msg}`; snd(i === 7 ? 'win' : 'coin'); if (i === 7 || i === 5) confettiOn($('screen-wheel')); whButton(); checkAch(); }, 4100);
+  }
+  /* ---- Welcome back: Simba missed you ---- */
+  let welcomeChecked = false;
+  function welcomeBack() {
+    const last = save.lastSeen || 0, now = Date.now(), h = (now - last) / 3600000;
+    save.lastSeen = now; persist();
+    if (!last || h < 3) return false;
+    const gift = Math.min(120, Math.round(h * 6));
+    save.coins += gift; persist();
+    $('wb-dog').innerHTML = A.simba({ collar: save.collar });
+    $('wb-text').textContent = h > 20 ? `Simba waited by the door all day! He brought you ${gift} 🪙.` : `Simba missed you! He found ${gift} 🪙 under the sofa.`;
+    $('screen-welcome').hidden = false; snd('bark');
+    return true;
+  }
+  setInterval(() => { save.lastSeen = Date.now(); }, 30000);
+  const bCost = (b) => ((save.freeB[b.id] || 0) > 0 ? 0 : b.cost);
 
   /* ---- custom days: challenge and endless ---- */
   let CUSTOM = null;
@@ -2450,7 +2568,7 @@
         if (save.sortd.date !== today()) save.sortd = { date: today(), done: [] };
         const first = !save.sortd.done[i];
         save.sortd.done[i] = true;
-        if (first) { save.coins += L.reward; track('sort'); if (save.sortd.done.filter(Boolean).length === 3) track('sort3'); }
+        track('game'); gainXP(8); if (first) { save.coins += L.reward; track('sort'); if (save.sortd.done.filter(Boolean).length === 3) track('sort3'); }
         persist(); snd('fanfare'); confettiOn($('screen-sort'));
         toast(first ? `🧪 Solved in ${m} moves! +${L.reward} 🪙` : `🧪 Solved in ${m} moves!`, 'combo', 1800);
         setTimeout(() => openSheet('sort'), 1600);
@@ -2468,7 +2586,7 @@
   /* Screens: title, map, story, shop                                    */
   /* ------------------------------------------------------------------ */
   function show(id) {
-    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig', 'screen-zen', 'screen-hair', 'screen-tree'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
+    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-welcome'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
   }
   function renderMap() {
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
@@ -2515,6 +2633,7 @@
     renderHub();
     music('menu');
     show('screen-map');
+    if (!welcomeChecked) { welcomeChecked = true; if (welcomeBack()) return; }
     if (dailyReady() && !dailyShown) { dailyShown = true; setTimeout(() => openSheet('daily'), 350); }
     const cur = document.querySelector('.node.current');
     if (cur) cur.scrollIntoView({ block: 'center' });
@@ -2547,10 +2666,10 @@
     $('pr-title').textContent = `Day ${n} · ${cfg.title}`;
     $('pr-goals').innerHTML = cfg.targets.map((t, i) => `<span>${'★'.repeat(i + 1)} <b>${t}</b></span>`).join('');
     $('pr-obj').innerHTML = cfg.obj ? `🏅 ${cfg.obj.label}${save.medals[n] ? ' <em>(done)</em>' : ' <em>+25 🪙</em>'}` : '';
-    const cost = BOOSTERS.reduce((a, b) => a + (prepPick[b.id] ? b.cost : 0), 0);
+    const cost = BOOSTERS.reduce((a, b) => a + (prepPick[b.id] ? bCost(b) : 0), 0);
     $('pr-coins').textContent = save.coins - cost;
-    $('pr-boosts').innerHTML = BOOSTERS.map((b) => `<button type="button" class="boost${prepPick[b.id] ? ' on' : ''}" data-boost="${b.id}" ${!prepPick[b.id] && save.coins - cost < b.cost ? 'disabled' : ''}>
-      <span class="b-i">${b.icon}</span><span class="b-t"><b>${b.name}</b><small>${b.desc}</small></span><span class="b-c">${prepPick[b.id] ? '✓' : b.cost + ' 🪙'}</span></button>`).join('');
+    $('pr-boosts').innerHTML = BOOSTERS.map((b) => `<button type="button" class="boost${prepPick[b.id] ? ' on' : ''}" data-boost="${b.id}" ${!prepPick[b.id] && save.coins - cost < bCost(b) ? 'disabled' : ''}>
+      <span class="b-i">${b.icon}</span><span class="b-t"><b>${b.name}</b><small>${b.desc}</small></span><span class="b-c">${prepPick[b.id] ? '✓' : bCost(b) === 0 ? `Free ×${save.freeB[b.id]}` : b.cost + ' 🪙'}</span></button>`).join('');
     const losses = (save.losses || {})[n] || 0;
     $('pr-easy').hidden = losses < 2;
     $('pr-easy').classList.toggle('on', !!prepPick.easy);
@@ -2593,8 +2712,9 @@
   $('pr-start').addEventListener('click', () => {
     const n = +$('pr-start').dataset.level;
     if (!save.seen._howto) { save.seen._howto = 1; persist(); showHowTo(() => $('pr-start').click()); return; }
-    const cost = BOOSTERS.reduce((a, b) => a + (prepPick[b.id] ? b.cost : 0), 0);
+    const cost = BOOSTERS.reduce((a, b) => a + (prepPick[b.id] ? bCost(b) : 0), 0);
     if (cost > save.coins) return;
+    BOOSTERS.forEach((b) => { if (prepPick[b.id] && (save.freeB[b.id] || 0) > 0) save.freeB[b.id]--; });
     save.coins -= cost; persist();
     pendingBoosts = Object.assign({}, prepPick); prepPick = {};
     show('screen-game'); startLevel(n);
@@ -2623,6 +2743,9 @@
   $('tk-back').addEventListener('click', () => { TK = null; snd('click'); openSheet('games'); });
   $('td-go').addEventListener('click', () => tdFlip());
   $('td-back').addEventListener('click', () => { if (TD) TD.run = false; cancelAnimationFrame(tdRaf); TD = null; snd('click'); openSheet('games'); });
+  $('wh-spin').addEventListener('click', spinWheel);
+  $('wh-back').addEventListener('click', () => { if (!spinning) renderMap(); });
+  $('wb-ok').addEventListener('click', () => { $('screen-welcome').hidden = true; snd('happy'); renderMap(); });
   $('m-journey').addEventListener('click', (e) => { const b = e.target.closest('[data-chest]'); if (b && !b.disabled) openChest(+b.dataset.chest); });
   $('zn-oud').addEventListener('click', lightOud);
   $('zn-btn').addEventListener('click', zenStart);

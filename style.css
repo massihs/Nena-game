@@ -990,3 +990,41 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 .journey { padding-bottom: 22px; }
 .tree .bar h2 { color: #2f6b3e; }
 .tree .tr-res { color: #2f6b3e; }
+
+/* ---- level, stickers, wheel, welcome ---- */
+.lvp { display: inline-flex; align-items: center; gap: 5px; color: #fff !important; }
+.xpbar { display: inline-block; width: 54px; height: 6px; border-radius: 99px; background: rgba(255,255,255,.18); overflow: hidden; vertical-align: middle; }
+.xpbar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #ffd36b, #ff9fc0); }
+.r-lines .xpbar { background: #e4d2b8; width: 70px; }
+.stk-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stk { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px 6px; border-radius: 14px; background: linear-gradient(135deg, #fff, #fff2d9); box-shadow: 0 3px 0 #e0b84a, inset 0 0 0 2px #fff; }
+.stk i { font-style: normal; font-size: 2rem; line-height: 1; }
+.stk small { font-size: .68rem; font-weight: 800; color: var(--cocoa-soft); text-align: center; }
+.stk em { position: absolute; top: 3px; right: 6px; font-style: normal; font-size: .65rem; font-weight: 900; color: #a8761b; }
+.stk.locked { background: #ece2d2; box-shadow: 0 3px 0 #d6c9b3; } .stk.locked i { color: #b9ad98; font-family: var(--font-display); }
+.stk.mini { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-left: 3px; padding: 0; font-size: 1.1rem; border-radius: 8px; animation: cardFlip .6s ease both; }
+.stk.mini:nth-child(2) { animation-delay: .25s; }
+.stk.mini.dup { opacity: .6; }
+@keyframes cardFlip { from { transform: rotateY(90deg) scale(.6); } }
+.sh-h small { font-family: var(--font-body); font-size: .72rem; color: var(--cocoa-soft); }
+.wheel { background: radial-gradient(circle at 50% 35%, #fff6e8, #f2dcc0); }
+.wh-stage { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.wh-wheel { width: min(82vw, 330px); aspect-ratio: 1; border-radius: 50%; box-shadow: 0 0 0 8px #c9496f, 0 0 0 12px #ffd36b, 0 16px 30px -10px rgba(0,0,0,.4); }
+.wh-wheel svg { width: 100%; height: 100%; display: block; }
+.wh-pointer { position: relative; z-index: 2; width: 0; height: 0; margin-bottom: -26px; border: 18px solid transparent; border-top: 30px solid #2c2850; border-bottom: 0; filter: drop-shadow(0 3px 2px rgba(0,0,0,.3)); }
+.wh-res { min-height: 1.4em; margin: 0 16px; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; color: var(--pink-deep); }
+.wh-how { margin: 0 18px 4px; text-align: center; font-size: .75rem; color: var(--cocoa-soft); }
+.wheel .confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 11; }
+.wb-dog { position: relative; left: auto; top: auto; transform: none; width: 170px; height: 135px; margin: -8px auto 0; }
+.sheet-body > .btn, .sheet-body > .row-card, .sheet-body > div, .sheet-body > p, .sheet-body > h4 { flex-shrink: 0; }
+.card.result { gap: 8px; }
+.r-lines { max-height: 34vh; overflow-y: auto; overscroll-behavior: contain; }
+.r-lines li { padding: 5px 10px; font-size: .86rem; }
+.r-lines li.stk-line b { display: inline-flex; }
+.r-rewards { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.r-rewards .rc { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 99px; background: linear-gradient(#fff6dc, #ffe9b0); box-shadow: inset 0 0 0 1.5px #e0b84a; font-weight: 800; font-size: .82rem; animation: popIn .4s cubic-bezier(.3,1.6,.5,1) both; }
+.r-rewards .rc:nth-child(2) { animation-delay: .15s; } .r-rewards .rc:nth-child(3) { animation-delay: .3s; }
+.r-rewards .xpbar { width: 40px; background: #e4d2b8; }
+.r-rewards .stk.mini { width: 26px; height: 26px; margin-left: 2px; }
+.r-lines { max-height: 26vh; }
+.r-rewards .stk.mini { display: inline-grid; place-items: center; width: 24px; height: 24px; padding: 0; font-size: .95rem; line-height: 1; box-shadow: none; background: #fff; border-radius: 6px; }

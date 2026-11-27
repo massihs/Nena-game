@@ -45,3 +45,11 @@ Serve the folder (`python3 -m http.server`) and open it, or install it from the 
 - Sometimes Nena then goes for a walk and hugs a tree for good energy (+1 heart today).
 - Hair day: after her shower, Maman dries Nena's hair. Sweep the dryer over the wet hair without burning her.
 - The result screen shows what tomorrow brings.
+
+## Reasons to come back
+
+- Player level with XP from everything you do; each level gives coins, every 2 levels a wheel spin.
+- Lucky wheel: a free spin every day, extra spins for perfect days, levels and the daily quest chest (coins, free boosters, sticker packs, jackpot).
+- Sticker album: 24 stickers in 4 sets (family, Simba, Tehran, CLAP), dropped by finished days; complete a set for 100 coins.
+- Daily quests (3 small tasks + a chest) next to the weekly missions.
+- Welcome back: when you return after a few hours, Simba greets you with a gift.
