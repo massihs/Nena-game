@@ -121,6 +121,7 @@
     tea:     { who: 'baba', icon: '☕', pts: 120, pat: 26, item: 'tea', src: 'samovar', at: 'baba', dur: 0.5, hint: 'Baba wants tea in the TV room: Nena brews it at the samovar in the kitchen.' },
     charger: { who: 'baba', icon: '🔌', pts: 150, pat: 28, item: 'charger', src: 'parentsroom', at: 'baba', dur: 0.6, hint: 'Baba’s phone is dead (he must call the girls!). Nena gets the charger in the parents’ room.' },
     cuddle:  { who: 'baba', icon: '🐶', pts: 140, pat: 28, item: 'pup', src: 'simba', at: 'baba', dur: 0.6, hint: 'Baba wants Simba on his belly: Nena carries Simba to the TV room.' },
+    brekky:  { who: 'fariba', icon: '🍳', pts: 170, pat: 32, at: 'fariba', dur: 2.4, hint: 'Breakfast time! Help Maman set the sofreh: sangak, panir, walnuts and tea for everyone.' },
     help:    { who: 'fariba', icon: '🍲', pts: 150, pat: 26, at: 'fariba', dur: 2.2, hint: 'Maman needs help in the kitchen: tap her.' },
     laundry: { who: 'fariba', icon: '🧺', pts: 150, pat: 28, item: 'laundry', src: 'nasimroom', at: 'fariba', dur: 0.8, hint: 'Maman wants the laundry: Nena collects it in Nasim’s messy room.' },
     talk:    { who: 'nasim', icon: '💬', pts: 130, pat: 18, at: 'nasim', dur: 1.6, hint: 'Nasim is back and angry: tap her to talk.' },
@@ -194,9 +195,11 @@
     if (n > 900 && CUSTOM) return CUSTOM;
     if (n <= LEVELS.length) return LEVELS[n - 1];
     const k = n - LEVELS.length;
-    const base = [LEVELS[13], LEVELS[11], LEVELS[12]][k % 3];
+    const HOME_DAY = Object.assign({}, LEVELS[13], { party: null, boss: false, events: null });
+    const kind = [0, 0, 1, 0, 2, 0, 0][k % 7], base = [HOME_DAY, LEVELS[11], LEVELS[12]][kind], rr = seeded(n * 31 + 7);
+    const titles = [['A day at home', 'Busy Saturday', 'Family day', 'Tea, laundry and Simba', 'Sunny afternoon', 'A lazy day… or not', 'Chaos at home', 'Simba’s day', 'Guests are coming?', 'Nena’s errands'], ['Out in Tehran', 'Errands on Valiasr', 'Bread and juice'], ['Back to CLAP', 'A night at CLAP']][kind];
     return Object.assign({}, base, {
-      n, title: ['Another busy day', 'Out in Tehran', 'Back to CLAP'][k % 3], day: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][(n - 1) % 7],
+      n, title: titles[Math.floor(rr() * titles.length)], rain: kind === 0 ? weather().k === 'rain' : base.rain, day: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][(n - 1) % 7],
       targets: base.targets.map((t) => Math.round(t * (1 + k * 0.05))), every: [Math.max(2.8, base.every[0] - k * 0.06), Math.max(4, base.every[1] - k * 0.08)],
       patience: Math.max(0.65, 0.9 - k * 0.02), obj: [{ k: 'combo', n: 5, label: 'Reach a ×5 combo' }, { k: 'nomiss', label: 'Don’t miss a single request' }, { k: 'done', n: 20, label: 'Complete 20 requests' }, { k: 'tips', n: 22, label: 'Earn 22 coins in tips' }][n % 4],
       story: [[pick(['mohsen', 'fariba', 'nasim', 'nena', 'negin']), 'happy', pick(['Another day in Tehran!', 'Simba, behave today, okay?', 'Who wants tea?', 'Yallah, let’s go!'])]],
@@ -351,15 +354,17 @@
     });
     // characters
     const H = HOMES[cfg.place];
-    G.nena = makeActor('nena', A.nena({ dressed: true, outfit: save.outfit, nails: nailOf('nena') }), 84, 147, 'nena', H.nena[0]);
-    place(G.nena, H.nena[1], H.nena[2]);
+    famSetup(cfg);
+    const NH = G.fam ? ['bedroom', 170, 650] : H.nena;
+    G.nena = makeActor('nena', A.nena({ dressed: true, outfit: save.outfit, nails: nailOf('nena') }), 84, 147, 'nena', NH[0]);
+    place(G.nena, NH[1], NH[2]);
     G.nena.el.dataset.target = 'nena';
     if (H.simba) {
       G.simba = makeActor('simba', simbaArt(), 112, 89, 'simba happy', H.simba[0]);
       G.simba.el.dataset.target = 'simba';
       place(G.simba, H.simba[1], H.simba[2]);
     }
-    ['baba', 'fariba', 'negin', 'pourya'].forEach((w) => { if ((W.who.has(w) || (w === 'pourya' && cfg.place === 'clap')) && H[w]) spawnNpc(w); });
+    ['baba', 'fariba', 'negin', 'pourya'].forEach((w) => { if ((W.who.has(w) || (w === 'pourya' && cfg.place === 'clap')) && H[w] && !G.away.has(w)) spawnNpc(w); });
     G.guests = [];
     if (cfg.place === 'clap') { GUESTS.forEach(([id, x, y, mood]) => { const g = makeActor(id, A.person(id, { mood }), 72, 126, 'npc guest' + (id.startsWith('witch') ? ' witch' : ''), 'clap'); g.mood = mood; place(g, x, y); G.guests.push([id, g]); G.npcs[id] = g; g.el.dataset.target = id; }); G.witchT = 14 + rnd() * 8; }
     G.life = []; G.talk = new Set(); G.amb = []; G.ambT = 2;
@@ -705,7 +710,7 @@
   const NEED = {
     food: { cap: 2, cool: 'half', ph: [2.2, 0, 2.2] }, water: { cap: 3, cool: 30, ph: [1, 1, 1] }, walk: { cap: 2, cool: 45, ph: [1.6, 0.8, 1.3] },
     brush: { cap: 1, ph: [0.6, 1, 1] }, play: { cap: 2, cool: 30, ph: [0.8, 1.5, 0.8] }, blanket: { cap: 1, ph: [0, 0.2, 2.5] }, bath: { cap: 1, ph: [0.3, 1, 1.4] },
-    tea: { cap: 3, cool: 28, ph: [0.8, 1.3, 1.5] }, charger: { cap: 1, ph: [0.5, 1, 1] }, cuddle: { cap: 2, cool: 35, ph: [0.3, 1, 1.6] }, help: { cap: 2, cool: 30, ph: [0.8, 2, 1.2] },
+    tea: { cap: 3, cool: 28, ph: [0.8, 1.3, 1.5] }, charger: { cap: 1, ph: [0.5, 1, 1] }, cuddle: { cap: 2, cool: 35, ph: [0.3, 1, 1.6] }, help: { cap: 2, cool: 30, ph: [0.8, 2, 1.2] }, brekky: { cap: 1, ph: [0, 0, 0] },
     laundry: { cap: 1, ph: [0.6, 1.4, 0.6] }, talk: { cap: 2, cool: 35, ph: [0.5, 1.2, 1.2] }, wake: { cap: 1, ph: [3, 0.2, 0] }, ready: { cap: 1, ph: [2.2, 0.6, 0.3] },
     study: { cap: 2, cool: 40, ph: [0.6, 2, 0.6] }, remote: { cap: 1, ph: [0.2, 1, 1.8] }, plants: { cap: 1, ph: [1.4, 1, 0.5] },
     poop: { cap: 2, cool: 30 }, thirst: { cap: 2, cool: 30 }, bread: { cap: 2, cool: 35 }, calm: { cap: 2, cool: 30 }, kids: { cap: 2, cool: 30 }, juice: { cap: 1 }, dogfriend: { cap: 1 },
@@ -717,6 +722,9 @@
     let types = G.cfg.types.filter((t) => !busyWho.has(REQ[t].who));
     if (G.simbaAway || G.simbaTask || holding('pup')) types = types.filter((t) => REQ[t].who !== 'simba' && REQ[t].src !== 'simba');
     if (up('fountain')) types = types.filter((t) => (t !== 'water' && t !== 'thirst') || rnd() < 0.6);
+    if (G.away && G.away.size) types = types.filter((t) => !G.away.has(REQ[t].who));
+    if (G.seq && G.seq.length) { const nx = G.seq[0]; if (!busyWho.has(REQ[nx].who) && !(G.away && G.away.has(REQ[nx].who))) { G.seq.shift(); addReq(nx); return; } if (G.away && G.away.has(REQ[nx].who)) G.seq.shift(); }
+    if (G.neginAsleep) types = types.filter((t) => t !== 'wake' || !G.seq.includes('wake'));
     if (!types.length) return;
     G.cnt = G.cnt || {}; G.last = G.last || {};
     const now = dayClock(), dur = G.cfg.endless ? 90 : G.cfg.dur;
@@ -863,6 +871,7 @@
     haptic(perfect ? 'perfect' : G.combo >= 2 ? 'combo' : 'deliver', G.combo);
     if (G.combo >= 3 || perfect) jolt(G.nena, 'yay');
     reactDone(r, perfect);
+    famAfter(r.type);
     if (G.combo === 5 || G.combo === 8) burst(G.nena.x, G.nena.y - 90, G.nena.room, 'confetti', 14);
     checkObj();
   }
@@ -1672,6 +1681,7 @@
     G.handEl.style.zIndex = String(Math.round(G.nena.y) + 1);
     lifeTick(dt);
     ambientTick(dt);
+    famTick(dt);
     talkTick(dt);
     highlights();
     G.tabT = (G.tabT || 0) - dt; if (G.tabT <= 0) { G.tabT = 0.14; renderTabs(); updateChips(); }
@@ -3076,8 +3086,10 @@
     14: { q: 'Everyone acts strange around Nena… even Simba.', sus: [['fariba', 'They’re angry'], ['pourya', 'A surprise party'], ['mohsen', 'They forgot something']], a: 1, rev: ['pourya', 'happy', 'SURPRISE! The party at CLAP was for YOU, Nena! 🎉'] },
   };
   save.myst = save.myst || { seen: {}, guess: {}, done: {} };
+  const MYST_POOL = [1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 13];
+  const mystFor = (n) => (n <= 14 ? MYST[n] : MYST[MYST_POOL[Math.floor(seeded(n * 13 + 5)() * MYST_POOL.length)]]);
   function renderMyst(n) {
-    const M = MYST[n], el = $('r-myst'); if (!M) { el.hidden = true; return; }
+    const M = mystFor(n), el = $('r-myst'); if (!M) { el.hidden = true; return; }
     save.myst.seen[n] = 1; persist();
     const g = save.myst.guess[n];
     el.innerHTML = `<b>🔍 Mystery · ${M.q}</b>` + (g == null
@@ -3267,6 +3279,115 @@
     track('hokm'); if (win) track('hokmWin'); if (k) track('hokmKot', k); persist(); checkAch();
     $('hk-over').innerHTML = `<div class="hk-ov-card"><div class="hk-ov-pics">${A.portrait(win ? 'nena' : 'mohsen', 'happy')}${A.portrait(win ? 'nasim' : 'negin', 'happy')}</div><h3>${win ? 'You win! 🏆' : 'Baba & Negin win…'}</h3><p>${HK.score[0]} – ${HK.score[1]}${k ? ` · ${k} kot${k > 1 ? 's' : ''}!` : ''}</p><p class="hk-rew">+${coins} 🪙 · ❤️ Nasim</p><p class="hk-quote">${win ? pick(['Nasim: “Not bad, partner. Not bad at all.”', 'Haj Mohsen: “Revenge tomorrow night!”']) : pick(['Haj Mohsen: “Haha! The master is back!” 😎', 'Negin: “Again? Same teams?”'])}</p><div class="row"><button type="button" class="btn btn-primary" data-hk="again">Play again</button><button type="button" class="btn" data-hk="back">Back</button></div></div>`;
     $('hk-over').hidden = false; snd(win ? 'win' : 'lose'); if (win) confettiOn($('screen-hokm'));
+  }
+
+  /* ---- the household today: every home day, who is asleep, who is out, who comes back — all random ---- */
+  let FAM = null;
+  function rollFamily(n, cfg) {
+    if (cfg.place !== 'home' || cfg.party || n > 900) return { home: false };
+    const r = Math.random, early = n <= 2;
+    const F = { home: true, neginSleep: n >= 2 && r() < 0.45, nasimOut: !early && r() < 0.35, mamanOut: !early && r() < 0.28, babaOut: !early && r() < 0.3 };
+    if (F.mamanOut && F.babaOut && r() < 0.6) F.babaOut = false;
+    F.mamanBack = F.mamanOut && r() < 0.65; F.babaBack = F.babaOut && r() < 0.6;
+    F.babaErrand = !F.babaOut && !early && r() < 0.3;
+    F.mamanFriends = pick(['Shirin', 'Parvin', 'Mina', 'Roya', 'Mahnaz']); F.babaFriend = pick(['Agha Jalal', 'Hamid', 'Agha Bahram', 'Agha Karim']);
+    const keep = new Set((cfg.story || []).map((l) => ({ mohsen: 'baba', fariba: 'fariba', nasim: 'nasim', negin: 'negin' })[l[0]]));
+    [cfg.obj && cfg.obj.t, cfg.types[cfg.types.length - 1]].forEach((t) => { if (t && REQ[t]) keep.add(REQ[t].who); });
+    if (keep.has('baba')) { F.babaOut = false; F.babaBack = false; F.babaErrand = false; }
+    if (keep.has('fariba')) { F.mamanOut = false; F.mamanBack = false; }
+    if (keep.has('nasim')) F.nasimOut = false;
+    if (keep.has('negin')) F.neginSleep = cfg.types.includes('wake') && F.neginSleep;
+    return F;
+  }
+  function familyIntro(n, F) {
+    const L = [['nena', 'sleepy', pick(['⏰ 7:00… the alarm rings. Simba jumps on the bed and licks my face! 🐶', '⏰ 7:15… Simba is sitting on my chest, staring at me. Okay, okay, I’m up!', '⏰ 6:45… the muezzin, the traffic… and a big orange lion yawning on my pillow.'])]];
+    if (n === 1) return L;
+    if (F.mamanOut) L.push(['fariba', 'happy', pick([`I’m going to ${F.mamanFriends}’s for tea with the girls${F.mamanBack ? ', back this afternoon' : ''}, azizam!`, `${F.mamanFriends} invited me for lunch. ${F.mamanBack ? 'I’ll be back later.' : 'Don’t wait for me for dinner!'} Be good!`, `I’m off to the bazaar with ${F.mamanFriends}. Don’t let Baba eat all the sweets!`])]);
+    else L.push(['fariba', 'happy', pick(['Sobh bekheir! Come help me with breakfast, Nena jan.', 'Breakfast in ten minutes! Who’s awake?', 'The samovar is on. Help me set the sofreh, azizam.'])]);
+    if (F.babaOut) L.push(['mohsen', 'happy', pick([`I’m going to play backgammon with ${F.babaFriend}. ${F.babaBack ? 'Back later!' : 'Don’t wait up!'}`, `Lunch with ${F.babaFriend} today. Take care of the house, Nena jan!`, `Off to the bank, then tea with ${F.babaFriend}. Khodahafez!`])]);
+    if (F.neginSleep) L.push(['negin', 'sleepy', pick(['Zzz… five more minutes… no breakfast for me…', '*from her room* Nobody wake me up before noon!', 'Zzz… mmh… Simba, go away…'])]);
+    else L.push(['negin', 'happy', pick(['Morning! Nena, did Jesus text you again? Ignore him. Seriously.', 'Who made tea? I want tea.', 'I’m up! A miracle, I know.'])]);
+    L.push(F.nasimOut ? ['nasim', 'neutral', pick(['I’m at university all day. Don’t touch my room.', 'Going out with my friends. Don’t wait for me.', 'Library day. Don’t call me.'])] : ['nasim', 'angry', pick(['I’m home today. Don’t talk to me before my coffee.', 'Ugh, I have an exam tomorrow. Keep Simba quiet.', 'I’m staying home. Nobody touches the TV remote.'])]);
+    return L;
+  }
+  // little conversations between family members during the day
+  const FAM_TALK = [
+    [['baba', 'Fariba jan, is there any more tea?'], ['fariba', 'Mohsen, it’s your fourth glass!']],
+    [['fariba', 'Mohsen, take your feet off the table!'], ['baba', 'Persepolis is playing, khanoom!']],
+    [['nasim', 'Who took my charger?!'], ['negin', 'Not me! …Okay, maybe me.']],
+    [['negin', 'Nena, if Jesus calls again, don’t answer. He’s weird.'], ['nena', 'I know, I know…']],
+    [['negin', 'Honestly Nena, stay away from Jesus. I don’t trust him at all.'], ['nena', 'Negin, he just sends flowers…'], ['negin', 'Exactly. Weird.']],
+    [['baba', 'Nena jan, you’re the only one who helps in this house!'], ['nasim', 'Excuse me?!']],
+    [['fariba', 'Nasim, your room is a disaster.'], ['nasim', 'It’s organised chaos, Maman.']],
+    [['baba', 'Simba! Come here, my lion!'], ['simba', '*runs to Baba* Woof!']],
+    [['negin', 'Maman, what’s for lunch?'], ['fariba', 'Ghormeh sabzi.'], ['negin', 'YESSS!']],
+    [['nasim', 'Can everyone be quiet? I’m studying!'], ['baba', 'GOOOAL!!']],
+    [['fariba', 'Nena jan, did you eat something?'], ['nena', 'Not yet, Maman!'], ['fariba', 'Eat! You’re too thin!']],
+    [['negin', 'Baba, can I borrow the car tonight?'], ['baba', 'Ask your mother.'], ['fariba', 'No.']],
+    [['baba', 'Who left the lights on in the hallway?'], ['negin', 'Nasim!'], ['nasim', 'Negin!']],
+    [['nasim', 'Nena, Simba is chewing my slipper!'], ['nena', 'Simba, nooo! 😅']],
+    [['negin', 'Did you see what Jesus posted? Cringe. Promise me you won’t go out with him.'], ['nena', 'I promise… 🙄']],
+  ];
+  const JESUS_NEGIN = ['Negin: “Jesus AGAIN? Nena, please, don’t see him.”', 'Negin: “Throw that away. I don’t like that guy.”', 'Negin: “Nena. Block him. I’m serious.”', 'Negin: “Flowers from Jesus? Red flag. 🚩”'];
+  function famAvail(w) {
+    if (!G || !G.fam) return false;
+    if (w === 'nena') return true;
+    if (w === 'simba') return !!G.simba && !G.simbaAway;
+    if (G.away.has(w)) return false;
+    if (w === 'negin') return !G.neginAsleep;
+    if (w === 'baba' || w === 'fariba') return !!G.npcs[w];
+    return true;
+  }
+  function famLeave(who, msg) {
+    if (G.reqs.some((r) => r.who === who)) return false;
+    const a = G.npcs[who]; G.away.add(who);
+    if (a) { a.el.classList.add('leave'); setTimeout(() => a.el.remove(), 500); delete G.npcs[who]; G.life = G.life.filter((L) => L.a !== a); }
+    toast(msg, '', 2200); snd('swoosh'); return true;
+  }
+  function famReturn(who, msg) {
+    G.away.delete(who);
+    if (!G.npcs[who] && HOMES.home[who]) { const a = spawnNpc(who); if (a) { emo(a, '👋', 1500); } }
+    toast(msg, 'hint', 2200); snd('happy');
+  }
+  function famTick(dt) {
+    if (!G.fam) return;
+    const now = dayClock(), dur = G.cfg.dur;
+    G.famEv.forEach((e) => { if (!e.done && now >= e.at) { e.done = e.fn() !== false; if (!e.done) e.at += 4; } });
+    G.famT -= dt; if (G.famT > 0 || G.blackout) return;
+    G.famT = 15 + rnd() * 10;
+    const ok = FAM_TALK.filter((d) => d.every(([w]) => famAvail(w)) && !G.famUsed.has(d));
+    if (!ok.length) return;
+    const d = pick(ok); G.famUsed.add(d);
+    d.forEach(([w, t], i) => setTimeout(() => { if (G && !G.over && famAvail(w)) talkAs(w, t, w === 'simba' ? 'dog' : ''); }, i * 1900));
+  }
+  function famAfter(t) {
+    const later = (w, s, ms) => setTimeout(() => { if (G && !G.over && famAvail(w)) talkAs(w, s); }, ms || 1300);
+    if (t === 'brekky' && G.fam) {
+      later('baba', pick(['Merci Nena jan, the tea is perfect!', 'Sangak and panir, the best breakfast in the world.']), 1200);
+      if (G.neginAsleep) setTimeout(() => G && !G.over && famAvail('fariba') && talkAs('fariba', 'Negin is still sleeping… AGAIN!'), 3000);
+      else later('negin', pick(['Pass me the honey, please!', 'Who ate all the walnuts?!']), 3000);
+    }
+    if (t === 'wake') { G.neginAsleep = false; later('negin', pick(['Ugh, okay, okay, I’m up! Is there still breakfast?', 'Five more minutes… fine. FINE.']), 900); }
+    if (t === 'flowers' || t === 'choco' || t === 'jtext') setTimeout(() => { if (G && !G.over && !G.neginAsleep && !(G.away && G.away.has('negin'))) toast(pick(JESUS_NEGIN), '', 2400); }, 1500);
+  }
+  function famSetup(cfg) {
+    G.fam = FAM && FAM.home && cfg.place === 'home' && !cfg.party ? FAM : null; FAM = null;
+    G.away = new Set(); G.famEv = []; G.famT = 12; G.famUsed = new Set(); G.seq = [];
+    if (!G.fam) return;
+    const F = G.fam, dur = cfg.dur;
+    if (F.mamanOut) G.away.add('fariba');
+    if (F.babaOut) G.away.add('baba');
+    if (F.nasimOut) G.away.add('nasim');
+    G.neginAsleep = F.neginSleep;
+    G.seq = G.n === 1 ? ['food'] : ['ready', F.mamanOut ? 'food' : 'brekky'];
+    if (F.neginSleep) G.seq.push('wake');
+    if (F.mamanBack) G.famEv.push({ at: dur * (0.45 + rnd() * 0.15), fn: () => famReturn('fariba', `🛍️ Maman is back from ${F.mamanFriends}’s! “Did you all eat?”`) });
+    if (F.babaBack) G.famEv.push({ at: dur * (0.5 + rnd() * 0.15), fn: () => famReturn('baba', `🚪 Baba is home! “${F.babaFriend} says salam to everyone!”`) });
+    if (F.babaErrand) { const t0 = dur * (0.35 + rnd() * 0.15); G.famEv.push({ at: t0, fn: () => famLeave('baba', 'Baba: “I’m going to buy fresh sangak, back in a bit!” 🫓') }, { at: t0 + dur * 0.2, fn: () => (G.away.has('baba') ? famReturn('baba', '🫓 Baba is back with hot sangak bread!') : true) }); }
+    if (F.nasimOut && rnd() < 0.5) G.famEv.push({ at: dur * (0.6 + rnd() * 0.2), fn: () => { G.away.delete('nasim'); toast('🎒 Nasim is back home. “Don’t talk to me, I’m tired.”', 'hint', 2200); } });
+    if (!F.neginSleep && rnd() < 0.3) G.famEv.push({ at: dur * (0.5 + rnd() * 0.2), fn: () => { G.away.add('negin'); toast('Negin: “I’m going to the café with my friends! Bye!” 👋', '', 2000); } });
+    const st = [F.mamanOut && 'Maman is out', F.babaOut && 'Baba is out', F.neginSleep && 'Negin is asleep', F.nasimOut && 'Nasim is out'].filter(Boolean);
+    if (st.length) setTimeout(() => { if (G && G.fam === F) toast('🏠 Today: ' + st.join(' · '), 'hint', 2600); }, 1600);
   }
 
   /* ---- daily chores mini-games: breakfast (orders), groceries (memory), laundry (pairs) ---- */
@@ -3546,7 +3667,7 @@
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
     $('m-coins').textContent = save.coins;
     renderNow();
-    $('m-prog').textContent = `Day ${Math.min(save.level, LEVELS.length)}/${LEVELS.length}`;
+    $('m-prog').textContent = `Day ${save.level}`;
     $('m-stars').textContent = total;
     const max = Math.max(save.level + 2, LEVELS.length);
     // winding path: chapter banners, then level nodes zig-zagging down the page
@@ -3588,7 +3709,7 @@
     renderHub();
     music('menu');
     show('screen-map');
-    $('m-play').innerHTML = save.level > LEVELS.length ? '♾️ Endless day' : `▶ Play <small>Day ${save.level}</small>`;
+    $('m-play').innerHTML = `▶ Play <small>Day ${save.level}</small>`;
     if (checkUnlocks()) { /* the unlock card comes first */ }
     else if (daysDone() >= 1) {
       if (!welcomeChecked) { welcomeChecked = true; if (welcomeBack()) return; }
@@ -3603,8 +3724,10 @@
   function playStory(n) {
     CUSTOM = null; storyAfter = null; storyTitle = ''; storyPlace = null;
     storyLevel = n;
-    storyLines = (levelCfg(n).story || []).slice();
-    const P = MYST[n - 1];
+    const lc = levelCfg(n);
+    FAM = rollFamily(n, lc);
+    storyLines = (FAM.home ? familyIntro(n, FAM).concat(n <= 15 ? (lc.story || []) : []) : (lc.story || [])).slice();
+    const P = mystFor(n - 1);
     if (P && save.myst.seen[n - 1] && !save.myst.done[n - 1]) {
       save.myst.done[n - 1] = 1; const g = save.myst.guess[n - 1], right = g === P.a;
       if (right) { save.coins += 25; track('mystery'); }
@@ -3777,7 +3900,7 @@
   ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => $('mo-play').addEventListener(ev, () => { if (MO && MO.hold) { MO.hold = false; const b = $('mo-hold'); if (b) b.classList.remove('on'); } }, true));
   $('mo-ok').addEventListener('click', () => { snd('click'); $('moment').hidden = true; const back = MO && MO.custom && MO.custom.back; if (MO) clearInterval(MO.iv); MO = null; renderNow(); renderHub(); if (back) openSheet(back); });
   $('mo-x').addEventListener('click', () => { $('moment').hidden = true; if (MO) clearInterval(MO.iv); MO = null; renderNow(); });
-  $('r-myst').addEventListener('click', (e) => { const b = e.target.closest('[data-g]'); if (!b) return; const n = G ? G.n : 0; if (!MYST[n]) return; save.myst.guess[n] = +b.dataset.g; persist(); snd('pop'); haptic('tap'); renderMyst(n); });
+  $('r-myst').addEventListener('click', (e) => { const b = e.target.closest('[data-g]'); if (!b) return; const n = G ? G.n : 0; if (!mystFor(n)) return; save.myst.guess[n] = +b.dataset.g; persist(); snd('pop'); haptic('tap'); renderMyst(n); });
   $('hk-hand').addEventListener('click', (e) => {
     const el = e.target.closest('.hk-card'); if (!el || !HK || !HK.waiting) return;
     if (!el.classList.contains('ok')) { snd('fail'); hkMsg(`You must follow ${HK_S[HK.trick[0].c.s]} ${HK_SN[HK.trick[0].c.s]}!`); el.classList.remove('shk'); void el.offsetWidth; el.classList.add('shk'); return; }
@@ -3787,7 +3910,7 @@
   $('hk-over').addEventListener('click', (e) => { const b = e.target.closest('[data-hk]'); if (!b) return; snd('click'); if (b.dataset.hk === 'again') openHokm(); else { HK = null; renderMap(); } });
   $('hk-back').addEventListener('click', () => { HK = null; renderMap(); });
   $('ul-ok').addEventListener('click', () => { snd('click'); $('unlock').hidden = true; renderHub(); if (dailyReady() && !dailyShown && daysDone() >= 1) { dailyShown = true; setTimeout(() => openSheet('daily'), 300); } });
-  $('m-play').addEventListener('click', () => { snd('click'); const n = Math.min(save.level, LEVELS.length); if (save.level > LEVELS.length) openSheet('endless'); else playStory(n); });
+  $('m-play').addEventListener('click', () => { snd('click'); playStory(save.level); });
   $('sh2-body').addEventListener('click', sheetAction);
   let sheetBackToPause = false;
   $('sh2-back').addEventListener('click', () => { snd('click'); if (sheetBackToPause) { sheetBackToPause = false; show('screen-pause'); } else renderMap(); });
