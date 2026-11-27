@@ -35,6 +35,7 @@
   save.xp = save.xp || 0; save.plv = save.plv || 1; save.stickers = save.stickers || {}; save.sets = save.sets || {};
   save.wheel = save.wheel || { date: '', used: false, extra: 0 }; save.freeB = save.freeB || {}; save.dq = save.dq || { date: '', base: {}, claimed: false };
   save.wellness = save.wellness || {};
+  save.life = save.life || {};
   save.games = save.games || { tricksBest: 0, tahdigBest: 0, tricksDay: '', tahdigDay: '' };
   const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* */ } };
   const up = (k) => save.up[k] || 0;
@@ -282,6 +283,7 @@
     if (G.boosts.heart) { G.hearts++; G.maxHearts++; }
     G.zen = n < 900 && save.wellness.zen === today();
     G.fit = n < 900 && save.wellness.gym === today();
+    if (n < 900) { const w = weather(); setTimeout(() => { if (G && G.n === n) toast(`${w.ico} Tehran today: ${w.temp}°C, ${w.name.toLowerCase()}`, 'hint', 2000); }, 7800); }
     G.slept = n < 900 && dayNum() - (save.wellness.bedN ?? -9) <= 1;
     if (G.slept) setTimeout(() => { if (G && G.n === n) toast('🌙 Simba slept in Nena’s arms: he is 15% more patient!', 'hint', 2200); }, 5200);
     if (G.fit) setTimeout(() => { if (G && G.n === n) toast('🏋️ Gym energy: Nena is 15% faster today!', 'hint', 2200); }, 3400);
@@ -1856,6 +1858,7 @@
     { id: 'journey', icon: '🗺️', name: 'Full journey', desc: 'Complete a 30-minute daily journey', test: (t) => (t.journey || 0) >= 1, r: 80 },
     { id: 'lv10', icon: '⭐', name: 'Level 10', desc: 'Reach player level 10', test: () => save.plv >= 10, r: 100 },
     { id: 'set1', icon: '🎴', name: 'Collector', desc: 'Complete a sticker set', test: (t) => (t.set || 0) >= 1, r: 80 },
+    { id: 'life10', icon: '🏠', name: 'Real life', desc: 'Do 10 daily chores (breakfast, groceries, laundry)', test: (t) => (t.breakfast || 0) + (t.grocery || 0) + (t.laundry || 0) >= 10, r: 100 },
     { id: 'bed7', icon: '🌙', name: 'Only in her arms', desc: 'Rock Simba to sleep on 7 nights', test: (t) => (t.bed || 0) >= 7, r: 100 },
     { id: 'gym5', icon: '🏋️', name: 'Gym sisters', desc: 'Train 5 times with Negin', test: (t) => (t.gym || 0) >= 5, r: 80 },
     { id: 'cuddle10', icon: '🦁', name: 'Baba’s lion', desc: 'Put Simba on Baba’s belly 10 times', test: (t) => (t.req_cuddle || 0) >= 10, r: 60 },
@@ -1944,7 +1947,7 @@
   /* ---- hub on the map ---- */
   function renderHub() {
     const items = [
-      ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
+      ['today', '📅', 'Today', routineNow() || ''], ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
       ['missions', '📋', 'Quests', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
       ['nails', '💅', 'Nail day', nailsReady() ? '!' : ''], ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
       ['wheel', '🎡', 'Wheel', spinsLeft() || ''], ['stickers', '🎴', 'Stickers', `${Object.keys(save.stickers).length}/${STICKERS.length}`], ['bed', '🌙', 'Bedtime', new Date().getHours() >= 18 && save.wellness.bed !== today() ? '!' : ''], ['gym', '🏋️', 'Gym', gymDay() && save.wellness.gym !== today() ? '!' : ''], ['zen', '🧘', 'Zen', save.wellness.zen !== today() ? '!' : ''], ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
@@ -1961,9 +1964,10 @@
     if (kind === 'wheel') { openWheel(); return; }
     if (kind === 'gym') { openGym(); return; }
     if (kind === 'bed') { openBed(); return; }
+    if (kind === 'breakfast' || kind === 'grocery' || kind === 'laundry') { openLife(kind); return; }
     if (kind === 'nails') { startNailDay(); return; }
     sheetKind = kind;
-    const T = { stickers: '🎴 Sticker album', games: '🎮 Mini-games', settings: '⚙️ Settings', daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Quests', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
+    const T = { today: '📅 Nena’s day', stickers: '🎴 Sticker album', games: '🎮 Mini-games', settings: '⚙️ Settings', daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Quests', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
     $('sh2-title').textContent = T[kind] || '';
     $('sh2-coins').textContent = save.coins;
     $('sh2-body').innerHTML = SHEETS[kind]();
@@ -1971,6 +1975,12 @@
   }
   const bar = (v, n) => `<span class="pbar"><i style="width:${Math.min(100, (v / n) * 100)}%"></i></span>`;
   const SHEETS = {
+    today: () => {
+      const w = weather(), h = new Date().getHours(), P = dayPhase();
+      return `<div class="now-card ${P.k}"><span class="now-ico">${P.ico}</span><span class="now-t"><b>${P.hello}</b><small>${persianDate()} · ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} in Tehran</small><small>${w.ico} ${w.temp}°C · ${w.name}</small></span></div><p class="sh-lede">${w.tip}</p><h4 class="sh-h">🗓️ Nena’s routine</h4>`
+        + routine().map((r) => { const done = r.done(), now = h >= r.win[0] && h < r.win[1]; return `<div class="row-card today-row${done ? ' done' : ''}${now && !done ? ' now' : ''}"><span class="rc-i">${r.ico}</span><span class="rc-t"><b>${r.name}</b><small>${String(r.win[0]).padStart(2, '0')}:00–${String(r.win[1] % 24).padStart(2, '0')}:00${now && !done ? ` · <em>now${LIFE[r.k] ? ' — on-time bonus ×1.5' : ''}</em>` : ''}</small><small>${r.desc}</small></span>${done ? '<b class="ok">✓</b>' : `<button type="button" class="btn ${now ? 'btn-primary' : ''}" data-act="routine" data-k="${r.k}">Go</button>`}</div>`; }).join('')
+        + '<p class="sh-lede small">The routine follows your real clock. Everything can be done any time, but chores done on time pay more.</p>';
+    },
     stickers: () => `<p class="sh-lede">Win stickers by finishing days (2 for a perfect day) and on the wheel. Complete a set for a big reward!</p>` + STICKER_SETS.map((set) => { const own = set.items.filter((it) => save.stickers[it[0]]).length; return `<h4 class="sh-h">${set.ico} ${set.name} <small>${own}/${set.items.length}${save.sets[set.id] ? ' · ✓ +100 🪙' : ' · reward 100 🪙'}</small></h4><div class="stk-grid">${set.items.map(([id, ico, name]) => save.stickers[id] ? `<div class="stk${save.stickers[id] > 1 ? ' many' : ''}"><i>${ico}</i><small>${name}</small>${save.stickers[id] > 1 ? `<em>×${save.stickers[id]}</em>` : ''}</div>` : '<div class="stk locked"><i>?</i><small>???</small></div>').join('')}</div>`; }).join(''),
     games: () => {
       const g = save.games, card = (act, ico, name, desc, best, daily) => `<div class="row-card game-card"><span class="rc-i">${ico}</span><span class="rc-t"><b>${name}</b><small>${desc}</small><small class="best">${best}${daily ? ' · <em>daily bonus +20 🪙</em>' : ''}</small></span><button type="button" class="btn btn-primary" data-act="${act}">Play</button></div>`;
@@ -2030,6 +2040,7 @@
     snd('click');
     if (act === 'play-tricks') { openTricks(); return; }
     if (act === 'play-zen') { openZen(); return; }
+    if (act === 'routine') { const r = routine().find((x) => x.k === b.dataset.k); if (r) r.go(); return; }
     if (act === 'play-hair') { openHair(); return; }
     if (act === 'play-tahdig') { openTahdig(); return; }
     if (act === 'go-sort') { openSheet('sort'); return; }
@@ -2247,7 +2258,7 @@
   const JOURNEY = [{ m: 5, c: 20, ico: '🎁' }, { m: 10, c: 40, ico: '🎁' }, { m: 20, c: 70, ico: '💎' }, { m: 30, c: 150, ico: '👑', outfit: 'zen' }];
   let lastInput = Date.now(), jReadyShown = -1;
   document.addEventListener('pointerdown', () => { lastInput = Date.now(); }, true);
-  const ACTIVE = ['screen-game', 'screen-tricks', 'screen-tahdig', 'screen-sort', 'screen-nails', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-gym', 'screen-bed'];
+  const ACTIVE = ['screen-game', 'screen-tricks', 'screen-tahdig', 'screen-sort', 'screen-nails', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-gym', 'screen-bed', 'screen-life'];
   function journeyToday() { if (save.journey.date !== today()) save.journey = { date: today(), sec: 0, got: [] }; return save.journey; }
   setInterval(() => {
     if (document.hidden || Date.now() - lastInput > 60000) return;
@@ -2467,7 +2478,7 @@
   const DQ_POOL = [
     { k: 'pet', n: 3, ico: '🐶', label: 'Pet Simba 3 times' }, { k: 'day', n: 1, ico: '🌅', label: 'Finish a day' }, { k: 'game', n: 1, ico: '🎮', label: 'Play a mini-game' },
     { k: 'req', n: 15, ico: '⚡', label: 'Complete 15 requests' }, { k: 'perfect', n: 1, ico: '⭐', label: 'Get 3 stars on a day' }, { k: 'mini', n: 2, ico: '🔥', label: 'Win 2 mini challenges' },
-    { k: 'zen', n: 1, ico: '🧘', label: 'Meditate once' }, { k: 'gym', n: 1, ico: '🏋️', label: 'Go to the gym with Negin' }, { k: 'bed', n: 1, ico: '🌙', label: 'Rock Simba to sleep' }, { k: 'req_food', n: 3, ico: '🍖', label: 'Feed Simba 3 times' }, { k: 'req_tea', n: 2, ico: '☕', label: 'Serve Baba 2 teas' }, { k: 'photo', n: 1, ico: '📸', label: 'Take a Simba photo' },
+    { k: 'zen', n: 1, ico: '🧘', label: 'Meditate once' }, { k: 'gym', n: 1, ico: '🏋️', label: 'Go to the gym with Negin' }, { k: 'bed', n: 1, ico: '🌙', label: 'Rock Simba to sleep' }, { k: 'breakfast', n: 1, ico: '🍳', label: 'Serve the family breakfast' }, { k: 'grocery', n: 1, ico: '🛒', label: 'Do the groceries for Maman' }, { k: 'laundry', n: 1, ico: '🧺', label: 'Hang the laundry' }, { k: 'req_food', n: 3, ico: '🍖', label: 'Feed Simba 3 times' }, { k: 'req_tea', n: 2, ico: '☕', label: 'Serve Baba 2 teas' }, { k: 'photo', n: 1, ico: '📸', label: 'Take a Simba photo' },
   ];
   function dailyQuests() {
     if (save.dq.date !== today()) save.dq = { date: today(), base: Object.assign({}, save.tot), claimed: false };
@@ -2663,6 +2674,176 @@
     if (stars === 3) confettiOn($('screen-gym'));
   }
 
+  /* ---- real life: clock, Persian date, Tehran weather, daily routine ---- */
+  function dayPhase() {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 11) return { k: 'morning', ico: '🌅', name: 'Morning', hello: 'Sobh bekheir! Good morning ☀️' };
+    if (h >= 11 && h < 17) return { k: 'day', ico: '🌤️', name: 'Afternoon', hello: 'Good afternoon! Busy day in the house.' };
+    if (h >= 17 && h < 21) return { k: 'evening', ico: '🌇', name: 'Evening', hello: 'Asr bekheir! The family is coming home.' };
+    return { k: 'night', ico: '🌙', name: 'Night', hello: 'Shab bekheir… Simba is yawning.' };
+  }
+  function persianDate() {
+    try { return new Intl.DateTimeFormat('en-u-ca-persian', { day: 'numeric', month: 'long' }).format(new Date()); } catch (e) { return new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); }
+  }
+  const TEH_HI = [8, 11, 16, 22, 28, 34, 37, 36, 32, 24, 16, 10];
+  function weather() {
+    const d = new Date(), m = d.getMonth(), h = d.getHours(), r = seeded(dayNum() * 7 + 3), a = r(), b = r();
+    let k = 'sun';
+    if (m === 11 || m <= 1) k = a < 0.18 ? 'snow' : a < 0.38 ? 'smog' : a < 0.6 ? 'cloud' : 'sun';
+    else if (m <= 4) k = a < 0.25 ? 'rain' : a < 0.45 ? 'cloud' : 'sun';
+    else if (m <= 7) k = a < 0.1 ? 'dust' : 'sun';
+    else k = m >= 9 && a < 0.22 ? 'rain' : m >= 10 && a < 0.42 ? 'smog' : a < 0.55 ? 'cloud' : 'sun';
+    const temp = Math.round(TEH_HI[m] + (b * 6 - 3) - (h < 7 || h >= 21 ? 7 : h < 11 || h >= 18 ? 3 : 0));
+    const W = {
+      sun: ['☀️', 'Sunny', 'Clear sky over Tehran — Alborz mountains are visible today!'],
+      cloud: ['☁️', 'Cloudy', 'Grey sky. A good day for tea and staying in.'],
+      rain: ['🌧️', 'Rainy', 'Rain in Tehran! Hang the laundry inside and dry Simba after walks.'],
+      snow: ['❄️', 'Snowy', 'Snow! Simba loves to roll in it — get the towel ready.'],
+      smog: ['🌫️', 'Smoggy — poor air', 'Air pollution alert: short walks for Simba, schools may close.'],
+      dust: ['🌪️', 'Dusty wind', 'Dust in the air. Close the windows and wipe the balcony.'],
+    }[k];
+    return { k, ico: W[0], name: W[1], tip: W[2], temp };
+  }
+  function routine() {
+    const L = [
+      { k: 'breakfast', ico: '🍳', name: 'Family breakfast', desc: 'Sangak, panir, walnuts and tea for everyone.', win: [6, 11], done: () => save.life.breakfast === today(), go: () => openLife('breakfast') },
+      { k: 'grocery', ico: '🛒', name: 'Groceries at Agha Reza’s shop', desc: 'Remember Maman’s list — no phone allowed!', win: [10, 14], done: () => save.life.grocery === today(), go: () => openLife('grocery') },
+      { k: 'laundry', ico: '🧺', name: 'Hang the laundry', desc: 'Pair the socks and hang them on the line.', win: [13, 18], done: () => save.life.laundry === today(), go: () => openLife('laundry') },
+      { k: 'zen', ico: '🧘', name: 'Meditation with oud', desc: 'Light the oud and breathe.', win: [6, 22], done: () => save.wellness.zen === today(), go: openZen },
+    ];
+    if (gymDay()) L.push({ k: 'gym', ico: '🏋️', name: 'Gym with Negin & Coach Shadi', desc: 'Every other day at FIT TEHRAN.', win: [16, 20], done: () => save.wellness.gym === today(), go: openGym });
+    L.push({ k: 'hair', ico: '💇‍♀️', name: 'Shower, then Maman dries her hair', desc: 'Don’t let Maman burn her!', win: [19, 23], done: () => save.wellness.hair === today(), go: openHair });
+    L.push({ k: 'bed', ico: '🌙', name: 'Rock Simba to sleep', desc: 'He only sleeps in Nena’s arms.', win: [20, 24], done: () => save.wellness.bed === today(), go: openBed });
+    return L;
+  }
+  const routineNow = () => { const h = new Date().getHours(); return routine().filter((r) => !r.done() && h >= r.win[0] && h < r.win[1]).length ? '!' : ''; };
+
+  /* ---- daily chores mini-games: breakfast (orders), groceries (memory), laundry (pairs) ---- */
+  const BF_ITEMS = { bread: ['🫓', 'Sangak'], panir: ['🧀', 'Panir'], walnut: ['🌰', 'Walnuts'], honey: ['🍯', 'Honey'], butter: ['🧈', 'Butter'], egg: ['🍳', 'Fried egg'], tomato: ['🍅', 'Tomato'], cucumber: ['🥒', 'Cucumber'], sabzi: ['🌿', 'Sabzi'], tea: ['🍵', 'Chai'], jam: ['🍓', 'Morabba'], haleem: ['🥣', 'Haleem'] };
+  const BF_WHO = [
+    ['baba', 'mohsen', 'Baba', ['bread', 'panir', 'walnut', 'tea', 'egg', 'haleem'], 'Nena jan, for me:'],
+    ['fariba', 'fariba', 'Maman', ['bread', 'butter', 'jam', 'tea', 'cucumber', 'sabzi'], 'Azizam, I’d like'],
+    ['negin', 'negin', 'Negin', ['honey', 'butter', 'bread', 'tea', 'jam', 'egg'], '*yawns* just give me'],
+    ['pourya', 'pourya', 'Pourya', ['egg', 'tomato', 'haleem', 'bread', 'tea', 'sabzi'], 'Quick, I’m late:'],
+  ];
+  const GR_ITEMS = { milk: ['🥛', 'Milk'], eggs: ['🥚', 'Eggs'], rice: ['🍚', 'Rice'], onion: ['🧅', 'Onions'], tomato: ['🍅', 'Tomatoes'], potato: ['🥔', 'Potatoes'], lime: ['🍋', 'Limes'], tea: ['🫖', 'Tea leaves'], lavash: ['🫓', 'Lavash'], cheese: ['🧀', 'Cheese'], paste: ['🥫', 'Tomato paste'], chicken: ['🍗', 'Chicken'] };
+  const sockSvg = (c) => `<svg viewBox="0 0 40 48" class="sock"><path d="M12 2h16v22l8 10a7 7 0 0 1-2 10l-2 1a7 7 0 0 1-9-2L12 31Z" fill="${c}" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/><rect x="12" y="2" width="16" height="6" fill="#fff" opacity=".8"/><rect x="12" y="10" width="16" height="2.5" fill="#fff" opacity=".55"/></svg>`;
+  const SOCKS = ['#e8577f', '#4f8fe0', '#f2c230', '#5bbf8a', '#9b6ad6', '#f08a3c', '#2b2b30', '#c9b28a'];
+  const LIFE = {
+    breakfast: { title: '🍳 Family breakfast', rounds: 4, time: 50, friend: 'baba', who: 'fariba', intro: 'The sofreh is ready! Serve each person exactly what they ask for.' },
+    grocery: { title: '🛒 Agha Reza’s shop', rounds: 3, time: 55, friend: 'fariba', who: 'fariba', intro: 'Maman: “Nena jan, go to Agha Reza’s and buy what I tell you. Don’t forget anything!”' },
+    laundry: { title: '🧺 Laundry day', rounds: 2, time: 45, friend: 'fariba', who: 'fariba', intro: 'Maman: “The washing machine is done! Pair the socks and hang them, please.”' },
+  };
+  let LF = null, lfTimer = 0;
+  function lfSay(who, t) { $('lf-who').innerHTML = A.portrait(who, 'happy'); const e = $('lf-say'); e.textContent = t; e.classList.remove('pop'); void e.offsetWidth; e.classList.add('pop'); }
+  function openLife(k) {
+    clearInterval(lfTimer);
+    const C = LIFE[k], w = weather();
+    LF = { k, C, round: -1, mistakes: 0, t: C.time, run: false, sel: null, phase: 'intro' };
+    $('screen-life').className = 'screen life lf-' + k;
+    $('lf-title').textContent = C.title; $('lf-list').innerHTML = ''; $('lf-grid').innerHTML = ''; $('lf-round').textContent = ''; $('lf-time').textContent = '';
+    let intro = C.intro;
+    if (k === 'laundry' && (w.k === 'rain' || w.k === 'snow')) intro += ` (It’s ${w.name.toLowerCase()} — we’ll hang it inside by the heater.)`;
+    if (k === 'grocery' && w.k === 'smog') intro += ' Take a mask, the air is bad today.';
+    lfSay(C.who === 'fariba' ? 'fariba' : C.who, intro);
+    const r = routine().find((x) => x.k === k), h = new Date().getHours();
+    LF.onTime = r && h >= r.win[0] && h < r.win[1];
+    $('lf-info').textContent = save.life[k] === today() ? 'Already done today ✓ (practice)' : LF.onTime ? 'Right on time! Coins ×1.5' : 'Reward: coins, XP and friendship';
+    $('lf-btn').hidden = false; $('lf-btn').textContent = 'Start'; $('lf-btn').dataset.mode = 'start';
+    show('screen-life'); music('home');
+  }
+  function lfStart() {
+    LF.run = true; $('lf-btn').hidden = true; lfNext();
+    clearInterval(lfTimer);
+    lfTimer = setInterval(() => {
+      if (!LF || !LF.run || $('screen-life').hidden) return;
+      LF.t -= 0.25; $('lf-time').textContent = `⏱ ${Math.max(0, Math.ceil(LF.t))}s`; $('lf-time').classList.toggle('low', LF.t <= 10);
+      if (LF.t <= 0) lfEnd(false);
+    }, 250);
+  }
+  const shuf = (a) => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+  function lfNext() {
+    LF.round++;
+    if (LF.round >= LF.C.rounds) { lfEnd(true); return; }
+    $('lf-round').textContent = `Round ${LF.round + 1}/${LF.C.rounds}`;
+    const k = LF.k;
+    if (k === 'breakfast') {
+      const [id, art, name, fav, pre] = BF_WHO[LF.round % BF_WHO.length], n = LF.round < 2 ? 3 : 4;
+      LF.want = shuf(fav).slice(0, n); LF.got = [];
+      lfSay(art, `${name}: ${pre} ${LF.want.map((x) => BF_ITEMS[x][1].toLowerCase()).join(', ')}!`);
+      $('lf-list').innerHTML = LF.want.map((x) => `<span class="lf-chip" data-k="${x}">${BF_ITEMS[x][0]} ${BF_ITEMS[x][1]}</span>`).join('');
+      lfGrid(shuf(Object.keys(BF_ITEMS)).map((x) => [x, BF_ITEMS[x][0], BF_ITEMS[x][1]]));
+      LF.phase = 'pick'; LF.who = id;
+    } else if (k === 'grocery') {
+      const n = 3 + LF.round; LF.want = shuf(Object.keys(GR_ITEMS)).slice(0, n); LF.got = [];
+      lfSay('fariba', `Maman’s list (${n} things) — memorize it!`);
+      $('lf-list').innerHTML = LF.want.map((x) => `<span class="lf-chip" data-k="${x}">${GR_ITEMS[x][0]} ${GR_ITEMS[x][1]}</span>`).join('');
+      lfGrid(shuf(Object.keys(GR_ITEMS)).map((x) => [x, GR_ITEMS[x][0], GR_ITEMS[x][1]]));
+      $('lf-grid').classList.add('wait'); LF.phase = 'memo';
+      const show = 2.6 + n * 0.5;
+      setTimeout(() => {
+        if (!LF || LF.phase !== 'memo') return;
+        [...$('lf-list').children].forEach((c) => { c.classList.add('hid'); c.textContent = '❓'; });
+        $('lf-grid').classList.remove('wait'); LF.phase = 'pick';
+        lfSay('fariba', LF.round === 0 ? 'Agha Reza: “Salam Nena khanum! What does Maman need today?”' : pick(['Agha Reza: “Back again? Say salam to Maman!”', 'Agha Reza: “Fresh bread just arrived!”', 'Agha Reza: “Take your time, azizam.”']));
+      }, show * 1000);
+    } else {
+      const n = LF.round === 0 ? 6 : 8, cols = shuf(SOCKS).slice(0, n);
+      LF.left = n; LF.sel = null;
+      $('lf-list').innerHTML = '<span class="lf-line"></span>';
+      lfGrid(shuf(cols.concat(cols)).map((c) => [c, sockSvg(c), '']));
+      lfSay('fariba', LF.round === 0 ? 'Find the matching pairs. Two socks of the same colour!' : 'More socks! Where do they all come from? 😅');
+      LF.phase = 'pick';
+    }
+  }
+  function lfGrid(items) {
+    $('lf-grid').className = 'lf-grid' + (items.length > 12 ? ' dense' : '');
+    $('lf-grid').innerHTML = items.map(([k, ico, name]) => `<button type="button" class="lf-tile" data-k="${k}"><span>${ico}</span>${name ? `<small>${name}</small>` : ''}</button>`).join('');
+  }
+  function lfTap(tile) {
+    if (!LF || !LF.run || LF.phase !== 'pick' || tile.disabled) return;
+    const k = tile.dataset.k;
+    const bad = () => { LF.mistakes++; snd('fail'); buzz(30); tile.classList.remove('no'); void tile.offsetWidth; tile.classList.add('no'); };
+    if (LF.k === 'laundry') {
+      if (!LF.sel) { LF.sel = tile; tile.classList.add('sel'); snd('click'); return; }
+      if (LF.sel === tile) { tile.classList.remove('sel'); LF.sel = null; return; }
+      const a = LF.sel; LF.sel = null; a.classList.remove('sel');
+      if (a.dataset.k === k) {
+        snd('pop'); [a, tile].forEach((t) => { t.disabled = true; t.classList.add('ok'); });
+        $('lf-list').insertAdjacentHTML('beforeend', `<span class="lf-peg">${sockSvg(k)}</span>`);
+        if (--LF.left === 0) { snd('success'); LF.phase = 'wait'; setTimeout(() => LF && lfNext(), 700); }
+      } else { bad(); a.classList.remove('no'); void a.offsetWidth; a.classList.add('no'); }
+      return;
+    }
+    const i = LF.want.indexOf(k);
+    if (i < 0 || LF.got.includes(k)) { bad(); if (LF.k === 'breakfast') lfSay(BF_WHO[LF.round % BF_WHO.length][1], pick(['No no, I didn’t ask for that!', 'Hmm? That’s not mine.', 'Nena, wake up! 😅'])); return; }
+    LF.got.push(k); snd('pop'); tile.disabled = true; tile.classList.add('ok');
+    const chip = $('lf-list').querySelector(`[data-k="${k}"]`); if (chip) { chip.classList.add('done'); chip.classList.remove('hid'); chip.textContent = (LF.k === 'breakfast' ? BF_ITEMS : GR_ITEMS)[k].join(' '); }
+    if (LF.got.length === LF.want.length) {
+      snd('success'); LF.phase = 'wait';
+      if (LF.k === 'breakfast') lfSay(BF_WHO[LF.round % BF_WHO.length][1], pick(['Merci azizam! Noosh-e jan! 😋', 'Perfect, just like a café!', 'Ahh, now the day can start.']));
+      else lfSay('fariba', 'Agha Reza: “That’s everything! Khodahafez!”');
+      setTimeout(() => LF && lfNext(), 900);
+    }
+  }
+  function lfEnd(ok) {
+    if (!LF || !LF.run) return;
+    LF.run = false; clearInterval(lfTimer); LF.phase = 'end';
+    let stars = ok ? 3 - (LF.mistakes > 5 ? 2 : LF.mistakes > 2 ? 1 : 0) : LF.round >= LF.C.rounds - 1 ? 1 : 0;
+    if (ok && LF.t > LF.C.time * 0.4 && LF.mistakes === 0) stars = 3;
+    const first = save.life[LF.k] !== today() && stars > 0;
+    const coins = first ? Math.round((10 + 10 * stars) * (LF.onTime ? 1.5 : 1)) : 0;
+    if (first) { save.life[LF.k] = today(); save.coins += coins; track(LF.k); }
+    if (stars) { gainXP(12); save.friend[LF.C.friend] = (save.friend[LF.C.friend] || 0) + stars; }
+    track('game'); persist(); checkAch();
+    snd(stars >= 2 ? 'win' : 'lose');
+    const msg = { breakfast: ['Everyone is full and happy. Simba got a piece of bread too 🐶', 'Breakfast was a bit chaotic… but nobody left hungry.'], grocery: ['Maman: “Afarin! You didn’t forget anything!”', 'Maman: “Hmm… where are the onions? Never mind, azizam.”'], laundry: ['All the socks are hanging. Maman is proud!', 'Some socks are still lost… the washing machine ate them. 🧦'] }[LF.k];
+    lfSay('fariba', msg[stars >= 2 ? 0 : 1]);
+    $('lf-info').textContent = `${'★'.repeat(stars)}${'☆'.repeat(3 - stars)} · ${first ? `+${coins} 🪙${LF.onTime ? ' (on time ×1.5)' : ''} · ❤️ +${stars}` : stars ? 'Nice practice!' : 'Time’s up — try again!'}`;
+    $('lf-btn').hidden = false; $('lf-btn').dataset.mode = stars ? 'done' : 'again'; $('lf-btn').textContent = stars ? 'Back' : 'Try again';
+    if (stars === 3) confettiOn($('screen-life'));
+  }
+
   /* ---- bedtime: Simba only sleeps in Nena's arms ---- */
   const BED_BG = `<svg viewBox="0 0 390 520" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="bdw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#232750"/><stop offset="1" stop-color="#352f63"/></linearGradient><radialGradient id="bdl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd98a" stop-opacity=".55"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs>
     <rect width="390" height="520" fill="url(#bdw)"/>
@@ -2806,11 +2987,12 @@
   /* Screens: title, map, story, shop                                    */
   /* ------------------------------------------------------------------ */
   function show(id) {
-    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-welcome', 'screen-gym', 'screen-bed'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
+    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-welcome', 'screen-gym', 'screen-bed', 'screen-life'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
   }
   function renderMap() {
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
     $('m-coins').textContent = save.coins;
+    { const w = weather(), P = dayPhase(); $('m-now').innerHTML = `<span>${P.ico} ${P.name}</span><span>${persianDate()}</span><span>${w.ico} ${w.temp}°C</span>`; }
     $('m-prog').textContent = `Day ${Math.min(save.level, LEVELS.length)}/${LEVELS.length}`;
     $('m-stars').textContent = total;
     const max = Math.max(save.level + 2, LEVELS.length);
@@ -2970,6 +3152,9 @@
   ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => $('bd-btn').addEventListener(ev, () => { if (BD) BD.hold = false; }));
   $('bd-btn').addEventListener('click', (e) => { const m = e.currentTarget.dataset.mode; if (m === 'arms') bdArms(); else if (m === 'again') openBed(); else if (m === 'done') { $('bd-pair').classList.remove('asleep'); BD = null; renderMap(); } });
   $('bd-basket').addEventListener('click', bdBasket);
+  $('lf-grid').addEventListener('pointerdown', (e) => { const t = e.target.closest('.lf-tile'); if (t) { e.preventDefault(); lfTap(t); } });
+  $('lf-btn').addEventListener('click', (e) => { const m = e.currentTarget.dataset.mode; if (m === 'start') lfStart(); else if (m === 'again') openLife(LF.k); else if (m === 'done') { LF = null; openSheet('today'); } });
+  $('lf-back').addEventListener('click', () => { clearInterval(lfTimer); LF = null; renderMap(); });
   $('bd-shh').addEventListener('pointerdown', (e) => { e.preventDefault(); bdShh(); });
   $('bd-back').addEventListener('click', () => { cancelAnimationFrame(bdRaf); BD = null; $('bd-pair').classList.remove('asleep'); renderMap(); });
   $('gy-back').addEventListener('click', () => { if (GY) GY.run = false; cancelAnimationFrame(gyRaf); GY = null; renderMap(); });

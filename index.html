@@ -45,6 +45,7 @@
       <span class="pill">★ <b id="m-stars">0</b></span>
       <span class="pill coin">🪙 <b id="m-coins">0</b></span>
     </header>
+    <div class="m-now" id="m-now"></div>
     <div class="journey" id="m-journey"></div>
     <div class="hub" id="m-hub"></div>
     <div class="levels" id="m-levels"></div>
@@ -279,6 +280,17 @@
   <!-- Welcome back -->
   <section class="screen modal" id="screen-welcome" hidden>
     <div class="card"><div class="actor simba wb-dog hop" id="wb-dog"></div><h2>Welcome back! 🐾</h2><p class="r-sub" id="wb-text"></p><button type="button" class="btn btn-primary btn-big" id="wb-ok">Hug Simba ❤️</button></div>
+  </section>
+
+  <!-- Daily chores -->
+  <section class="screen life" id="screen-life" hidden>
+    <header class="bar"><button type="button" class="icon-btn" id="lf-back" aria-label="Back">‹</button><h2 id="lf-title">Chores</h2></header>
+    <div class="lf-top"><span class="lf-who" id="lf-who"></span><p class="say lf-say" id="lf-say"></p></div>
+    <div class="lf-list" id="lf-list"></div>
+    <div class="lf-meta"><span id="lf-round"></span><span id="lf-time"></span></div>
+    <div class="lf-grid" id="lf-grid"></div>
+    <p class="gy-info" id="lf-info"></p>
+    <footer class="map-foot"><button type="button" class="btn btn-primary btn-big" id="lf-btn">Start</button></footer>
   </section>
 
   <!-- Bedtime -->
