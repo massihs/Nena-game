@@ -7,11 +7,18 @@ window.Art = (function () {
     sweat:   { top: '#b9a5e3', stripe: '#ffffff', bottom: '#3f4f78' },
     robe:    { top: '#f5cf5b', stripe: '#fff3c4', bottom: '#f5cf5b' },
     cire:    { top: '#f2c230', stripe: '#d99a00', bottom: '#4f6d9a' },
+    night:   { top: '#26232b', stripe: '#c9a24a', bottom: '#26232b' },
+    denim:   { top: '#9cc2d9', stripe: '#ffffff', bottom: '#2f4a6a' },
+    rose:    { top: '#f4a3c0', stripe: '#ffffff', bottom: '#3a3550' },
+    persian: { top: '#2f6b3e', stripe: '#e0c27a', bottom: '#3a2418' },
   };
   const COLLARS = {
     rouge:   { color: '#d4513f', kind: 'collar' },
     bandana: { color: '#ef8fb0', kind: 'bandana' },
     noeud:   { color: '#4a7bd0', kind: 'bow' },
+    gold:    { color: '#e0b84a', kind: 'collar' },
+    green:   { color: '#2f6b3e', kind: 'bandana' },
+    pinkbow: { color: '#ef6fa3', kind: 'bow' },
   };
 
   /* Nena's hair, modelled on the cover art: big, tousled auburn-chestnut waves. */
@@ -200,6 +207,7 @@ window.Art = (function () {
     guest1:  { skin: '#f2c9a6', hair: '#2b1d16', hair2: '#3e2a20', style: 'bob', shirt: '#7aa6c2', collar: '#4f7f9c', pants: '#3a3550', earrings: '#ffd36b' },
     guest2:  { skin: '#dcae86', hair: '#1c1b22', hair2: '#2b2a33', style: 'short', shirt: '#6aa84f', collar: '#4d8044', pants: '#3a3a44', beard: true },
     guest3:  { skin: '#f4cdb0', hair: '#5a2a16', hair2: '#6e3820', style: 'ponytail', shirt: '#e98aab', collar: '#c9496f', pants: '#2f2b46' },
+    aunt:    { skin: '#efc39e', hair: '#5a3a2a', hair2: '#a89a90', style: 'bob', shirt: '#7a2d8c', collar: '#e0c27a', pants: '#3a2a44', earrings: '#ffd36b', belly: true },
     witch1:  { skin: '#f7ddd0', hair: '#f2d77e', hair2: '#dcbb55', style: 'curly', shirt: '#231a2b', collar: '#7a2d8c', pants: '#1a1420', earrings: '#b98bff' },
     witch2:  { skin: '#f4d8c6', hair: '#f7e7a6', hair2: '#e2c66c', style: 'curly', shirt: '#1d2420', collar: '#2f7a5a', pants: '#14181a', earrings: '#7fe0b4' },
     guest4:  { skin: '#c99872', hair: '#241a14', hair2: '#33261e', style: 'side', shirt: '#e7b84a', collar: '#c9952a', pants: '#3a3550' },

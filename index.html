@@ -43,6 +43,7 @@
       <span class="pill">★ <b id="m-stars">0</b></span>
       <span class="pill coin">🪙 <b id="m-coins">0</b></span>
     </header>
+    <div class="hub" id="m-hub"></div>
     <div class="levels" id="m-levels"></div>
     <footer class="map-foot"><button type="button" class="btn btn-primary btn-big" id="m-shop">🛍️ Upgrades</button></footer>
   </section>
@@ -114,6 +115,28 @@
     </div>
   </section>
 
+  <!-- Generic sheet: daily reward, missions, family, decor, wardrobe, album, trophies… -->
+  <section class="screen sheet" id="screen-sheet" hidden>
+    <header class="bar">
+      <button type="button" class="icon-btn" id="sh2-back" aria-label="Back">‹</button>
+      <h2 id="sh2-title"></h2>
+      <span class="pill coin">🪙 <b id="sh2-coins">0</b></span>
+    </header>
+    <div class="sheet-body" id="sh2-body"></div>
+  </section>
+
+  <!-- Daily Color Sort -->
+  <section class="screen sort" id="screen-sort" hidden>
+    <header class="bar">
+      <button type="button" class="icon-btn" id="so-back" aria-label="Back">‹</button>
+      <h2 id="so-title">Color Sort</h2>
+      <span class="pill" id="so-moves">0 moves</span>
+    </header>
+    <p class="so-help">Tap a glass, then another to pour. Same colour on top, or an empty glass.</p>
+    <div class="tubes" id="so-tubes"></div>
+    <footer class="map-foot row"><button type="button" class="btn" id="so-undo">↶ Undo</button><button type="button" class="btn" id="so-restart">⟳ Restart</button></footer>
+  </section>
+
   <!-- Pause -->
   <section class="screen modal" id="screen-pause" hidden>
     <div class="card">
@@ -141,6 +164,7 @@
 <script src="js/art.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/rooms-art.js"></script>
+<script src="js/sort.js"></script>
 <script src="js/rush.js"></script>
 </body>
 </html>

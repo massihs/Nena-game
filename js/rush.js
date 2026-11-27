@@ -20,6 +20,15 @@
   let save = { level: 1, stars: {}, best: {}, medals: {}, coins: 0, up: {}, sound: true, music: true, seen: {} };
   try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.level) save = Object.assign(save, d); } catch (e) { /* */ }
   save.medals = save.medals || {};
+  ['tot', 'ach', 'friend', 'scenes', 'album', 'decor', 'chapters'].forEach((k) => { save[k] = save[k] || {}; });
+  save.daily = save.daily || { last: '', streak: 0 };
+  save.sortd = save.sortd || { date: '', done: [] };
+  save.chal = save.chal || { date: '', done: false };
+  save.week = save.week || { id: -1, prog: {}, claimed: [] };
+  save.owned = save.owned || { basique: 1 };
+  save.outfit = save.outfit || 'basique';
+  if (save.collar === undefined) save.collar = null;
+  save.endless = save.endless || 0;
   const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* */ } };
   const up = (k) => save.up[k] || 0;
 
@@ -66,15 +75,15 @@
   };
   // where each character lives, per place
   const HOMES = {
-    home: { nena: ['salon', 300, 670], simba: ['salon', 330, 600], baba: ['tv', 250, 560], fariba: ['kitchen', 160, 470], nasim: ['salon', 545, 470] },
+    home: { aunt: ['salon', 470, 525], nena: ['salon', 300, 670], simba: ['salon', 330, 600], baba: ['tv', 250, 560], fariba: ['kitchen', 160, 470], nasim: ['salon', 545, 470] },
     street: { nena: ['street', 250, 545], simba: ['street', 330, 535], nasim: ['street', 520, 600], kids: ['street', 70, 548] },
     clap: { nena: ['clap', 250, 646], negin: ['clap', 400, 646], pourya: ['clap', 176, 452] },
   };
   const FUR_ZONE = { x0: 270, x1: 560, y0: 600, y1: 780 };
   const FRONT = [548, 430];
-  const NPC_ART = { baba: ['mohsen', 'happy', 84, 147], fariba: ['fariba', 'happy', 80, 140], nasim: ['nasim', 'angry', 80, 140], negin: ['negin', 'happy', 80, 140], kids: ['mia', 'happy', 64, 112], pourya: ['pourya', 'happy', 84, 147] };
+  const NPC_ART = { baba: ['mohsen', 'happy', 84, 147], fariba: ['fariba', 'happy', 80, 140], nasim: ['nasim', 'angry', 80, 140], negin: ['negin', 'happy', 80, 140], kids: ['mia', 'happy', 64, 112], pourya: ['pourya', 'happy', 84, 147], aunt: ['aunt', 'happy', 84, 147] };
   const GUESTS = [['guest1', 40, 552, 'happy'], ['guest2', 112, 554, 'happy'], ['guest3', 42, 742, 'happy'], ['guest4', 112, 744, 'neutral'], ['witch1', 490, 552, 'angry'], ['witch2', 562, 554, 'angry']];
-  const TRANSIENT = { nasim: 1, kids: 1 };
+  const TRANSIENT = { nasim: 1, kids: 1, aunt: 1 };
   const ELEV = { mall: [40, 228, 112, 192], parking: [436, 214, 112, 186] };
 
   /* request catalogue: who asks, what item is needed (src = where to get it), where to deliver (at) */
@@ -106,6 +115,10 @@
     insta:   { who: 'pourya', icon: '📸', pts: 90, pat: 18, at: 'pourya', dur: 1, hint: 'Pourya asks for Nena’s Instagram. Again. Answer him (politely)!' },
     chai:    { who: 'negin', icon: '🍵', pts: 120, pat: 24, item: 'teapot', src: 'teabar', at: 'negin', dur: 0.6, hint: 'Negin wants tea: bring the teapot from the tea bar.' },
     doze:    { who: 'negin', icon: '😴', pts: 110, pat: 20, at: 'negin', dur: 1.2, hint: 'Negin fell asleep at the table. Of course. Wake her up!' },
+    aunt:    { who: 'aunt', icon: '🎁', pts: 260, pat: 26, item: 'tea', src: 'samovar', at: 'aunt', dur: 0.8, special: true, vip: true, hint: 'Surprise! Aunt Mahin is visiting. Bring her tea, quick!' },
+    vip:     { who: 'guest2', icon: '👑', pts: 240, pat: 22, item: 'mochi', src: 'sushi', at: 'guest2', dur: 0.6, special: true, vip: true, hint: 'A VIP at CLAP! Serve him mochi for a big tip.' },
+    curse:   { who: 'witch1', icon: '🔮', pts: 160, pat: 16, at: 'witch1', dur: 1.2, special: true, hint: 'The witches are cursing your hookah! Ask them (nicely) to stop.' },
+    chase:   { who: 'simba', icon: '🫓', pts: 150, pat: 14, at: 'simba', dur: 1, special: true, hint: 'Simba stole a sangak! Catch him!' },
     snack:   { who: 'table', icon: '🍡', pts: 130, pat: 26, item: 'mochi', src: 'sushi', at: 'table', dur: 0.6, hint: 'Snack time: mochi from the sushi counter to your table.' },
   };
   const ITEMS = { food: '🥣', tea: '🍵', brush: '🪮', ball: '🎾', charger: '🔌', laundry: '🧺', blanket: '🧸', pup: '🐕', bread: '🫓', juice: '🧃', bag: '🛍️', teapot: '🫖', coal: '🔥', mochi: '🍡' };
@@ -132,8 +145,10 @@
     L(12, 'Tehran evening', 'Tuesday', 'street', 95, ['poop', 'thirst', 'bread', 'calm', 'kids', 'juice', 'phone'], [1250, 2250, 3500], [4.2, 6], { night: true, obj: { k: 'nomiss', label: 'Don’t miss a single request' }, story: [['nasim', 'angry', 'I’m coming too. And you’re buying me a juice.'], ['mohsen', 'neutral', 'It’s getting dark! I’ll call you every five minutes.']] }),
     L(13, 'Late night at CLAP', 'Wednesday', 'clap', 100, ['coals', 'chai', 'doze', 'snack', 'phone', 'insta'], [950, 1750, 2700], [3.9, 5.6], { night: true, patience: 0.92, obj: { k: 'combo', n: 5, label: 'Reach a ×5 combo' }, story: [['negin', 'sleepy', 'One more hookah… and a nap… on this cushion…'], ['pourya', 'happy', 'Nena! Today you give me your Instagram, yes?'], ['negin', 'neutral', 'Don’t look now… the two blonde witches are here again. Corner table.'], ['nena', 'surprised', 'No, Pourya. And Baba already called three times. It’s only 9!']] }),
     L(14, 'Simba’s birthday', 'Thursday', 'home', 110, HOME_ALL, [1650, 3000, 4700], [3.8, 5.3], { fur: 6, patience: 0.9, obj: { k: 'done', n: 20, label: 'Complete 20 requests' }, story: [['mohsen', 'happy', 'Happy birthday, my lion!'], ['nasim', 'neutral', 'I made the decorations. Don’t say anything.']] }),
+    L(15, 'Cousin Sara’s wedding', 'Friday', 'home', 120, HOME_ALL, [1900, 3400, 5200], [3.4, 4.8], { boss: true, fur: 6, patience: 0.9, events: 16, obj: { k: 'nomiss', label: 'Don’t miss a single request' }, story: [['fariba', 'surprised', 'Cousin Sara’s wedding is TONIGHT and the whole family is getting ready here!'], ['mohsen', 'neutral', 'Where is my tie? Where is my tea? Where is everybody?!'], ['nena', 'happy', 'Boss day, Simba. Let’s do this!']] }),
   ];
   function levelCfg(n) {
+    if (n > 900 && CUSTOM) return CUSTOM;
     if (n <= LEVELS.length) return LEVELS[n - 1];
     const k = n - LEVELS.length;
     const base = [LEVELS[13], LEVELS[11], LEVELS[12]][k % 3];
@@ -233,6 +248,10 @@
       zoomT: n >= 7 && cfg.place === 'home' ? 22 + rnd() * 10 : 999, rushHour: false, lastTick: 99, starsShown: 0, boosts: pendingBoosts || {}, tabKey: '',
     };
     if (G.boosts.time) G.time += 15;
+    G.evT = cfg.events || (cfg.mod && (cfg.mod.events || cfg.mod.blackout)) || (n >= 5 && n < 900 ? 30 + rnd() * 15 : n === 902 ? 25 : null);
+    if (cfg.mod && cfg.mod.hearts) { G.hearts = cfg.mod.hearts; G.maxHearts = cfg.mod.hearts; }
+    if (cfg.mod && cfg.mod.zoom) G.zoomT = 6;
+    G.frStart = {}; FRIENDS.forEach((f) => { G.frStart[f.id] = friendLv(f.id); });
     if (G.boosts.heart) { G.hearts++; G.maxHearts++; }
     pendingBoosts = {};
     // room layers
@@ -246,6 +265,7 @@
         e.style.left = pr.x + 'px'; e.style.top = pr.y + 'px'; e.style.width = pr.w + 'px'; e.style.height = pr.h + 'px'; e.style.zIndex = String(pr.z);
         d.appendChild(e);
       });
+      DECOR.filter((x) => x.room === id && save.decor[x.id]).forEach((x) => { const e = document.createElement('div'); e.className = 'decor'; e.innerHTML = `<svg viewBox="0 0 600 800">${x.svg}</svg>`; d.appendChild(e); });
       if (RA.LIGHT[id]) { const e = document.createElement('div'); e.className = 'light'; e.innerHTML = RA.LIGHT[id](cfg); d.appendChild(e); }
       (RA.FX[id] ? RA.FX[id](cfg) : []).forEach((f) => { const e = document.createElement('div'); e.className = 'fx ' + f.cls; e.innerHTML = f.html || ''; Object.assign(e.style, { left: f.x + 'px', top: f.y + 'px', width: f.w + 'px', height: f.h + 'px' }); d.appendChild(e); });
       const ev = ELEV[id];
@@ -266,20 +286,20 @@
     });
     // characters
     const H = HOMES[cfg.place];
-    G.nena = makeActor('nena', A.nena({ dressed: true, outfit: 'basique' }), 84, 147, 'nena', H.nena[0]);
+    G.nena = makeActor('nena', A.nena({ dressed: true, outfit: save.outfit }), 84, 147, 'nena', H.nena[0]);
     place(G.nena, H.nena[1], H.nena[2]);
     if (H.simba) {
-      G.simba = makeActor('simba', A.simba({}), 112, 89, 'simba happy', H.simba[0]);
+      G.simba = makeActor('simba', A.simba({ collar: save.collar }), 112, 89, 'simba happy', H.simba[0]);
       G.simba.el.dataset.target = 'simba';
       place(G.simba, H.simba[1], H.simba[2]);
     }
     ['baba', 'fariba', 'negin', 'pourya'].forEach((w) => { if ((W.who.has(w) || (w === 'pourya' && cfg.place === 'clap')) && H[w]) spawnNpc(w); });
     G.guests = [];
-    if (cfg.place === 'clap') { GUESTS.forEach(([id, x, y, mood]) => { const g = makeActor(id, A.person(id, { mood }), 72, 126, 'npc guest' + (id.startsWith('witch') ? ' witch' : ''), 'clap'); place(g, x, y); G.guests.push([id, g]); }); G.witchT = 14 + rnd() * 8; }
+    if (cfg.place === 'clap') { GUESTS.forEach(([id, x, y, mood]) => { const g = makeActor(id, A.person(id, { mood }), 72, 126, 'npc guest' + (id.startsWith('witch') ? ' witch' : ''), 'clap'); place(g, x, y); G.guests.push([id, g]); G.npcs[id] = g; g.el.dataset.target = id; }); G.witchT = 14 + rnd() * 8; }
     G.life = []; G.talk = new Set(); G.amb = []; G.ambT = 2;
-    G.guests.forEach(([id, g]) => lifeAdd(id, g, { lines: id.startsWith('witch') ? LINES.witch : LINES.guest, kind: id.startsWith('witch') ? 'witch' : '', still: true }));
     lifeAdd('nena', G.nena, { lines: LINES.nena, kind: 'think', still: true });
     if (G.simba) lifeAdd('simba', G.simba, {});
+    G.guests.forEach(([id, g]) => lifeAdd(id, g, { lines: id.startsWith('witch') ? LINES.witch : LINES.guest, kind: id.startsWith('witch') ? 'witch' : '', still: true }));
     Object.keys(G.npcs).forEach((w) => lifeAdd(w, G.npcs[w], {}));
     // overlays that follow Nena
     G.bar = document.createElement('div'); G.bar.className = 'workbar'; G.bar.innerHTML = '<i></i>'; G.bar.hidden = true;
@@ -289,7 +309,7 @@
     if (G.boosts.coffee) G.nena.el.classList.add('coffee');
     renderHand();
     $('screen-game').hidden = false;
-    $('g-level').textContent = `Day ${n} · ${cfg.title}`;
+    $('g-level').textContent = n > 900 ? cfg.title : `Day ${n} · ${cfg.title}`;
     $('g-rush').hidden = true;
     $('g-rooms').classList.toggle('single', W.tabs.length < 2);
     setView(G.nena.room);
@@ -417,6 +437,9 @@
     if (who === 'simba' && up('treats')) m *= 1.2;
     if (who !== 'simba' && up('decor')) m *= 1.15;
     if (G.W.tabs.length > 2) m *= 1.1;  // more rooms, more walking
+    const f = FR_OF[who]; if (f) m *= 1 + 0.04 * friendLv(f);
+    m *= 1 + 0.01 * cozy();
+    if (G.cfg.mod && G.cfg.mod.patienceMul) m *= G.cfg.mod.patienceMul;
     return m;
   }
   function spawn() {
@@ -425,8 +448,11 @@
     if (G.simbaAway || G.simbaTask || holding('pup')) types = types.filter((t) => REQ[t].who !== 'simba' && REQ[t].src !== 'simba');
     if (up('fountain')) types = types.filter((t) => (t !== 'water' && t !== 'thirst') || rnd() < 0.6);
     if (!types.length) return;
-    const t = pick(types.concat(types.filter((x) => REQ[x].who === 'simba')));
+    addReq(pick(types.concat(types.filter((x) => REQ[x].who === 'simba'))));
+  }
+  function addReq(t) {
     const R = REQ[t];
+    if (G.reqs.some((r) => r.who === R.who)) return;
     if (TRANSIENT[R.who] && !G.npcs[R.who]) { spawnNpc(R.who); snd('swoosh'); }
     if (R.who === 'simba' && G.simba) G.simba.el.classList.remove('lying', 'sniff');
     lifeHome(R.who);
@@ -437,9 +463,11 @@
     el.innerHTML = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" class="ring-bg"/><circle cx="20" cy="20" r="17" class="ring"/></svg><span>${R.icon}</span>`;
     layer(whoRoom(R.who)).appendChild(el);
     const r = { type: t, who: R.who, left: max, max, el };
+    if (R.vip) el.classList.add('vip');
     G.reqs.push(r);
     posReq(r);
-    if (t === 'phone') { snd('fanfare'); buzz([30, 60, 30]); toast('📞 Baba is calling…', '', 1200); }
+    if (R.special) { toast(R.hint, 'hint', 2400); snd('fanfare'); }
+    else if (t === 'phone') { snd('fanfare'); buzz([30, 60, 30]); toast('📞 Baba is calling…', '', 1200); }
     else snd(R.who === 'simba' ? 'bark' : 'pop');
   }
   function posReq(r) {
@@ -486,12 +514,15 @@
     G.comboT = 6;
     const mul = 1 + 0.15 * (G.combo - 1);
     const perfect = r.left / r.max > 0.75;
-    const pts = Math.round(R.pts * speed * mul * (bonusMul || 1) * (G.rushHour ? 1.5 : 1));
+    const pts = Math.round(R.pts * speed * mul * (bonusMul || 1) * (G.rushHour ? 1.5 : 1) * ((G.cfg.mod && G.cfg.mod.ptsMul) || 1));
     G.score += pts; G.done++;
     const tip = r.who !== 'simba' && r.who !== 'nena' ? 2 + Math.round(3 * r.left / r.max) + (r.type === 'kids' ? 3 : 0) : 0;
     G.coins += tip;
     G.stats.tips += tip; G.stats.maxCombo = Math.max(G.stats.maxCombo, G.combo);
     G.stats.type[r.type] = (G.stats.type[r.type] || 0) + 1;
+    track('req'); track('req_' + r.type); addFriend(r.who, perfect);
+    if (G.combo === 5) track('combo5');
+    if (G.combo === 8) track('combo8');
     if (r.type === 'walk') G.stats.walk++;
     if (r.type === 'tea') G.stats.tea++;
     const [x, y] = anchorOf(r.who);
@@ -563,6 +594,7 @@
     if (G.intro) { endIntro(); return; }
     const bone = e.target.closest('[data-bone]');
     if (bone) { catchBone(); return; }
+    if (e.target.closest('[data-photo]')) { takePhoto(); return; }
     const t = e.target.closest('[data-target]');
     if (!t) return;
     queueSteps(tapTarget(t.dataset.target));
@@ -701,7 +733,7 @@
     return null;
   }
   // per-request flavour: sounds, little scenes and family one-liners
-  const SPEAKER = { Baba: 'baba', Maman: 'fariba', Nasim: 'nasim', Negin: 'negin', Pourya: 'pourya', Nena: 'nena', 'The kids': 'kids', Simba: 'simba' };
+  const SPEAKER = { 'Aunt Mahin': 'aunt', Baba: 'baba', Maman: 'fariba', Nasim: 'nasim', Negin: 'negin', Pourya: 'pourya', Nena: 'nena', 'The kids': 'kids', Simba: 'simba' };
   const say = (t) => {
     const m = /^([^:“]+):\s*“?(.+?)”?(\s*[^\w\s]*)$/u.exec(t);
     const id = m && SPEAKER[m[1].trim()];
@@ -714,7 +746,7 @@
     water: { snd: 'water' },
     brush: { snd: 'brush' },
     play: { snd: 'happy', after: () => simbaHop() },
-    blanket: { snd: 'happy', after: () => floatText(G.simba.x, G.simba.y - 100, 'zzz…', 'hint', G.simba.room) },
+    blanket: { snd: 'happy', after: () => (G.photoHint = 'blankie') && floatText(G.simba.x, G.simba.y - 100, 'zzz…', 'hint', G.simba.room) },
     tea: { after: () => say(pick(['Baba: “Merci azizam! Goal!!”', 'Baba: “Ahh, chai. Now sit with your old father.”'])) },
     charger: { after: () => say('Baba: “Ahh, 3%! Now where are those girls…” 📞') },
     cuddle: { end: () => cuddleSimba(), after: () => say('Baba: “My little lion! On my belly, come!” 🦁') },
@@ -736,6 +768,10 @@
     chai: { snd: 'water', after: () => say('Negin: “Ahh, chai. Wake me up when it’s cold.”') },
     doze: { snd: 'click', after: () => say('Negin: “I wasn’t sleeping! I was… resting my eyes.”') },
     snack: { after: () => say('Mochi time! 🍡') },
+    aunt: { after: () => say('Aunt Mahin: “Such a good girl! When is YOUR wedding?” 😅') },
+    vip: { after: () => { G.coins += 15; floatText(112, 400, '+15 🪙 VIP tip!', 'coin', 'clap'); } },
+    curse: { snd: 'talk', after: () => toast('The witches giggle… and stop. For now. 🔮', '', 1800) },
+    chase: { snd: 'happy', after: () => { G.photoHint = 'thief'; say('Simba: “*gives back the sangak… mostly*”'); } },
     insta: { snd: 'talk', after: () => say(pick(['Nena: “Pourya… no.” 😅', 'Nena: “It’s private, Pourya.”', 'Nena: “Ask me again next week.” (He will.)', 'Negin: “She doesn’t have Instagram!” (She does.)', 'Nena: “Just bring the hookah, Pourya!”'])) },
   };
   function doWalk(r) {
@@ -956,6 +992,60 @@
   /* ------------------------------------------------------------------ */
   /* Main loop                                                           */
   /* ------------------------------------------------------------------ */
+  // surprise events: blackout, Aunt Mahin, VIPs, the witches, Simba the thief
+  function eventTick(dt) {
+    const c = G.cfg, mod = c.mod || {};
+    if (G.blackout) {
+      G.blackout.t -= dt;
+      const el = G.blackout.el;
+      if (el.parentNode !== G.layers[G.view]) layer(G.view).appendChild(el);
+      const [x, y] = G.nena.room === G.view ? [G.nena.x, G.nena.y - 70] : [-200, -200];
+      el.style.background = `radial-gradient(circle at ${x.toFixed(0)}px ${y.toFixed(0)}px, rgba(10,8,24,0) 0, rgba(10,8,24,0) 95px, rgba(10,8,24,.9) 175px)`;
+      if (G.blackout.t <= 0) { el.remove(); G.blackout = null; toast('💡 The power is back!', '', 1200); }
+    }
+    if (G.evT == null) return;
+    G.evT -= dt; if (G.evT > 0) return;
+    G.evT = (mod.events || mod.blackout || c.events || 26) + rnd() * 10;
+    const opts = [];
+    if (c.place === 'home') { opts.push('blackout'); if (G.st.samovar && G.n >= 7) opts.push('aunt'); }
+    if (c.place === 'street') opts.push('chase');
+    if (c.place === 'clap') opts.push('vip', 'curse');
+    if (mod.blackout) opts.length = 0, opts.push('blackout');
+    const e = pick(opts); if (!e) return;
+    if (e === 'blackout') {
+      if (G.blackout) return;
+      const el = document.createElement('div'); el.className = 'blackout';
+      G.blackout = { t: 8, el };
+      toast('⚡ Blackout in the tower! Baba: “Who touched the fuses?!”', 'bad', 2200); snd('fail');
+    } else if (e === 'chase') {
+      if (!G.simba || G.simbaAway || G.simbaTask || findReq('simba')) return;
+      walkActor(G.simba, 540, 548, null, 160); addReq('chase');
+    } else addReq(e);
+  }
+  // photo moments: when Simba does something cute, a camera appears next to him
+  function photoTick(dt) {
+    G.photoT = (G.photoT == null ? 6 : G.photoT) - dt;
+    if (G.photo) { G.photo.t -= dt; if (G.photo.t <= 0) { G.photo.el.remove(); G.photo = null; } return; }
+    if (G.photoT > 0 || !G.simba || G.simba.room !== G.view || G.simba.el.classList.contains('gone')) return;
+    const cl = G.simba.el.classList;
+    const cand = PHOTOS.filter((p) => !save.album[p.id] && ((p.cls && cl.contains(p.cls)) || (p.id === 'street' && G.simba.room === 'street') || (p.id === 'kids' && findReq('kids')) || (p.id === 'party' && G.n >= 14 && G.n <= 15) || (p.id === G.photoHint)));
+    if (!cand.length) return;
+    const ph = cand[0];
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'hit photo-btn'; b.dataset.photo = ph.id; b.innerHTML = '<span>📸</span>';
+    b.style.left = Math.min(540, G.simba.x + 40) + 'px'; b.style.top = (G.simba.y - G.simba.h - 40) + 'px';
+    layer(G.simba.room).appendChild(b);
+    G.photo = { el: b, t: 4, id: ph.id }; G.photoT = 9;
+    snd('pop');
+  }
+  function takePhoto() {
+    if (!G.photo) return;
+    const ph = PHOTOS.find((p) => p.id === G.photo.id);
+    G.photo.el.remove(); G.photo = null; G.photoHint = null;
+    save.album[ph.id] = 1; track('photo'); persist();
+    const f = document.createElement('div'); f.className = 'flash'; $('stage-wrap').appendChild(f); setTimeout(() => f.remove(), 500);
+    snd('coin'); toast(`📸 New photo for the album: ${ph.ico} ${ph.name}!`, 'combo', 1800);
+  }
   function runTweens(dt) {
     for (let i = tweens.length - 1; i >= 0; i--) {
       const tw = tweens[i];
@@ -990,11 +1080,17 @@
     if (G.intro) { runTweens(dt); talkTick(dt); return; }
     G.time -= dt;
     G.comboT -= dt;
+    G.elapsed = G.elapsed || 0;
     if (G.comboT <= 0 && G.combo) G.combo = 0;
     // spawn requests
     G.spawnT -= dt;
-    const maxReq = Math.min(5, 2 + Math.floor(G.n / 3));
-    if (G.spawnT <= 0) { if (G.reqs.length < maxReq) spawn(); const [a, b] = G.cfg.every; G.spawnT = (a + rnd() * (b - a)) * (G.rushHour ? 0.7 : 1); }
+    const maxReq = G.cfg.endless ? Math.min(6, 2 + Math.floor(G.elapsed / 30)) : Math.min(5, 2 + Math.floor(Math.min(G.n, 15) / 3));
+    if (G.spawnT <= 0) {
+      if (G.reqs.length < maxReq) spawn();
+      const [a, b] = G.cfg.every;
+      const k = (G.rushHour ? 0.7 : 1) * ((G.cfg.mod && G.cfg.mod.everyMul) || 1) * (G.cfg.endless ? Math.max(0.35, 1 - G.elapsed / 240) : 1);
+      G.spawnT = (a + rnd() * (b - a)) * k;
+    }
     if (G.cfg.fur) { G.furT -= dt; if (G.furT <= 0) { addFur(); G.furT = G.cfg.fur * (0.7 + rnd() * 0.6); } }
     // power-ups and events
     if (G.boostT > 0) { G.boostT -= dt; if (G.boostT <= 0) G.nena.el.classList.remove('boost'); }
@@ -1006,8 +1102,11 @@
     if (G.pkg) { G.pkg.t -= dt; G.pkg.el.querySelector('i').style.width = (G.pkg.t / 10 * 100) + '%'; if (G.pkg.t <= 0) { G.pkg.el.remove(); G.pkg = null; G.queue = G.queue.filter((q) => q.id !== 'pkg'); markQueue(); } }
     G.zoomT -= dt;
     if (G.witchT != null) { G.witchT -= dt; if (G.witchT <= 0) { G.witchT = 22 + rnd() * 14; floatText(526, 410, pick(['🔮', '✨', '🧹', '🕯️']), 'hint', 'clap'); toast(pick(['The two blonde “witches” are staring at Nena… again.', 'Negin: “Don’t look at them. They’re casting spells.”', 'One of the witches laughs. Creepy.', 'Nena: “Are they ALWAYS here?”', 'The witches order their tenth tea. Nobody has ever seen them leave.']), '', 1800); } }
-    if (G.zoomT <= 0) { zoomies(); if (G.zoomT <= 0) G.zoomT = 28 + rnd() * 12; }
-    if (!G.rushHour && G.time <= 15) { G.rushHour = true; $('g-rush').hidden = false; toast('⏰ Rush hour! Points ×1.5', 'combo', 1800); snd('fanfare'); }
+    if (G.zoomT <= 0) { zoomies(); if (G.zoomT <= 0) G.zoomT = (G.cfg.mod && G.cfg.mod.zoom) || 28 + rnd() * 12; }
+    eventTick(dt);
+    photoTick(dt);
+    if (G.cfg.endless) { G.elapsed += dt; G.time = 99999; }
+    if (!G.cfg.endless && !G.rushHour && G.time <= 15) { G.rushHour = true; $('g-rush').hidden = false; toast('⏰ Rush hour! Points ×1.5', 'combo', 1800); snd('fanfare'); }
     if (G.time <= 5 && Math.ceil(G.time) !== G.lastTick) { G.lastTick = Math.ceil(G.time); snd('click'); }
     if (up('robot') && G.furs.length) { G.robotT -= dt; if (G.robotT <= 0) { const f = G.furs.find((x) => !x.puddle) || G.furs[0]; f.el.remove(); G.furs = G.furs.filter((x) => x !== f); floatText(f.x, f.y - 20, '🤖', 'hint', 'salon'); G.robotT = 8; } }
     // patience
@@ -1124,9 +1223,9 @@
   }
   function hud() {
     const c = G.cfg;
-    const t = Math.ceil(G.time);
-    $('g-time').textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-    $('g-time').classList.toggle('low', G.time < 10);
+    const t = Math.ceil(G.cfg.endless ? G.elapsed : G.time);
+    $('g-time').textContent = `${G.cfg.endless ? '∞ ' : ''}${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+    $('g-time').classList.toggle('low', !G.cfg.endless && G.time < 10);
     $('g-score').textContent = G.score;
     $('g-fill').style.width = Math.min(100, (G.score / c.targets[2]) * 100) + '%';
     $('g-star1').classList.toggle('on', G.score >= c.targets[0]);
@@ -1174,9 +1273,24 @@
     const objOk = !lost && stars > 0 && (G.objDone || pr.ok);
     const medalNew = objOk && !save.medals[G.n];
     if (objOk) save.medals[G.n] = 1;
-    const earned = (lost ? Math.floor(G.coins / 2) : G.coins + Math.floor(final / 50) + stars * 10) + (medalNew ? 25 : 0);
+    let earned = (lost ? Math.floor(G.coins / 2) : G.coins + Math.floor(final / 50) + stars * 10) + (medalNew ? 25 : 0);
+    let extra = '';
+    if (c.endless) {
+      earned = G.coins + Math.floor(final / 40);
+      const rec = final > save.endless; if (rec) save.endless = final;
+      extra = `<li class="ok"><span>♾️ Lasted ${Math.floor(G.elapsed / 60)}:${String(Math.floor(G.elapsed % 60)).padStart(2, '0')}</span><b>${rec ? 'NEW RECORD!' : 'Best ' + save.endless}</b></li>`;
+    } else if (c.challenge) {
+      const first = !(save.chal.date === today() && save.chal.done);
+      if (stars > 0 && first) { earned += 60 + stars * 15; save.chal = { date: today(), done: true }; track('challenge'); extra = `<li class="ok"><span>🎯 Daily challenge done!</span><b>+${60 + stars * 15} 🪙</b></li>`; }
+    }
     save.coins += earned;
-    if (stars > 0) {
+    if (!lost) { track('day'); if (stars === 3) track('perfect'); if (G.failed === 0) track('nohit'); }
+    const ups = FRIENDS.filter((f) => friendLv(f.id) > (G.frStart[f.id] || 0));
+    ups.forEach((f) => { extra += `<li class="ok"><span>❤️ ${f.name}: ${FR_TITLES[friendLv(f.id)]}!</span><b>new scene</b></li>`; });
+    G.pendingScene = null;
+    const ch = !c.endless && !c.challenge && chapterOf(G.n);
+    if (stars > 0 && ch && ch.to === G.n && !save.chapters[ch.title]) { save.chapters[ch.title] = 1; G.pendingScene = ch; extra += `<li class="ok"><span>📖 ${ch.title} complete!</span><b>▶</b></li>`; }
+    if (stars > 0 && !c.endless && !c.challenge) {
       save.stars[G.n] = Math.max(save.stars[G.n] || 0, stars);
       save.best[G.n] = Math.max(save.best[G.n] || 0, final);
       if (G.n === save.level) save.level = G.n + 1;
@@ -1184,12 +1298,14 @@
     persist();
     $('r-title').textContent = lost ? 'Too many upset faces…' : stars ? ['', 'Day done!', 'Great day!', 'Perfect day!'][stars] : 'Not quite…';
     $('r-stars').innerHTML = [0, 1, 2].map((i) => `<span class="${i < stars ? 'on' : ''}">★</span>`).join('');
-    $('r-lines').innerHTML = `<li><span>Requests done</span><b>${G.done}</b></li><li><span>Missed</span><b>${G.failed}</b></li>${mess ? `<li><span>Mess left (${mess})</span><b>−${penalty}</b></li>` : ''}${c.obj ? `<li class="${objOk ? 'ok' : 'ko'}"><span>🏅 ${c.obj.label}</span><b>${objOk ? (medalNew ? '+25 🪙' : '✓') : '✗'}</b></li>` : ''}<li class="total"><span>Score</span><b>${final}</b></li><li><span>Coins earned</span><b>+${earned} 🪙</b></li>`;
+    $('r-lines').innerHTML = `<li><span>Requests done</span><b>${G.done}</b></li><li><span>Missed</span><b>${G.failed}</b></li>${mess ? `<li><span>Mess left (${mess})</span><b>−${penalty}</b></li>` : ''}${c.obj ? `<li class="${objOk ? 'ok' : 'ko'}"><span>🏅 ${c.obj.label}</span><b>${objOk ? (medalNew ? '+25 🪙' : '✓') : '✗'}</b></li>` : ''}<li class="total"><span>Score</span><b>${final}</b></li><li><span>Coins earned</span><b>+${earned} 🪙</b></li>${extra}`;
     $('r-sub').textContent = lost ? 'The family lost patience. Try again, and watch the rings!' : stars ? `Goal: ${c.targets[0]} · ${c.targets[1]} · ${c.targets[2]}` : `You needed ${c.targets[0]} points for 1 star.`;
-    $('r-next').hidden = !stars;
+    $('r-next').hidden = !stars || !!c.endless || !!c.challenge;
+    $('r-title').textContent = c.endless ? 'Endless day over!' : $('r-title').textContent;
     $('screen-result').hidden = false;
     snd(stars >= 2 ? 'fanfare' : stars ? 'success' : 'fail');
     if (stars === 3) confetti();
+    checkAch();
   }
 
   function confetti() {
@@ -1200,10 +1316,265 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* Meta game: daily reward, challenge, missions, trophies, family,     */
+  /* decor, wardrobe, photo album, endless, chapters, Color Sort         */
+  /* ------------------------------------------------------------------ */
+  const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const dayNum = (s) => Math.floor(new Date((s || today()) + 'T12:00:00').getTime() / 86400000);
+  const weekNum = () => Math.floor((dayNum() + 3) / 7);
+  function seeded(seed) { let s = (seed >>> 0) || 1; return () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296; }
+
+  const CHAPTERS = [
+    { from: 1, to: 5, title: 'Chapter 1 · A week with Simba', end: [['nasim', 'neutral', '(whispering on the phone) …no, they don’t know. Not yet.'], ['nena', 'surprised', 'Nasim? Who was that?'], ['nasim', 'angry', 'NOBODY. Mind your own business!'], ['nena', 'neutral', 'Hmm… my little sister has a secret.']] },
+    { from: 6, to: 9, title: 'Chapter 2 · Out in Tehran', end: [['negin', 'surprised', 'Nena… the witches left a note on our table.'], ['nena', 'neutral', '“The orange lion will bring you luck.” …Simba?!'], ['simba', 'happy', '*proud woof*'], ['negin', 'sleepy', 'Creepy. Let’s go home. I need a nap.']] },
+    { from: 10, to: 13, title: 'Chapter 3 · Secrets', end: [['pourya', 'happy', 'Nena! I made a hookah head shaped like Simba. NOW can I have your Instagram?'], ['nena', 'happy', '…Okay. Fine. It’s @nena.and.simba.'], ['pourya', 'surprised', 'REALLY?! Best. Day. Ever.'], ['negin', 'sleepy', 'Finally. Can we go home now?']] },
+    { from: 14, to: 15, title: 'Chapter 4 · The big day', end: [['nasim', 'happy', 'Okay… my secret: I adopted a kitten. She arrives tomorrow.'], ['mohsen', 'surprised', 'A CAT?! In MY house?!'], ['simba', 'sad', '…woof?'], ['nena', 'happy', 'Oh no. To be continued…']] },
+  ];
+  const chapterOf = (n) => CHAPTERS.find((c) => n >= c.from && n <= c.to);
+
+  const FRIENDS = [
+    { id: 'simba', name: 'Simba', pic: 'simba' }, { id: 'baba', name: 'Baba', pic: 'mohsen' }, { id: 'fariba', name: 'Maman', pic: 'fariba' },
+    { id: 'nasim', name: 'Nasim', pic: 'nasim' }, { id: 'negin', name: 'Negin', pic: 'negin' }, { id: 'pourya', name: 'Pourya', pic: 'pourya' },
+  ];
+  const FR_OF = { simba: 'simba', kids: 'simba', baba: 'baba', fariba: 'fariba', car: 'fariba', nasim: 'nasim', negin: 'negin', hookah: 'negin', table: 'negin', pourya: 'pourya' };
+  const FR_LV = [0, 8, 22, 42, 70];
+  const friendLv = (id) => FR_LV.filter((t) => (save.friend[id] || 0) >= t).length - 1;
+  const FR_TITLES = ['Stranger', 'Friend', 'Good friend', 'Close friend', 'Best friend'];
+  const SCENES = {
+    simba: [[['simba', 'happy', '*brings Nena his favourite sock*'], ['nena', 'happy', 'For me? Thank you, Simba!']], [['simba', 'happy', '*sleeps on Nena’s feet*'], ['nena', 'happy', 'My little lion heater.']], [['nena', 'neutral', 'Bad day…'], ['simba', 'happy', '*puts his big head on her lap*'], ['nena', 'happy', '…okay, better day.']], [['nena', 'happy', 'You know you’re my best friend, right?'], ['simba', 'happy', 'WOOF! (Obviously.)']]],
+    baba: [[['mohsen', 'happy', 'Nena jan, your tea is the best in Tehran.'], ['nena', 'happy', 'It’s the same samovar, Baba!']], [['mohsen', 'neutral', 'When you were small, you fell asleep on my belly too. Like Simba.']], [['mohsen', 'happy', 'I only call so much because I love you girls.'], ['nena', 'happy', 'We know, Baba. Maybe call a little less?']], [['mohsen', 'happy', 'Here. The keys of the white 4×4. It’s yours now.'], ['nena', 'surprised', 'BABA?!']]],
+    fariba: [[['fariba', 'happy', 'Taste this, azizam. Too much salt?'], ['nena', 'happy', 'Perfect, Maman!']], [['fariba', 'happy', 'Let me teach you my tahdig secret. Don’t tell Nasim.']], [['fariba', 'neutral', 'You do so much for this family, Nena. I see it.']], [['fariba', 'happy', 'This is my mother’s recipe book. Now it’s yours.'], ['nena', 'happy', 'Maman… thank you.']]],
+    nasim: [[['nasim', 'angry', 'What. …Fine. Thanks for the juice.']], [['nasim', 'neutral', 'You can borrow my hoodie. ONCE.']], [['nasim', 'happy', 'Okay, you’re not the worst sister.'], ['nena', 'happy', 'Wow. High praise.']], [['nasim', 'happy', 'You’ll be the first to meet my kitten. Promise.'], ['nena', 'surprised', 'Your WHAT?']]],
+    negin: [[['negin', 'sleepy', 'Thanks for waking me up. I guess.']], [['negin', 'happy', 'CLAP is more fun with you, Nena.']], [['negin', 'happy', 'I’ll walk Simba tomorrow. For real this time.'], ['nena', 'neutral', 'I’ll believe it when I see it.']], [['negin', 'happy', 'You’re my favourite person. Don’t tell Nasim.'], ['nena', 'happy', 'Your secret is safe. Go back to sleep.']]],
+    pourya: [[['pourya', 'happy', 'Your hookah is always the best one, Nena. I make it special.']], [['pourya', 'neutral', 'Maybe… your phone number then? No? Okay.']], [['pourya', 'happy', 'I named a new flavour after you: “Nena Mint”.']], [['pourya', 'happy', 'Free hookah for you and Negin. Forever.'], ['negin', 'happy', 'I LOVE you, Pourya!']]],
+  };
+
+  const PHOTOS = [
+    { id: 'nap', name: 'Nap time', cls: 'lying', ico: '💤' }, { id: 'spin', name: 'Tail chaser', cls: 'spin', ico: '🌀' },
+    { id: 'sniff', name: 'Detective Simba', cls: 'sniff', ico: '🔍' }, { id: 'bark', name: 'Big bark', cls: 'barking', ico: '📣' },
+    { id: 'zoom', name: 'Zoomies!', cls: 'zoom', ico: '💨' }, { id: 'cuddle', name: 'Baba’s lion', cls: 'cuddle', ico: '🦁' },
+    { id: 'bath', name: 'Bubble bath', cls: 'bath', ico: '🫧' }, { id: 'street', name: 'Tehran walk', ico: '🌳' },
+    { id: 'kids', name: 'Fan club', ico: '🧒' }, { id: 'thief', name: 'Sangak thief', ico: '🫓' },
+    { id: 'blankie', name: 'Blankie love', ico: '🧸' }, { id: 'party', name: 'Birthday boy', ico: '🎂' },
+  ];
+
+  const ACH = [
+    { id: 'first', icon: '🌅', name: 'First morning', desc: 'Finish your first day', test: (t) => (t.day || 0) >= 1, r: 20 },
+    { id: 'star3', icon: '⭐', name: 'Perfect day', desc: 'Get 3 stars on a day', test: (t) => (t.perfect || 0) >= 1, r: 30 },
+    { id: 'combo8', icon: '⚡', name: 'Chai master', desc: 'Reach a ×8 combo', test: (t) => (t.combo8 || 0) >= 1, r: 50 },
+    { id: 'walk25', icon: '🦮', name: 'Dog walker', desc: 'Walk Simba 25 times', test: (t) => (t.req_walk || 0) >= 25, r: 50 },
+    { id: 'req200', icon: '💪', name: 'Super sister', desc: 'Complete 200 requests', test: (t) => (t.req || 0) >= 200, r: 80 },
+    { id: 'insta10', icon: '📵', name: 'Still no Instagram', desc: 'Turn Pourya down 10 times', test: (t) => (t.req_insta || 0) >= 10, r: 60 },
+    { id: 'nohit', icon: '🛡️', name: 'Untouchable', desc: 'Finish a day without losing a heart', test: (t) => (t.nohit || 0) >= 1, r: 50 },
+    { id: 'ch2', icon: '📖', name: 'Out in Tehran', desc: 'Finish chapter 2', test: () => save.level > 9, r: 60 },
+    { id: 'boss', icon: '💍', name: 'Wedding planner', desc: 'Beat Cousin Sara’s wedding', test: () => (save.stars[15] || 0) > 0, r: 150 },
+    { id: 'decor3', icon: '🛋️', name: 'Interior designer', desc: 'Buy 3 decorations', test: () => Object.keys(save.decor).length >= 3, r: 60 },
+    { id: 'album', icon: '📸', name: 'Simba paparazzi', desc: 'Fill the photo album', test: () => Object.keys(save.album).length >= PHOTOS.length, r: 150 },
+    { id: 'bff', icon: '❤️', name: 'Best friends', desc: 'Max friendship with someone', test: () => FRIENDS.some((f) => friendLv(f.id) >= 4), r: 100 },
+    { id: 'endless', icon: '♾️', name: 'Never-ending day', desc: 'Score 3000 in Endless', test: () => save.endless >= 3000, r: 100 },
+    { id: 'streak7', icon: '🎁', name: 'Loyal', desc: 'Claim 7 daily rewards in a row', test: () => save.daily.streak >= 7, r: 100 },
+    { id: 'sort3', icon: '🧪', name: 'Colour genius', desc: 'Solve all 3 Color Sorts in a day', test: (t) => (t.sort3 || 0) >= 1, r: 60 },
+    { id: 'cuddle10', icon: '🦁', name: 'Baba’s lion', desc: 'Put Simba on Baba’s belly 10 times', test: (t) => (t.req_cuddle || 0) >= 10, r: 60 },
+  ];
+  const MISSIONS = [
+    { k: 'req_walk', n: 12, label: 'Walk Simba 12 times', r: 80 }, { k: 'req_tea', n: 12, label: 'Serve Baba 12 teas', r: 80 },
+    { k: 'req_insta', n: 5, label: 'Turn Pourya down 5 times', r: 90 }, { k: 'perfect', n: 3, label: 'Get 3 stars on 3 days', r: 120 },
+    { k: 'sort', n: 6, label: 'Solve 6 Color Sorts', r: 100 }, { k: 'req_phone', n: 8, label: 'Answer Baba 8 times', r: 90 },
+    { k: 'req', n: 80, label: 'Complete 80 requests', r: 150 }, { k: 'combo5', n: 5, label: 'Reach a ×5 combo 5 times', r: 120 },
+    { k: 'photo', n: 2, label: 'Take 2 Simba photos', r: 100 }, { k: 'req_bread', n: 5, label: 'Buy 5 sangak breads', r: 80 },
+    { k: 'challenge', n: 2, label: 'Finish 2 daily challenges', r: 150 }, { k: 'req_cuddle', n: 4, label: 'Put Simba on Baba’s belly 4 times', r: 90 },
+  ];
+  const DAILY = [20, 30, 40, 50, 60, 80, 150];
+  const CHAL = [
+    { id: 'zoomies', name: 'Zoomies day', desc: 'Simba gets the zoomies every 10 seconds!', base: 7, mod: { zoom: 10 } },
+    { id: 'calls', name: 'Baba calls all day', desc: 'Baba phones Nena again and again.', base: 8, mod: { addTypes: ['phone'] } },
+    { id: 'rush', name: 'Rush day', desc: 'Requests come twice as fast, but everyone is patient.', base: 5, mod: { everyMul: 0.55, patienceMul: 1.25 } },
+    { id: 'blackout', name: 'Power cuts', desc: 'The power keeps going out in the tower.', base: 8, mod: { blackout: 15 } },
+    { id: 'vipnight', name: 'VIP night at CLAP', desc: 'VIPs everywhere, and the witches are restless.', base: 13, mod: { events: 9 } },
+    { id: 'glass', name: 'Glass heart', desc: 'Only 2 hearts, but every point counts double.', base: 10, mod: { hearts: 2, ptsMul: 2 } },
+    { id: 'busy', name: 'Busy Tehran', desc: 'The street is packed and Simba is a thief.', base: 12, mod: { everyMul: 0.75, events: 11 } },
+  ];
+  const todayChal = () => CHAL[dayNum() % CHAL.length];
+
+  // decorations: drawn into the rooms, each one makes the family a little more patient
+  const DECOR = [
+    { id: 'chandelier', room: 'salon', name: 'Crystal chandelier', icon: '💎', cost: 180, svg: '<path d="M300 0 v34" stroke="#c9a24a" stroke-width="3"/><ellipse cx="300" cy="40" rx="46" ry="9" fill="#e0c27a"/>' + [-36, -18, 0, 18, 36].map((d, i) => `<path d="M${300 + d} 44 v${18 + (i % 2) * 10}" stroke="#d9eef7" stroke-width="2"/><path d="M${300 + d} ${62 + (i % 2) * 10} l-5 9 l5 9 l5 -9z" fill="#e8f6ff" stroke="#9fc4da"/>`).join('') + '<circle cx="300" cy="60" r="70" fill="url(#rglow)" opacity=".7"/>' },
+    { id: 'goldbed', room: 'salon', name: 'Golden Simba bed', icon: '👑', cost: 150, svg: '<ellipse cx="330" cy="606" rx="80" ry="25" fill="#c9a24a"/><ellipse cx="330" cy="600" rx="64" ry="17" fill="#2f3f8f"/><path d="M302 572 l8 -14 l8 10 l12 -16 l12 16 l8 -10 l8 14z" fill="#f2c230" stroke="#c9952a"/>' },
+    { id: 'monstera', room: 'salon', name: 'Giant monstera', icon: '🌿', cost: 90, svg: '<path d="M30 640 h50 l-6 46 h-38z" fill="#e9e1d4"/>' + [[55, 560, -30], [40, 590, -60], [70, 585, 20], [60, 535, 5], [85, 610, 40]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="30" ry="16" fill="#3f7a3a" transform="rotate(${r} ${x} ${y})"/><path d="M${x - 20} ${y} h40" stroke="#2c5a2a" stroke-width="2" transform="rotate(${r} ${x} ${y})"/>`).join('') },
+    { id: 'silkrug', room: 'salon', name: 'Silk Persian rug', icon: '🧶', cost: 160, svg: '<ellipse cx="320" cy="625" rx="200" ry="66" fill="#7a1c2c"/><ellipse cx="320" cy="625" rx="184" ry="56" fill="none" stroke="#e0c27a" stroke-width="5"/><ellipse cx="320" cy="625" rx="150" ry="42" fill="none" stroke="#1f2a5a" stroke-width="8"/><ellipse cx="320" cy="625" rx="60" ry="20" fill="#e0c27a"/><ellipse cx="320" cy="625" rx="34" ry="11" fill="#1f2a5a"/>' + [0, 1, 2, 3, 4, 5, 6, 7].map((i) => `<circle cx="${320 + Math.cos(i * 0.785) * 110}" cy="${625 + Math.sin(i * 0.785) * 32}" r="6" fill="#e0c27a"/>`).join('') },
+    { id: 'miniature', room: 'salon', name: 'Persian miniature painting', icon: '🖼️', cost: 120, svg: '<rect x="520" y="70" width="70" height="90" fill="#c9a24a"/><rect x="526" y="76" width="58" height="78" fill="#f3e2b8"/><circle cx="555" cy="100" r="12" fill="#2f6b3e"/><path d="M536 146 q19 -30 38 0z" fill="#8c1f30"/><path d="M546 120 q9 -10 18 0" stroke="#1f2a5a" stroke-width="3" fill="none"/>' },
+    { id: 'tulips', room: 'kitchen', name: 'Tulip vase', icon: '🌷', cost: 70, svg: '<path d="M412 538 h20 l-3 -26 h-14z" fill="#d9eef7" opacity=".9"/>' + [[408, 480, '#e2433a'], [422, 470, '#ef6fa3'], [436, 482, '#f2c230']].map(([x, y, c]) => `<path d="M422 512 Q${x} ${y + 20} ${x} ${y + 8}" stroke="#3f7a3a" stroke-width="2.5" fill="none"/><path d="M${x - 6} ${y + 8} q6 -16 12 0 q-6 6 -12 0z" fill="${c}"/>`).join('') },
+    { id: 'espresso', room: 'kitchen', name: 'Espresso machine', icon: '☕', cost: 110, svg: '<rect x="414" y="236" width="40" height="46" rx="5" fill="#b8bec4"/><rect x="418" y="242" width="32" height="14" rx="3" fill="#2a2a2e"/><rect x="428" y="262" width="12" height="8" fill="#555"/><rect x="426" y="272" width="16" height="10" rx="2" fill="#fff"/>' },
+    { id: 'aquarium', room: 'tv', name: 'Aquarium', icon: '🐠', cost: 140, svg: '<rect x="488" y="248" width="94" height="52" rx="4" fill="#7ec8e3" opacity=".85" stroke="#9aa2a8" stroke-width="3"/><path d="M500 300 q10 -14 20 0 M540 300 q8 -20 16 0" stroke="#3f7a3a" stroke-width="3" fill="none"/><path d="M510 268 q8 -6 14 0 q-6 6 -14 0z M524 268 l6 -4 v8z" fill="#f08a24"/><path d="M550 282 q8 -6 14 0 q-6 6 -14 0z M564 282 l6 -4 v8z" fill="#f2c230"/><circle cx="570" cy="260" r="3" fill="#fff" opacity=".7"/>' },
+    { id: 'ambilight', room: 'tv', name: 'TV ambilight', icon: '🌈', cost: 100, svg: '<ellipse cx="445" cy="171" rx="160" ry="110" fill="#7a5cff" opacity=".18"/><ellipse cx="445" cy="171" rx="140" ry="92" fill="#3fd0ff" opacity=".16"/>' },
+    { id: 'neon', room: 'bedroom', name: 'Neon sign “Nena ♥ Simba”', icon: '💡', cost: 130, svg: '<text x="155" y="372" text-anchor="middle" font-size="26" font-family="Baloo 2, sans-serif" font-weight="800" fill="#ffd1e6" stroke="#ff5fa2" stroke-width="2">Nena ♥ Simba</text><ellipse cx="155" cy="362" rx="120" ry="30" fill="url(#rneon)"/>' },
+    { id: 'canopy', room: 'bedroom', name: 'Bed canopy', icon: '🎀', cost: 120, svg: '<path d="M30 330 q125 -60 250 0 l-10 260 q-115 30 -230 0z" fill="#fff" opacity=".28"/><path d="M30 330 q125 -60 250 0" stroke="#f3c6d5" stroke-width="6" fill="none"/>' },
+    { id: 'vanity', room: 'bedroom', name: 'Hollywood mirror lights', icon: '✨', cost: 90, svg: [...Array(10)].map((_, i) => `<circle cx="${505 + Math.cos(i * 0.628) * 64}" cy="${190 + Math.sin(i * 0.628) * 64}" r="6" fill="#fff6c4"/><circle cx="${505 + Math.cos(i * 0.628) * 64}" cy="${190 + Math.sin(i * 0.628) * 64}" r="14" fill="url(#rglow)"/>`).join('') },
+    { id: 'gallery', room: 'hall', name: 'Family photo gallery', icon: '📷', cost: 80, svg: [[146, 330, '#f3c6d5'], [284, 340, '#bfe0f0'], [418, 330, '#f6e1b0']].map(([x, y, c]) => `<rect x="${x}" y="${y}" width="26" height="34" fill="#6b4632"/><rect x="${x + 3}" y="${y + 3}" width="20" height="28" fill="${c}"/><circle cx="${x + 13}" cy="${y + 14}" r="5" fill="#c9496f" opacity=".6"/>`).join('') },
+  ];
+  const cozy = () => Object.keys(save.decor).length;
+  const OUTFIT_SHOP = [
+    { id: 'basique', name: 'Everyday stripes', cost: 0 }, { id: 'sweat', name: 'Lilac sweater', cost: 60 }, { id: 'denim', name: 'Denim day', cost: 80 },
+    { id: 'rose', name: 'Rose top', cost: 90 }, { id: 'cire', name: 'Yellow raincoat', cost: 100 }, { id: 'robe', name: 'Sunny dress', cost: 120 },
+    { id: 'persian', name: 'Persian green', cost: 140 }, { id: 'night', name: 'CLAP night out', cost: 160 },
+  ];
+  const COLLAR_SHOP = [
+    { id: null, name: 'No collar', cost: 0 }, { id: 'rouge', name: 'Red collar', cost: 40 }, { id: 'bandana', name: 'Pink bandana', cost: 60 },
+    { id: 'noeud', name: 'Blue bow', cost: 60 }, { id: 'green', name: 'Green bandana', cost: 70 }, { id: 'pinkbow', name: 'Pink bow', cost: 70 }, { id: 'gold', name: 'Golden collar', cost: 150 },
+  ];
+
+  // progress tracking (missions, trophies)
+  function track(k, n) {
+    save.tot[k] = (save.tot[k] || 0) + (n || 1);
+    if (save.week.id === weekNum() && weekMissions().some((m) => m.k === k)) save.week.prog[k] = (save.week.prog[k] || 0) + (n || 1);
+    checkAch();
+  }
+  function weekMissions() {
+    if (save.week.id !== weekNum()) save.week = { id: weekNum(), prog: {}, claimed: [] };
+    const r = seeded(weekNum() * 31 + 7), pool = MISSIONS.slice(), out = [];
+    while (out.length < 3) out.push(pool.splice(Math.floor(r() * pool.length), 1)[0]);
+    return out;
+  }
+  let achQueue = [];
+  function checkAch() {
+    ACH.forEach((a) => {
+      if (save.ach[a.id] || !a.test(save.tot)) return;
+      save.ach[a.id] = 1; save.coins += a.r; achQueue.push(a);
+    });
+    persist();
+    if (achQueue.length) { const a = achQueue.shift(); toast(`🏆 Trophy: ${a.icon} ${a.name} · +${a.r} 🪙`, 'combo', 2200); snd('fanfare'); if (achQueue.length) setTimeout(checkAch, 2300); }
+  }
+  function addFriend(who, perfect) {
+    const id = FR_OF[who]; if (!id) return;
+    save.friend[id] = (save.friend[id] || 0) + (perfect ? 2 : 1);
+  }
+  const dailyReady = () => save.daily.last !== today();
+  const sortLeft = () => (save.sortd.date === today() ? 3 - save.sortd.done.filter(Boolean).length : 3);
+  const chalReady = () => save.chal.date !== today() || !save.chal.done;
+  const missionsReady = () => weekMissions().some((m, i) => !save.week.claimed[i] && (save.week.prog[m.k] || 0) >= m.n);
+  const scenesNew = () => FRIENDS.some((f) => { for (let l = 1; l <= friendLv(f.id); l++) if (!save.scenes[f.id + l]) return true; return false; });
+
+  /* ---- hub on the map ---- */
+  function renderHub() {
+    const items = [
+      ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
+      ['missions', '📋', 'Missions', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
+      ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
+      ['endless', '♾️', 'Endless', ''],
+    ];
+    $('m-hub').innerHTML = items.map(([id, ico, name, b]) => `<button type="button" class="hub-btn" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^\d+\/\d+$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
+  }
+  let dailyShown = false;
+
+  /* ---- generic sheet ---- */
+  let sheetKind = '';
+  function openSheet(kind) {
+    sheetKind = kind;
+    const T = { daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Weekly missions', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
+    $('sh2-title').textContent = T[kind] || '';
+    $('sh2-coins').textContent = save.coins;
+    $('sh2-body').innerHTML = SHEETS[kind]();
+    show('screen-sheet');
+  }
+  const bar = (v, n) => `<span class="pbar"><i style="width:${Math.min(100, (v / n) * 100)}%"></i></span>`;
+  const SHEETS = {
+    daily: () => {
+      const streak = save.daily.last === today() ? save.daily.streak : (save.daily.last === dayKey(-1) ? save.daily.streak + 1 : 1);
+      const idx = (streak - 1) % 7;
+      const shown = dailyReady() ? streak - 1 : streak;
+      return `<p class="sh-lede">Come back every day! Current streak: <b>${shown} day${shown === 1 ? '' : 's'}</b></p>
+        <div class="daily">${DAILY.map((c, i) => `<div class="day${i < idx || (!dailyReady() && i === idx) ? ' got' : ''}${i === idx && dailyReady() ? ' now' : ''}"><small>Day ${i + 1}</small><b>${i === 6 ? '🎁' : '🪙'}</b><span>+${c}</span></div>`).join('')}</div>
+        ${dailyReady() ? '<button type="button" class="btn btn-primary btn-big" data-act="claim-daily">Claim +' + DAILY[idx] + ' 🪙</button>' : '<p class="sh-done">✓ Claimed today. See you tomorrow!</p>'}`;
+    },
+    sort: () => {
+      if (save.sortd.date !== today()) save.sortd = { date: today(), done: [] };
+      return `<p class="sh-lede">Three new glasses puzzles every day. Pour the sherbet until each glass holds a single colour.</p>
+        ${window.ColorSort.LEVELS.map((L, i) => { const done = save.sortd.done[i], locked = i > 0 && !save.sortd.done[i - 1]; return `<div class="row-card${done ? ' done' : ''}"><span class="rc-i">${['🟢', '🟡', '🔴'][i]}</span><span class="rc-t"><b>${L.name}</b><small>${L.colors} colours · +${L.reward} 🪙</small></span>${done ? '<b class="ok">✓</b>' : `<button type="button" class="btn ${locked ? '' : 'btn-primary'}" data-act="sort" data-i="${i}" ${locked ? 'disabled' : ''}>${locked ? '🔒' : 'Play'}</button>`}</div>`; }).join('')}`;
+    },
+    challenge: () => {
+      const c = todayChal(), done = save.chal.date === today() && save.chal.done;
+      return `<div class="chal"><span class="chal-i">🎯</span><h3>${c.name}</h3><p>${c.desc}</p><small>Get at least 1 star · reward 60 🪙 + 15 per star</small></div>
+        <button type="button" class="btn btn-primary btn-big" data-act="challenge">${done ? 'Play again (no reward)' : 'Start the challenge'}</button>${done ? '<p class="sh-done">✓ Done today!</p>' : ''}`;
+    },
+    missions: () => `<p class="sh-lede">New missions every week.</p>` + weekMissions().map((m, i) => { const v = save.week.prog[m.k] || 0, ok = v >= m.n, got = save.week.claimed[i]; return `<div class="row-card${got ? ' done' : ''}"><span class="rc-i">📋</span><span class="rc-t"><b>${m.label}</b>${bar(v, m.n)}<small>${Math.min(v, m.n)}/${m.n} · +${m.r} 🪙</small></span>${got ? '<b class="ok">✓</b>' : `<button type="button" class="btn ${ok ? 'btn-primary' : ''}" data-act="claim-mission" data-i="${i}" ${ok ? '' : 'disabled'}>Claim</button>`}</div>`; }).join(''),
+    family: () => FRIENDS.map((f) => {
+      const lv = friendLv(f.id), pts = save.friend[f.id] || 0, next = FR_LV[lv + 1];
+      const scenes = [1, 2, 3, 4].map((l) => `<button type="button" class="scene-b${l <= lv ? '' : ' locked'}${l <= lv && !save.scenes[f.id + l] ? ' new' : ''}" data-act="scene" data-f="${f.id}" data-l="${l}" ${l <= lv ? '' : 'disabled'}>${l <= lv ? '▶' : '🔒'} ${l}</button>`).join('');
+      return `<div class="fam"><span class="fam-p">${A.portrait(f.pic, 'happy')}</span><span class="fam-t"><b>${f.name} <small>${FR_TITLES[lv]}</small></b><span class="hearts-s">${'❤️'.repeat(lv)}${'🤍'.repeat(4 - lv)}</span>${next ? bar(pts - FR_LV[lv], next - FR_LV[lv]) : '<small>Max friendship!</small>'}<span class="scenes">${scenes}</span></span></div>`;
+    }).join('') + '<p class="sh-lede small">Help someone to grow your friendship. Each level unlocks a little scene and makes them a bit more patient.</p>',
+    decor: () => ['salon', 'kitchen', 'tv', 'hall', 'bedroom'].map((room) => `<h4 class="sh-h">${ROOMS[room].icon} ${ROOMS[room].name}</h4>` + DECOR.filter((d) => d.room === room).map((d) => { const own = save.decor[d.id]; return `<div class="row-card${own ? ' done' : ''}"><span class="rc-i">${d.icon}</span><span class="rc-t"><b>${d.name}</b><small>+1% patience for everyone</small></span>${own ? '<b class="ok">✓</b>' : `<button type="button" class="btn btn-primary" data-act="buy-decor" data-id="${d.id}" ${save.coins < d.cost ? 'disabled' : ''}>${d.cost} 🪙</button>`}</div>`; }).join('')).join(''),
+    wardrobe: () => `<h4 class="sh-h">Nena’s outfits</h4><div class="wardrobe">${OUTFIT_SHOP.map((o) => { const own = save.owned[o.id], on = save.outfit === o.id; return `<button type="button" class="ward${on ? ' on' : ''}" data-act="outfit" data-id="${o.id}" ${!own && save.coins < o.cost ? 'disabled' : ''}><span class="ward-p">${A.nena({ dressed: true, outfit: o.id, eyes: 'open' })}</span><small>${o.name}</small><b>${on ? 'Wearing' : own ? 'Wear' : o.cost + ' 🪙'}</b></button>`; }).join('')}</div>
+      <h4 class="sh-h">Simba’s collars</h4><div class="wardrobe">${COLLAR_SHOP.map((o) => { const k = 'c_' + o.id, own = o.cost === 0 || save.owned[k], on = save.collar === o.id; return `<button type="button" class="ward dog${on ? ' on' : ''}" data-act="collar" data-id="${o.id}" ${!own && save.coins < o.cost ? 'disabled' : ''}><span class="ward-p">${A.simba({ collar: o.id, eyes: 'open' })}</span><small>${o.name}</small><b>${on ? 'Wearing' : own ? 'Wear' : o.cost + ' 🪙'}</b></button>`; }).join('')}</div>`,
+    album: () => `<p class="sh-lede">When Simba does something cute, a 📸 appears next to him. Tap it fast!</p><div class="album">${PHOTOS.map((p) => save.album[p.id] ? `<div class="photo"><span class="ph-pic ${p.cls || ''}">${A.simba({ collar: save.collar, eyes: p.cls === 'lying' ? 'closed' : 'open' })}<em>${p.ico}</em></span><small>${p.name}</small></div>` : '<div class="photo locked"><span class="ph-pic">?</span><small>???</small></div>').join('')}</div>`,
+    trophies: () => `<div class="trophies">${ACH.map((a) => `<div class="troph${save.ach[a.id] ? ' got' : ''}"><span>${save.ach[a.id] ? a.icon : '🔒'}</span><b>${a.name}</b><small>${a.desc}</small><em>+${a.r} 🪙</em></div>`).join('')}</div>`,
+    endless: () => `<div class="chal"><span class="chal-i">♾️</span><h3>Endless day</h3><p>The day never ends… and it gets busier and busier. How long can Nena keep up?</p><small>Best score: <b>${save.endless}</b></small></div><button type="button" class="btn btn-primary btn-big" data-act="endless">Start</button>`,
+  };
+  const dayKey = (off) => { const d = new Date(); d.setDate(d.getDate() + off); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  function sheetAction(e) {
+    const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+    const act = b.dataset.act;
+    snd('click');
+    if (act === 'claim-daily') {
+      const streak = save.daily.last === dayKey(-1) ? save.daily.streak + 1 : 1;
+      const gain = DAILY[(streak - 1) % 7];
+      save.daily = { last: today(), streak }; save.coins += gain; persist(); snd('coin'); confetti(); toast(`🎁 +${gain} coins! Streak: ${streak} day${streak > 1 ? 's' : ''}`, 'combo', 1800); checkAch();
+    } else if (act === 'sort') { startSort(+b.dataset.i); return; }
+    else if (act === 'challenge') { const c = todayChal(); playCustom(challengeCfg(c)); return; }
+    else if (act === 'endless') { playCustom(endlessCfg()); return; }
+    else if (act === 'claim-mission') { const i = +b.dataset.i, m = weekMissions()[i]; save.week.claimed[i] = true; save.coins += m.r; persist(); snd('coin'); toast(`📋 Mission complete! +${m.r} 🪙`, 'combo', 1600); }
+    else if (act === 'scene') { const f = b.dataset.f, l = +b.dataset.l; save.scenes[f + l] = 1; persist(); playScene(SCENES[f][l - 1], `${FRIENDS.find((x) => x.id === f).name} · ${FR_TITLES[l]}`, () => openSheet('family')); return; }
+    else if (act === 'buy-decor') { const d = DECOR.find((x) => x.id === b.dataset.id); if (save.coins < d.cost) return; save.coins -= d.cost; save.decor[d.id] = 1; persist(); snd('coin'); toast(`${d.icon} ${d.name} added to the ${ROOMS[d.room].name.toLowerCase()}!`, 'hint', 1800); checkAch(); }
+    else if (act === 'outfit') { const o = OUTFIT_SHOP.find((x) => x.id === b.dataset.id); if (!save.owned[o.id]) { if (save.coins < o.cost) return; save.coins -= o.cost; save.owned[o.id] = 1; snd('coin'); } save.outfit = o.id; persist(); }
+    else if (act === 'collar') { const id = b.dataset.id === 'null' ? null : b.dataset.id; const o = COLLAR_SHOP.find((x) => String(x.id) === String(id)); const k = 'c_' + o.id; if (o.cost && !save.owned[k]) { if (save.coins < o.cost) return; save.coins -= o.cost; save.owned[k] = 1; snd('coin'); } save.collar = id; persist(); }
+    openSheet(sheetKind);
+  }
+
+  /* ---- custom days: challenge and endless ---- */
+  let CUSTOM = null;
+  function challengeCfg(c) {
+    const base = levelCfg(c.base);
+    return Object.assign({}, base, { n: 902, title: '🎯 ' + c.name, challenge: c.id, mod: c.mod, story: [], obj: null, types: base.types.concat(c.mod.addTypes || []).filter((t, i, a) => a.indexOf(t) === i) });
+  }
+  function endlessCfg() { return Object.assign({}, LEVELS[13], { n: 901, title: '♾️ Endless day', endless: true, dur: 99999, targets: [1500, 3000, 5000], every: [4.6, 6], story: [], obj: null, fur: 8, patience: 1 }); }
+  function playCustom(cfg) { CUSTOM = cfg; pendingBoosts = {}; show('screen-game'); startLevel(cfg.n); }
+
+  /* ---- story scenes (chapter endings, friendship) ---- */
+  let storyAfter = null, storyTitle = '';
+  function playScene(lines, title, after) { storyLines = lines.slice(); storyAfter = after; storyTitle = title; show('screen-story'); nextLine(); }
+
+  /* ---- Color Sort screen ---- */
+  let sortLv = 0;
+  function startSort(i) {
+    sortLv = i;
+    const L = window.ColorSort.LEVELS[i];
+    $('so-title').textContent = `Color Sort · ${L.name}`;
+    show('screen-sort');
+    window.ColorSort.start({
+      seed: dayNum() * 3 + i, level: i, box: $('so-tubes'), sound: (n) => snd(n),
+      onMoves: (m) => { $('so-moves').textContent = `${m} moves`; },
+      onWin: (m) => {
+        if (save.sortd.date !== today()) save.sortd = { date: today(), done: [] };
+        const first = !save.sortd.done[i];
+        save.sortd.done[i] = true;
+        if (first) { save.coins += L.reward; track('sort'); if (save.sortd.done.filter(Boolean).length === 3) track('sort3'); }
+        persist(); snd('fanfare'); confettiOn($('screen-sort'));
+        toast(first ? `🧪 Solved in ${m} moves! +${L.reward} 🪙` : `🧪 Solved in ${m} moves!`, 'combo', 1800);
+        setTimeout(() => openSheet('sort'), 1600);
+      },
+    });
+  }
+  function confettiOn(host) {
+    const box = document.createElement('div'); box.className = 'confetti'; host.appendChild(box);
+    const cols = ['#ef8fb0', '#ffd98a', '#e38c30', '#7fe0b4', '#86aaff', '#ffffff'];
+    for (let i = 0; i < 40; i++) { const c = document.createElement('i'); c.style.left = (rnd() * 100) + '%'; c.style.background = cols[i % cols.length]; c.style.animationDelay = (rnd() * 0.5) + 's'; c.style.setProperty('--r', (rnd() * 720 - 360) + 'deg'); box.appendChild(c); }
+    setTimeout(() => box.remove(), 3000);
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Screens: title, map, story, shop                                    */
   /* ------------------------------------------------------------------ */
   function show(id) {
-    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game'); });
+    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game'); });
   }
   function renderMap() {
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
@@ -1213,19 +1584,25 @@
     let html = '';
     for (let n = 1; n <= max; n++) {
       const cfg = levelCfg(n), locked = n > save.level, st = save.stars[n] || 0;
-      html += `<button type="button" class="lvl${locked ? ' locked' : ''}${n === save.level ? ' current' : ''}" data-level="${n}" ${locked ? 'disabled' : ''}>
-        <span class="lvl-n">${locked ? '🔒' : n}</span><span class="lvl-t"><b>${cfg.title}</b><small>${cfg.day} · ${PLACE_LABEL[cfg.place]}</small></span>
+      const chap = CHAPTERS.find((x) => x.from === n);
+      if (chap) html += `<h3 class="chap">${chap.title}</h3>`;
+      if (n === LEVELS.length + 1) html += '<h3 class="chap">Bonus days</h3>';
+      html += `<button type="button" class="lvl${cfg.boss ? ' boss' : ''}${locked ? ' locked' : ''}${n === save.level ? ' current' : ''}" data-level="${n}" ${locked ? 'disabled' : ''}>
+        <span class="lvl-n">${locked ? '🔒' : n}</span><span class="lvl-t"><b>${cfg.boss ? '👑 ' : ''}${cfg.title}</b><small>${cfg.boss ? 'BOSS DAY · ' : ''}${cfg.day} · ${PLACE_LABEL[cfg.place]}</small></span>
         <span class="lvl-s">${save.medals[n] ? '<em>🏅</em>' : ''}${'★'.repeat(st)}<i>${'★'.repeat(3 - st)}</i></span></button>`;
     }
     $('m-levels').innerHTML = html;
+    renderHub();
     show('screen-map');
+    if (dailyReady() && !dailyShown) { dailyShown = true; setTimeout(() => openSheet('daily'), 350); }
     const cur = document.querySelector('.lvl.current');
     if (cur) cur.scrollIntoView({ block: 'center' });
   }
   const PLACE_LABEL = { home: '🏠 Home', street: '🌳 Tehran street', clap: '🏮 CLAP' };
-  const NAMES = { pourya: 'Pourya', nena: 'Nena', simba: 'Simba', mohsen: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin' };
+  const NAMES = { aunt: 'Aunt Mahin', pourya: 'Pourya', nena: 'Nena', simba: 'Simba', mohsen: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin' };
   let storyLines = [], storyLevel = 1;
   function playStory(n) {
+    CUSTOM = null; storyAfter = null; storyTitle = '';
     storyLevel = n;
     storyLines = (levelCfg(n).story || []).slice();
     show('screen-story');
@@ -1233,12 +1610,12 @@
   }
   function nextLine() {
     const l = storyLines.shift();
-    if (!l) { renderPrep(storyLevel); return; }
+    if (!l) { if (storyAfter) { const f = storyAfter; storyAfter = null; storyTitle = ''; f(); } else renderPrep(storyLevel); return; }
     const [who, mood, text] = l;
     $('s-portrait').innerHTML = A.portrait(who, mood);
     $('s-name').textContent = NAMES[who] || who;
     $('s-text').textContent = text;
-    $('s-day').textContent = `Day ${storyLevel} · ${levelCfg(storyLevel).day}`;
+    $('s-day').textContent = storyTitle || `Day ${storyLevel} · ${levelCfg(storyLevel).day}`;
     snd('talk', 600);
   }
   let prepPick = {};
@@ -1292,12 +1669,20 @@
     show('screen-game'); startLevel(n);
   });
   $('pr-back').addEventListener('click', () => { prepPick = {}; renderMap(); });
-  $('r-next').addEventListener('click', () => { playStory(G.n + 1); });
-  $('r-retry').addEventListener('click', () => { renderPrep(G.n); });
-  $('r-map').addEventListener('click', () => renderMap());
+  const afterScene = (fn) => { if (G.pendingScene) { const ch = G.pendingScene; G.pendingScene = null; playScene(ch.end, ch.title, fn); } else fn(); };
+  $('r-next').addEventListener('click', () => { const n = G.n + 1; afterScene(() => playStory(n)); });
+  $('r-retry').addEventListener('click', () => { if (G.cfg.n > 900) playCustom(G.cfg); else renderPrep(G.n); });
+  $('r-map').addEventListener('click', () => afterScene(renderMap));
+  $('m-hub').addEventListener('click', (e) => { const b = e.target.closest('[data-hub]'); if (b) { snd('tab'); openSheet(b.dataset.hub); } });
+  $('sh2-body').addEventListener('click', sheetAction);
+  $('sh2-back').addEventListener('click', () => { snd('click'); renderMap(); });
+  $('so-back').addEventListener('click', () => openSheet('sort'));
+  $('so-tubes').addEventListener('click', (e) => { const g = e.target.closest('[data-i]'); if (g) window.ColorSort.tap(+g.dataset.i); });
+  $('so-undo').addEventListener('click', () => window.ColorSort.undo());
+  $('so-restart').addEventListener('click', () => window.ColorSort.restart());
   $('g-pause').addEventListener('click', () => { if (!G || G.over) return; G.paused = true; show('screen-pause'); });
   $('p-resume').addEventListener('click', () => { G.paused = false; last = performance.now(); show('screen-game'); });
-  $('p-quit').addEventListener('click', () => { G.over = true; cancelAnimationFrame(raf); renderMap(); });
+  $('p-quit').addEventListener('click', () => { G.over = true; cancelAnimationFrame(raf); CUSTOM = null; renderMap(); });
   $('p-sound').addEventListener('click', () => { save.sound = save.sound === false; save.music = save.sound; persist(); wake(); $('p-sound').textContent = save.sound ? 'Sound: on' : 'Sound: off'; });
   document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !G.paused) { G.paused = true; show('screen-pause'); } });
   $('p-sound').textContent = save.sound === false ? 'Sound: off' : 'Sound: on';
