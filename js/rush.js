@@ -28,7 +28,10 @@
     sink:    { x: 40,  y: 300, r: 38, stand: [70, 420],  label: 'Sink' },
     samovar: { x: 168, y: 292, r: 36, stand: [168, 420], label: 'Samovar' },
     kibble:  { x: 238, y: 300, r: 34, stand: [238, 420], label: 'Kibble' },
-    negin:   { x: 380, y: 270, r: 42, stand: [342, 400], label: 'Negin’s room (hallway)' },
+    negin:   { x: 384, y: 282, r: 26, stand: [342, 400], label: 'Negin’s room (hallway)', room: true },
+    nenaroom:    { x: 291, y: 312, r: 20, stand: [342, 400], label: 'Nena’s room', room: true },
+    nasimroom:   { x: 312, y: 264, r: 17, stand: [342, 400], label: 'Nasim’s room', room: true },
+    parentsroom: { x: 340, y: 300, r: 18, stand: [342, 400], label: 'Parents’ room', room: true },
     toy:     { x: 452, y: 520, r: 34, stand: [430, 575], label: 'Toy basket' },
     laptop:  { x: 540, y: 470, r: 36, stand: [520, 560], label: 'Laptop' },
     bowl:    { x: 92,  y: 702, r: 34, stand: [130, 690], label: 'Food bowl' },
@@ -50,9 +53,12 @@
     help:   { who: 'fariba', icon: '🍲', pts: 150, pat: 26, hint: 'Tap Maman to help her cook.' },
     talk:   { who: 'nasim', icon: '💬', pts: 130, pat: 18, hint: 'Nasim is back and angry: tap her to talk.' },
     wake:   { who: 'negin', icon: '⏰', pts: 140, pat: 24, hint: 'Negin overslept: only Nena may enter the bedrooms. Tap Negin’s door in the hallway.' },
+    charger: { who: 'baba', icon: '🔌', pts: 150, pat: 28, hint: 'Baba’s phone is dead (he must call the girls!). Tap him: Nena fetches the charger from the parents’ room.' },
+    laundry: { who: 'fariba', icon: '🧺', pts: 150, pat: 28, hint: 'Maman wants the laundry. Tap her: Nena collects it from Nasim’s messy room.' },
+    blanket: { who: 'simba', icon: '🧸', pts: 130, pat: 26, hint: 'Simba is sleepy and wants his blankie from Nena’s room. Tap him!' },
   };
-  const ITEMS = { food: '🥣', tea: '🍵', brush: '🪮', ball: '🎾' };
-  const CHIP = { kibble: '🥣', bowl: '👇', water: '💧', samovar: '☕', brush: '🪮', toy: '🎾', sink: '🧽', negin: '⏰', laptop: '💻' };
+  const ITEMS = { food: '🥣', tea: '🍵', brush: '🪮', ball: '🎾', charger: '🔌', laundry: '🧺', blanket: '🧸' };
+  const CHIP = { kibble: '🥣', bowl: '👇', water: '💧', samovar: '☕', brush: '🪮', toy: '🎾', sink: '🧽', negin: '⏰', laptop: '💻', nenaroom: '🧸', nasimroom: '🧺', parentsroom: '🔌' };
 
   /* ------------------------------------------------------------------ */
   /* Levels                                                              */
@@ -66,11 +72,11 @@
     L(5, 'Maman’s kitchen', 'Wednesday', 85, ['food', 'water', 'walk', 'tea', 'brush', 'help'], [900, 1550, 2400], [5, 7], { obj: { k: 'clean', label: 'Leave no mess at the end' }, laptop: true, fur: 9, story: [['fariba', 'happy', 'Nena jan, help me with the ghormeh sabzi? And then the dishes, please!']] }),
     L(6, 'Nasim is home', 'Thursday', 90, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk'], [1100, 1950, 3000], [4.8, 6.8], { obj: { k: 'treat', label: 'Catch a golden bone' }, laptop: true, fur: 8, story: [['nasim', 'angry', 'DON’T talk to me. …Okay, maybe talk to me. Later.'], ['mohsen', 'neutral', 'Nena, go see your sister before she explodes.']] }),
     L(7, 'Play time', 'Friday', 90, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play'], [1150, 2000, 3100], [4.6, 6.5], { obj: { k: 'nomiss', label: 'Don’t miss a single request' }, laptop: true, fur: 8, story: [['simba', 'happy', '*drops the ball on your foot. Again.*'], ['nena', 'happy', 'Friday means play time!']] }),
-    L(8, 'Wake up, Negin!', 'Saturday', 95, ['food', 'water', 'walk', 'tea', 'help', 'talk', 'play', 'wake'], [1200, 2100, 3250], [4.4, 6.2], { obj: { k: 'done', n: 16, label: 'Complete 16 requests' }, laptop: true, fur: 8, story: [['negin', 'sleepy', '…zzz… five more minutes… zzz…'], ['fariba', 'neutral', 'Nena, wake your sister, she has class!']] }),
-    L(9, 'Busy Friday', 'Friday', 100, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play', 'wake'], [1300, 2250, 3450], [4.2, 6], { obj: { k: 'combo', n: 5, label: 'Reach a ×5 combo' }, laptop: true, fur: 7, story: [['mohsen', 'happy', 'The whole family is home today! Tea for everyone!']] }),
-    L(10, 'Rainy day', 'Sunday', 100, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play'], [1450, 2550, 3950], [4.1, 5.8], { obj: { k: 'tips', n: 20, label: 'Earn 20 coins in tips' }, laptop: true, fur: 5, rain: true, story: [['nena', 'neutral', 'Rain… muddy paws, wet fur, more mess. Let’s go!']] }),
-    L(11, 'Party prep', 'Wednesday', 105, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play', 'wake'], [1700, 3000, 4800], [3.9, 5.5], { obj: { k: 'nomiss', label: 'Don’t miss a single request' }, laptop: true, fur: 7, patience: 0.92, story: [['fariba', 'surprised', 'Simba’s birthday is tomorrow and nothing is ready!']] }),
-    L(12, 'Simba’s birthday', 'Thursday', 110, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play', 'wake'], [1850, 3300, 5200], [3.8, 5.3], { obj: { k: 'done', n: 22, label: 'Complete 22 requests' }, laptop: true, fur: 6, patience: 0.9, story: [['mohsen', 'happy', 'Happy birthday, my lion!'], ['nasim', 'neutral', 'I made the decorations. Don’t say anything.']] }),
+    L(8, 'Wake up, Negin!', 'Saturday', 95, ['food', 'water', 'walk', 'tea', 'help', 'talk', 'play', 'wake', 'charger'], [1200, 2100, 3250], [4.4, 6.2], { obj: { k: 'done', n: 16, label: 'Complete 16 requests' }, laptop: true, fur: 8, story: [['negin', 'sleepy', '…zzz… five more minutes… zzz…'], ['fariba', 'neutral', 'Nena, wake your sister, she has class!']] }),
+    L(9, 'Busy Friday', 'Friday', 100, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play', 'wake', 'charger', 'laundry'], [1300, 2250, 3450], [4.2, 6], { obj: { k: 'combo', n: 5, label: 'Reach a ×5 combo' }, laptop: true, fur: 7, story: [['mohsen', 'happy', 'The whole family is home today! Tea for everyone!']] }),
+    L(10, 'Rainy day', 'Sunday', 100, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play', 'charger', 'laundry', 'blanket'], [1450, 2550, 3950], [4.1, 5.8], { obj: { k: 'tips', n: 20, label: 'Earn 20 coins in tips' }, laptop: true, fur: 5, rain: true, story: [['nena', 'neutral', 'Rain… muddy paws, wet fur, more mess. Let’s go!']] }),
+    L(11, 'Party prep', 'Wednesday', 105, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play', 'wake', 'charger', 'laundry', 'blanket'], [1700, 3000, 4800], [3.9, 5.5], { obj: { k: 'nomiss', label: 'Don’t miss a single request' }, laptop: true, fur: 7, patience: 0.92, story: [['fariba', 'surprised', 'Simba’s birthday is tomorrow and nothing is ready!']] }),
+    L(12, 'Simba’s birthday', 'Thursday', 110, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play', 'wake', 'charger', 'laundry', 'blanket'], [1850, 3300, 5200], [3.8, 5.3], { obj: { k: 'done', n: 22, label: 'Complete 22 requests' }, laptop: true, fur: 6, patience: 0.9, story: [['mohsen', 'happy', 'Happy birthday, my lion!'], ['nasim', 'neutral', 'I made the decorations. Don’t say anything.']] }),
   ];
   function levelCfg(n) {
     if (n <= LEVELS.length) return LEVELS[n - 1];
@@ -255,12 +261,15 @@
     Object.entries(STATIONS).forEach(([id, s]) => {
       if (id === 'laptop' && !cfg.laptop) return;
       if (id === 'negin' && !cfg.types.includes('wake')) return;
+      if (id === 'nenaroom' && !cfg.types.includes('blanket')) return;
+      if (id === 'nasimroom' && !cfg.types.includes('laundry')) return;
+      if (id === 'parentsroom' && !cfg.types.includes('charger')) return;
       if (id === 'samovar' && !cfg.types.includes('tea')) return;
       if (id === 'brush' && !cfg.types.includes('brush')) return;
       if (id === 'toy' && !cfg.types.includes('play')) return;
       if (id === 'sink' && !cfg.types.includes('help')) return;
       const b = document.createElement('button');
-      b.type = 'button'; b.className = 'hit station'; b.dataset.target = id;
+      b.type = 'button'; b.className = 'hit station' + (s.room ? ' room' : ''); b.dataset.target = id;
       b.setAttribute('aria-label', s.label);
       b.style.left = (s.x - s.r) + 'px'; b.style.top = (s.y - s.r) + 'px'; b.style.width = b.style.height = (s.r * 2) + 'px';
       b.innerHTML = `<span class="st-ico">${CHIP[id] || ''}</span>`;
@@ -290,7 +299,7 @@
     hud();
     // tutorial hint for a newly introduced mechanic
     const newType = cfg.types.find((t) => !save.seen[t]);
-    if (newType) { toast(REQ[newType].hint, 'hint', 4500); cfg.types.forEach((t) => { save.seen[t] = 1; }); persist(); }
+    if (newType) { cfg.types.filter((t) => !save.seen[t]).forEach((t, i) => setTimeout(() => { if (G && G.n === n && !G.over) toast(REQ[t].hint, 'hint', 4500); }, i * 5200)); cfg.types.forEach((t) => { save.seen[t] = 1; }); persist(); }
     last = performance.now();
     raf = requestAnimationFrame(loop);
   }
@@ -426,8 +435,11 @@
       if (r && r.type === 'water') return ['water'];
       if (r && r.type === 'brush') return holding('brush') || planned('brush') ? ['simba'] : ['brush', 'simba'];
       if (r && r.type === 'play') return holding('ball') || planned('toy') ? ['simba'] : ['toy', 'simba'];
+      if (r && r.type === 'blanket') return holding('blanket') || planned('nenaroom') ? ['simba'] : ['nenaroom', 'simba'];
       return ['simba'];
     }
+    if (id === 'baba' && findReq('baba', 'charger')) return holding('charger') || planned('parentsroom') ? ['baba'] : ['parentsroom', 'baba'];
+    if (id === 'fariba' && findReq('fariba', 'laundry')) return holding('laundry') || planned('nasimroom') ? ['fariba'] : ['nasimroom', 'fariba'];
     if (id === 'baba' && findReq('baba') && !holding('tea') && !planned('samovar')) return ['samovar', 'baba'];
     if (id === 'bowl' && findReq('simba', 'food') && !holding('food') && !planned('kibble')) return ['kibble', 'bowl'];
     return [id];
@@ -500,7 +512,7 @@
     const cap = up('tray') ? 2 : 1;
     if (G.hand.length >= cap) {
       // swap: put down whatever nobody needs any more (or the oldest item)
-      const needed = { food: !!findReq('simba', 'food'), tea: !!findReq('baba'), brush: !!findReq('simba', 'brush'), ball: !!findReq('simba', 'play') };
+      const needed = { food: !!findReq('simba', 'food'), tea: !!findReq('baba', 'tea'), brush: !!findReq('simba', 'brush'), ball: !!findReq('simba', 'play'), charger: !!findReq('baba', 'charger'), laundry: !!findReq('fariba', 'laundry'), blanket: !!findReq('simba', 'blanket') };
       let i = G.hand.findIndex((h) => !needed[h]);
       if (i < 0) i = 0;
       const old = G.hand.splice(i, 1)[0];
@@ -514,6 +526,14 @@
   }
 
   // Decide what happens when Nena reaches a target: returns {dur, done()} or null (nothing to do)
+  // Rooms: only Nena goes in. She vanishes down the hallway and comes back with the item.
+  function roomAct(name, item) {
+    const sp = (1 / (1 + 0.15 * up('shoes'))) * (G.boostT > 0 ? 0.6 : 1) * (G.boosts.coffee ? 0.85 : 1);
+    const need = { blanket: findReq('simba', 'blanket'), laundry: findReq('fariba', 'laundry'), charger: findReq('baba', 'charger') }[item];
+    if (!need && !holding(item)) return { dur: 0.2, miss: `Nothing needed from ${name} right now.` };
+    if (holding(item)) return { dur: 0.2, miss: 'Nena already has it!' };
+    return { dur: 1.4 * sp, snd: 'swoosh', start: () => { G.nena.el.classList.add('gone'); floatText(342, 300, '🚪', 'hint'); }, done: () => { G.nena.el.classList.remove('gone'); give(item); } };
+  }
   function actionFor(id) {
     const sp = (1 / (1 + 0.15 * up('shoes'))) * (G.boostT > 0 ? 0.6 : 1) * (G.boosts.coffee ? 0.85 : 1);
     switch (id) {
@@ -533,16 +553,27 @@
       case 'negin': { const r = findReq('negin'); if (!r) return { dur: 0.2, miss: 'Shh… Negin is sleeping. Leave her be.' }; return { dur: 2 * sp, snd: 'click', start: () => { G.nena.el.classList.add('gone'); floatText(342, 300, 'Knock knock…', 'hint'); }, done: () => { G.nena.el.classList.remove('gone'); complete(r); toast('Negin: “I’m up… I’m up…”', '', 1500); } }; }
       case 'simba': {
         if (G.simbaAway) return null;
-        const walk = findReq('simba', 'walk'), br = findReq('simba', 'brush'), pl = findReq('simba', 'play');
+        const walk = findReq('simba', 'walk'), br = findReq('simba', 'brush'), pl = findReq('simba', 'play'), bl = findReq('simba', 'blanket');
         if (walk) return { dur: 0.3, done: () => doWalk(walk) };
+        if (bl && holding('blanket')) return { dur: 1 * sp, snd: 'happy', done: () => { take('blanket'); complete(bl); floatText(G.simba.x, G.simba.y - 100, 'zzz…', 'hint'); } };
+        if (bl) return { dur: 0.2, miss: 'His blankie is in Nena’s room!' };
         if (br && holding('brush')) return { dur: 1.6 * sp, snd: 'brush', done: () => { take('brush'); complete(br); } };
         if (pl && holding('ball')) return { dur: 1.4 * sp, snd: 'happy', done: () => { take('ball'); complete(pl); simbaHop(); } };
         if (br) return { dur: 0.2, miss: 'Grab the brush first!' };
         if (pl) return { dur: 0.2, miss: 'Grab the ball first!' };
         return { dur: 0.6, snd: 'happy', done: () => { G.score += 10; floatText(G.simba.x, G.simba.y - 100, '♥', 'heart'); simbaHop(); } };
       }
-      case 'baba': { const r = findReq('baba'); if (!r) return { dur: 0.2, miss: 'Baba is happily watching TV.' }; if (!holding('tea')) return { dur: 0.2, miss: 'Brew tea at the samovar first!' }; return { dur: 0.5, done: () => { take('tea'); complete(r); } }; }
-      case 'fariba': { const r = findReq('fariba'); if (!r) return { dur: 0.2, miss: 'Maman is fine for now.' }; return { dur: 2.2 * sp, snd: 'swoosh', done: () => { complete(r); addDish(); } }; }
+      case 'nenaroom': return roomAct('Nena’s room', 'blanket');
+      case 'nasimroom': return roomAct('Nasim’s room', 'laundry');
+      case 'parentsroom': return roomAct('the parents’ room', 'charger');
+      case 'baba': {
+        const ch = findReq('baba', 'charger');
+        if (ch) { if (!holding('charger')) return { dur: 0.2, miss: 'Get the charger from the parents’ room!' }; return { dur: 0.6, done: () => { take('charger'); complete(ch); toast('Baba: “Ahh, 3%! Now where are those girls…” 📞', '', 1600); } }; }
+        const r = findReq('baba'); if (!r) return { dur: 0.2, miss: 'Baba is happily watching TV.' }; if (!holding('tea')) return { dur: 0.2, miss: 'Brew tea at the samovar first!' }; return { dur: 0.5, done: () => { take('tea'); complete(r); } }; }
+      case 'fariba': {
+        const lr = findReq('fariba', 'laundry');
+        if (lr) { if (!holding('laundry')) return { dur: 0.2, miss: 'Collect the laundry in Nasim’s room!' }; return { dur: 0.8, snd: 'swoosh', done: () => { take('laundry'); complete(lr); toast('Maman: “Merci azizam! What a mess that girl makes…”', '', 1600); } }; }
+        const r = findReq('fariba'); if (!r) return { dur: 0.2, miss: 'Maman is fine for now.' }; return { dur: 2.2 * sp, snd: 'swoosh', done: () => { complete(r); addDish(); } }; }
       case 'nasim': { const r = findReq('nasim'); if (!r) return null; return { dur: 1.6 * sp, done: () => { complete(r); toast('Nasim: “…Thanks. Whatever.”', '', 1500); } }; }
       case 'pkg': if (!G.pkg) return null; return { dur: 0.8 * sp, done: () => { if (!G.pkg) return; G.pkg.el.remove(); G.pkg = null; G.score += 100; G.coins += 12; floatText(DOOR[0] - 40, DOOR[1] - 80, '+100 · +12 🪙', 'coin'); toast('📦 A package for Baba!', '', 1300); snd('coin'); } };
       default: {
@@ -694,6 +725,9 @@
       else if (r.type === 'play' && !holding('ball')) need.add('toy');
       else if (r.type === 'tea' && !holding('tea')) need.add('samovar');
       else if (r.type === 'wake') need.add('negin');
+      else if (r.type === 'charger' && !holding('charger')) need.add('parentsroom');
+      else if (r.type === 'laundry' && !holding('laundry')) need.add('nasimroom');
+      else if (r.type === 'blanket' && !holding('blanket')) need.add('nenaroom');
     });
     if (G.dishes) need.add('sink');
     const key = [...need].sort().join(',');

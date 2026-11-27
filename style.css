@@ -244,6 +244,10 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 .confetti i { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; animation: confetti 2.4s cubic-bezier(.3,.6,.5,1) forwards; }
 @keyframes confetti { to { transform: translateY(110vh) rotate(var(--r)); } }
 
+.hit.station.room .st-ico { opacity: 0; width: 22px; height: 22px; font-size: 12px; bottom: auto; top: -26px; }
+.hit.station.room.need .st-ico { opacity: 1; }
+.hit.station.room::after { inset: 2px; }
+
 /* prep screen */
 .prep { gap: 12px; }
 .pr-goals { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
