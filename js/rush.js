@@ -31,6 +31,7 @@
   save.outfit = save.outfit || 'basique';
   if (save.collar === undefined) save.collar = null;
   save.endless = save.endless || 0;
+  save.games = save.games || { tricksBest: 0, tahdigBest: 0, tricksDay: '', tahdigDay: '' };
   const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* */ } };
   const up = (k) => save.up[k] || 0;
 
@@ -74,18 +75,23 @@
     sushi:   { room: 'clap', x: 484, y: 300, r: 44, stand: [484, 462], label: 'Sushi counter', gives: 'mochi', dur: 1.2, chip: '🍡' },
     hookah:  { room: 'clap', x: 320, y: 548, r: 36, stand: [278, 692], label: 'Hookah', chip: '💨' },
     table:   { room: 'clap', x: 425, y: 596, r: 30, stand: [425, 706], label: 'Table', chip: '🍽️' },
+    plant:   { room: 'salon', x: 470, y: 338, r: 32, stand: [470, 450], label: 'Plant', chip: '🪴' },
+    cushion: { room: 'salon', x: 178, y: 444, r: 30, stand: [178, 562], label: 'Sofa cushions', search: true, chip: '❓' },
+    tvcab:   { room: 'tv', x: 350, y: 335, r: 32, stand: [350, 448], label: 'TV cabinet', search: true, chip: '❓' },
+    tvsofa:  { room: 'tv', x: 209, y: 438, r: 28, stand: [196, 566], label: 'Baba’s sofa', search: true, chip: '❓' },
+    tvplant: { room: 'tv', x: 560, y: 338, r: 30, stand: [538, 446], label: 'Plant pot', search: true, chip: '❓' },
   };
   // where each character lives, per place
   const HOMES = {
     home: { courier: ['salon', 470, 470], aunt: ['salon', 470, 525], nena: ['salon', 300, 670], simba: ['salon', 330, 600], baba: ['tv', 250, 560], fariba: ['kitchen', 160, 470], nasim: ['salon', 545, 470] },
-    street: { nena: ['street', 250, 545], simba: ['street', 330, 535], nasim: ['street', 520, 600], kids: ['street', 70, 548] },
+    street: { nena: ['street', 250, 545], simba: ['street', 330, 535], nasim: ['street', 520, 600], kids: ['street', 70, 548], biscuit: ['street', 470, 548] },
     clap: { courier: ['clap', 334, 470], nena: ['clap', 250, 646], negin: ['clap', 400, 646], pourya: ['clap', 176, 452] },
   };
   const FUR_ZONE = { x0: 270, x1: 560, y0: 600, y1: 780 };
   const FRONT = [548, 430];
   const NPC_ART = { baba: ['mohsen', 'happy', 84, 147], fariba: ['fariba', 'happy', 80, 140], nasim: ['nasim', 'angry', 80, 140], negin: ['negin', 'happy', 80, 140], kids: ['mia', 'happy', 64, 112], pourya: ['pourya', 'happy', 84, 147], aunt: ['aunt', 'happy', 84, 147], courier: ['courier', 'happy', 80, 140] };
   const GUESTS = [['guest1', 40, 552, 'happy'], ['guest2', 112, 554, 'happy'], ['guest3', 42, 742, 'happy'], ['guest4', 112, 744, 'neutral'], ['witch1', 490, 552, 'angry'], ['witch2', 562, 554, 'angry']];
-  const TRANSIENT = { nasim: 1, kids: 1, aunt: 1, courier: 1 };
+  const TRANSIENT = { nasim: 1, kids: 1, aunt: 1, courier: 1, biscuit: 1 };
   const ELEV = { mall: [40, 228, 112, 192], parking: [436, 214, 112, 186] };
 
   /* request catalogue: who asks, what item is needed (src = where to get it), where to deliver (at) */
@@ -124,33 +130,37 @@
     vip:     { who: 'guest2', icon: '👑', pts: 240, pat: 22, item: 'mochi', src: 'sushi', at: 'guest2', dur: 0.6, special: true, vip: true, hint: 'A VIP at CLAP! Serve him mochi for a big tip.' },
     curse:   { who: 'witch1', icon: '🔮', pts: 160, pat: 16, at: 'witch1', dur: 1.2, special: true, hint: 'The witches are cursing your hookah! Ask them (nicely) to stop.' },
     chase:   { who: 'simba', icon: '🫓', pts: 150, pat: 14, at: 'simba', dur: 1, special: true, hint: 'Simba stole a sangak! Catch him!' },
+    remote:  { who: 'baba', icon: '🔍', pts: 170, pat: 34, item: 'remote', at: 'baba', dur: 0.5, search: ['cushion', 'tvcab', 'tvsofa', 'tvplant'], hint: 'Baba lost the TV remote! Search the ❓ spots in the living room and the TV room.' },
+    plants:  { who: 'plant', icon: '🪴', pts: 120, pat: 30, item: 'can', src: 'sink', at: 'plant', dur: 1.2, hint: 'The plant is thirsty: fill the watering can at the kitchen sink.' },
+    dogfriend: { who: 'biscuit', icon: '🐕', pts: 140, pat: 24, at: 'biscuit', dur: 1.6, hint: 'Biscuit the shiba wants to play with Simba! Tap them.' },
+    selfie:  { who: 'negin', icon: '🤳', pts: 120, pat: 22, at: 'negin', dur: 1.2, hint: 'Negin wants a photo for her Instagram story. Tap her!' },
     snack:   { who: 'table', icon: '🍡', pts: 130, pat: 26, item: 'mochi', src: 'sushi', at: 'table', dur: 0.6, hint: 'Snack time: mochi from the sushi counter to your table.' },
   };
-  const ITEMS = { food: '🥣', tea: '🍵', brush: '🪮', ball: '🎾', charger: '🔌', laundry: '🧺', blanket: '🧸', pup: '🐕', bread: '🫓', juice: '🧃', bag: '🛍️', teapot: '🫖', coal: '🔥', mochi: '🍡' };
-  const NOREQ = { baba: 'Baba is happily watching football.', fariba: 'Maman is fine for now.', nasim: 'Nasim doesn’t want to talk.', negin: 'Shh… Negin is sleeping. Leave her be.', mirror: 'Nena looks great already!', car: 'Nothing to put in the car yet.', hookah: 'The hookah is fine.', table: 'Nothing to bring to the table.', kids: 'The kids are playing.', bowl: 'Simba isn’t hungry right now.', water: 'The water bowl is already full.', fountain: 'Simba isn’t thirsty.', tub: 'No bath needed.', negin_door: '', pourya: 'Pourya is busy preparing hookah heads.' };
+  const ITEMS = { food: '🥣', tea: '🍵', brush: '🪮', ball: '🎾', charger: '🔌', laundry: '🧺', blanket: '🧸', pup: '🐕', bread: '🫓', juice: '🧃', bag: '🛍️', teapot: '🫖', coal: '🔥', mochi: '🍡', remote: '🎛️', can: '🪣' };
+  const NOREQ = { plant: 'The plant looks happy.', baba: 'Baba is happily watching football.', fariba: 'Maman is fine for now.', nasim: 'Nasim doesn’t want to talk.', negin: 'Shh… Negin is sleeping. Leave her be.', mirror: 'Nena looks great already!', car: 'Nothing to put in the car yet.', hookah: 'The hookah is fine.', table: 'Nothing to bring to the table.', kids: 'The kids are playing.', bowl: 'Simba isn’t hungry right now.', water: 'The water bowl is already full.', fountain: 'Simba isn’t thirsty.', tub: 'No bath needed.', negin_door: '', pourya: 'Pourya is busy preparing hookah heads.' };
   const BABA_CALLS = ['Baba: “Where are you?! It’s late!”', 'Baba: “Did you eat? Come home!”', 'Baba: “Is Negin with you? Put her on!”', 'Baba: “Nena jan, it’s 11 o’clock!!”', 'Baba: “Why don’t you answer the first time?”'];
 
   /* ------------------------------------------------------------------ */
   /* Levels                                                              */
   /* ------------------------------------------------------------------ */
   const L = (n, title, day, place, dur, types, targets, every, extra) => Object.assign({ n, title, day, place, dur, types, targets, every }, extra || {});
-  const HOME_ALL = ['food', 'water', 'walk', 'brush', 'play', 'tea', 'help', 'talk', 'cuddle', 'wake', 'charger', 'laundry', 'blanket', 'bath', 'ready', 'study'];
+  const HOME_ALL = ['food', 'water', 'walk', 'brush', 'play', 'tea', 'help', 'talk', 'cuddle', 'wake', 'charger', 'laundry', 'blanket', 'bath', 'ready', 'study', 'remote', 'plants'];
   const LEVELS = [
     L(1, 'First morning', 'Saturday', 'home', 60, ['food', 'water'], [300, 500, 650], [6, 9], { obj: { k: 'done', n: 5, label: 'Complete 5 requests' }, story: [['simba', 'happy', 'Woof! (Breakfast. Now. Please.)'], ['nena', 'happy', 'Okay Simba! Kibble is in the kitchen, your bowls are in the living room.']] }),
     L(2, 'Walkies!', 'Sunday', 'home', 70, ['food', 'water', 'walk'], [350, 600, 950], [6, 8.5], { obj: { k: 'type', t: 'walk', n: 2, label: 'Walk Simba 2 times' }, story: [['nena', 'neutral', 'Negin was supposed to walk him… she’s still asleep.'], ['simba', 'happy', '*brings the leash*']] }),
     L(3, 'Tea for Baba', 'Monday', 'home', 75, ['food', 'water', 'walk', 'tea'], [500, 950, 1450], [5.5, 8], { obj: { k: 'type', t: 'tea', n: 3, label: 'Serve Baba 3 teas' }, story: [['mohsen', 'happy', 'Nena jan, is there tea? Persepolis is playing!'], ['nena', 'happy', 'Coming, Baba! Samovar in the kitchen, TV room… use the room tabs!']] }),
     L(4, 'Fluffy trouble', 'Tuesday', 'home', 80, ['food', 'water', 'walk', 'tea', 'brush'], [700, 1200, 1900], [5.5, 7.5], { obj: { k: 'combo', n: 3, label: 'Reach a ×3 combo' }, fur: 9, story: [['nena', 'surprised', 'Orange fur EVERYWHERE. Simba, you’re shedding again!'], ['simba', 'happy', '*shakes proudly*']] }),
-    L(5, 'Maman’s kitchen', 'Wednesday', 'home', 85, ['food', 'water', 'walk', 'tea', 'brush', 'help'], [750, 1350, 2100], [5, 7], { obj: { k: 'clean', label: 'Leave no mess at the end' }, fur: 9, story: [['fariba', 'happy', 'Nena jan, help me with the ghormeh sabzi? And then the dishes, please!']] }),
-    L(6, 'Bread run', 'Thursday', 'street', 80, ['poop', 'thirst', 'bread', 'calm', 'kids'], [650, 1150, 1800], [5, 7], { obj: { k: 'type', t: 'bread', n: 2, label: 'Put 2 sangak breads in the car' }, story: [['fariba', 'neutral', 'Nena jan, take Simba out and bring sangak for lunch. Put it in the 4×4!'], ['nena', 'happy', 'A walk in the street, Simba! Stay away from the cats…']] }),
+    L(5, 'Maman’s kitchen', 'Wednesday', 'home', 85, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'plants'], [750, 1350, 2100], [5, 7], { obj: { k: 'clean', label: 'Leave no mess at the end' }, fur: 9, story: [['fariba', 'happy', 'Nena jan, help me with the ghormeh sabzi? And then the dishes, please!']] }),
+    L(6, 'Bread run', 'Thursday', 'street', 80, ['poop', 'thirst', 'bread', 'calm', 'kids', 'dogfriend'], [650, 1150, 1800], [5, 7], { obj: { k: 'type', t: 'bread', n: 2, label: 'Put 2 sangak breads in the car' }, story: [['fariba', 'neutral', 'Nena jan, take Simba out and bring sangak for lunch. Put it in the 4×4!'], ['nena', 'happy', 'A walk in the street, Simba! Stay away from the cats…']] }),
     L(7, 'Nasim is home', 'Friday', 'home', 90, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'cuddle'], [900, 1600, 2450], [4.8, 6.8], { obj: { k: 'treat', label: 'Catch a golden bone' }, fur: 8, story: [['nasim', 'angry', 'DON’T talk to me. …Okay, maybe talk to me. Later.'], ['mohsen', 'happy', 'And bring me my little lion! I want him on my belly.']] }),
-    L(8, 'Wake up, Negin!', 'Saturday', 'home', 95, ['food', 'water', 'walk', 'tea', 'help', 'talk', 'wake', 'charger'], [1000, 1800, 2750], [4.6, 6.4], { obj: { k: 'done', n: 14, label: 'Complete 14 requests' }, fur: 8, story: [['negin', 'sleepy', '…zzz… five more minutes… zzz…'], ['fariba', 'neutral', 'Nena, wake your sister, she has class! You’re the only one she lets in.']] }),
-    L(9, 'Night at CLAP', 'Saturday', 'clap', 85, ['coals', 'chai', 'doze', 'snack', 'phone', 'insta'], [750, 1350, 2150], [4.6, 6.4], { night: true, obj: { k: 'type', t: 'phone', n: 3, label: 'Answer Baba 3 times' }, story: [['negin', 'happy', 'CLAP tonight? Hookah and tea, my treat… I mean your treat.'], ['nena', 'happy', 'Okay! I park the 4×4 under Hayat Sabz, we go up to the mall, and CLAP is on the ground floor.'], ['pourya', 'happy', 'Salam Nena! A new hookah head? …And your Instagram, maybe?'], ['mohsen', 'neutral', 'Girls, be home by ten! I will call. Many times.']] }),
-    L(10, 'Nena’s own day', 'Sunday', 'home', 100, ['food', 'water', 'walk', 'tea', 'ready', 'study', 'blanket', 'laundry'], [1000, 1800, 2800], [4.4, 6.2], { obj: { k: 'type', t: 'study', n: 2, label: 'Study 2 times' }, story: [['nena', 'neutral', 'Exams, Simba, Baba, Maman… and I still have to get ready myself!'], ['nasim', 'happy', 'Oh, and someone sent you flowers AGAIN. Who is this Jesus?!'], ['nena', 'angry', 'JESUS AGAIN?! I told him to stop! Next time I block him!']] }),
-    L(11, 'Rainy day', 'Monday', 'home', 100, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'play', 'bath', 'blanket', 'charger'], [1100, 1950, 3000], [4.2, 6], { rain: true, fur: 6, obj: { k: 'tips', n: 20, label: 'Earn 20 coins in tips' }, story: [['nena', 'neutral', 'Rain… muddy paws. Bath time in my bathroom, Simba.'], ['simba', 'sad', '*hides under the sofa*']] }),
-    L(12, 'Tehran evening', 'Tuesday', 'street', 95, ['poop', 'thirst', 'bread', 'calm', 'kids', 'juice', 'phone'], [1250, 2250, 3500], [4.2, 6], { night: true, obj: { k: 'nomiss', label: 'Don’t miss a single request' }, story: [['nasim', 'angry', 'I’m coming too. And you’re buying me a juice.'], ['mohsen', 'neutral', 'It’s getting dark! I’ll call you every five minutes.']] }),
-    L(13, 'Late night at CLAP', 'Wednesday', 'clap', 100, ['coals', 'chai', 'doze', 'snack', 'phone', 'insta'], [950, 1750, 2700], [3.9, 5.6], { night: true, patience: 0.92, obj: { k: 'combo', n: 5, label: 'Reach a ×5 combo' }, story: [['negin', 'sleepy', 'One more hookah… and a nap… on this cushion…'], ['pourya', 'happy', 'Nena! Today you give me your Instagram, yes?'], ['negin', 'neutral', 'Don’t look now… the two blonde witches are here again. Corner table.'], ['nena', 'surprised', 'No, Pourya. And Baba already called three times. It’s only 9!']] }),
-    L(14, 'Simba’s birthday', 'Thursday', 'home', 110, HOME_ALL, [1650, 3000, 4700], [3.8, 5.3], { fur: 6, patience: 0.9, obj: { k: 'done', n: 20, label: 'Complete 20 requests' }, story: [['mohsen', 'happy', 'Happy birthday, my lion!'], ['nasim', 'neutral', 'I made the decorations. Don’t say anything.']] }),
-    L(15, 'Cousin Sara’s wedding', 'Friday', 'home', 120, HOME_ALL, [1900, 3400, 5200], [3.4, 4.8], { boss: true, fur: 6, patience: 0.9, events: 16, obj: { k: 'nomiss', label: 'Don’t miss a single request' }, story: [['fariba', 'surprised', 'Cousin Sara’s wedding is TONIGHT and the whole family is getting ready here!'], ['mohsen', 'neutral', 'Where is my tie? Where is my tea? Where is everybody?!'], ['nena', 'happy', 'Boss day, Simba. Let’s do this!']] }),
+    L(8, 'Wake up, Negin!', 'Saturday', 'home', 95, ['food', 'water', 'walk', 'tea', 'help', 'talk', 'wake', 'charger', 'remote'], [1000, 1800, 2750], [4.6, 6.4], { obj: { k: 'done', n: 14, label: 'Complete 14 requests' }, fur: 8, story: [['negin', 'sleepy', '…zzz… five more minutes… zzz…'], ['fariba', 'neutral', 'Nena, wake your sister, she has class! You’re the only one she lets in.']] }),
+    L(9, 'Night at CLAP', 'Saturday', 'clap', 85, ['coals', 'chai', 'doze', 'snack', 'phone', 'insta', 'selfie'], [750, 1350, 2150], [4.6, 6.4], { night: true, obj: { k: 'type', t: 'phone', n: 3, label: 'Answer Baba 3 times' }, story: [['negin', 'happy', 'CLAP tonight? Hookah and tea, my treat… I mean your treat.'], ['nena', 'happy', 'Okay! I park the 4×4 under Hayat Sabz, we go up to the mall, and CLAP is on the ground floor.'], ['pourya', 'happy', 'Salam Nena! A new hookah head? …And your Instagram, maybe?'], ['mohsen', 'neutral', 'Girls, be home by ten! I will call. Many times.']] }),
+    L(10, 'Nena’s own day', 'Sunday', 'home', 100, ['food', 'water', 'walk', 'tea', 'ready', 'study', 'blanket', 'laundry', 'plants'], [1000, 1800, 2800], [4.4, 6.2], { obj: { k: 'type', t: 'study', n: 2, label: 'Study 2 times' }, story: [['nena', 'neutral', 'Exams, Simba, Baba, Maman… and I still have to get ready myself!'], ['nasim', 'happy', 'Oh, and someone sent you flowers AGAIN. Who is this Jesus?!'], ['nena', 'angry', 'JESUS AGAIN?! I told him to stop! Next time I block him!']] }),
+    L(11, 'Rainy day', 'Monday', 'home', 100, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'play', 'bath', 'blanket', 'charger', 'remote'], [1100, 1950, 3000], [4.2, 6], { rain: true, fur: 6, obj: { k: 'tips', n: 20, label: 'Earn 20 coins in tips' }, story: [['nena', 'neutral', 'Rain… muddy paws. Bath time in my bathroom, Simba.'], ['simba', 'sad', '*hides under the sofa*']] }),
+    L(12, 'Tehran evening', 'Tuesday', 'street', 95, ['poop', 'thirst', 'bread', 'calm', 'kids', 'juice', 'phone', 'dogfriend'], [1250, 2250, 3500], [4.2, 6], { night: true, obj: { k: 'nomiss', label: 'Don’t miss a single request' }, story: [['nasim', 'angry', 'I’m coming too. And you’re buying me a juice.'], ['mohsen', 'neutral', 'It’s getting dark! I’ll call you every five minutes.']] }),
+    L(13, 'Late night at CLAP', 'Wednesday', 'clap', 100, ['coals', 'chai', 'doze', 'snack', 'phone', 'insta', 'selfie'], [950, 1750, 2700], [3.9, 5.6], { night: true, patience: 0.92, obj: { k: 'combo', n: 5, label: 'Reach a ×5 combo' }, story: [['negin', 'sleepy', 'One more hookah… and a nap… on this cushion…'], ['pourya', 'happy', 'Nena! Today you give me your Instagram, yes?'], ['negin', 'neutral', 'Don’t look now… the two blonde witches are here again. Corner table.'], ['nena', 'surprised', 'No, Pourya. And Baba already called three times. It’s only 9!']] }),
+    L(14, 'Simba’s birthday', 'Thursday', 'home', 110, HOME_ALL, [1650, 3000, 4700], [3.8, 5.3], { party: 'birthday', fur: 6, patience: 0.9, obj: { k: 'done', n: 20, label: 'Complete 20 requests' }, story: [['mohsen', 'happy', 'Happy birthday, my lion!'], ['nasim', 'neutral', 'I made the decorations. Don’t say anything.']] }),
+    L(15, 'Cousin Sara’s wedding', 'Friday', 'home', 120, HOME_ALL, [1900, 3400, 5200], [3.4, 4.8], { party: 'wedding', boss: true, fur: 6, patience: 0.9, events: 16, obj: { k: 'nomiss', label: 'Don’t miss a single request' }, story: [['fariba', 'surprised', 'Cousin Sara’s wedding is TONIGHT and the whole family is getting ready here!'], ['mohsen', 'neutral', 'Where is my tie? Where is my tea? Where is everybody?!'], ['nena', 'happy', 'Boss day, Simba. Let’s do this!']] }),
   ];
   function levelCfg(n) {
     if (n > 900 && CUSTOM) return CUSTOM;
@@ -167,7 +177,7 @@
   // stations, rooms and characters a level needs
   function levelWorld(cfg) {
     const st = new Set(), who = new Set();
-    cfg.types.forEach((t) => { const R = REQ[t]; [R.src, R.at, R.who].forEach((x) => { if (STATIONS[x]) st.add(x); }); who.add(R.who); });
+    cfg.types.forEach((t) => { const R = REQ[t]; [R.src, R.at, R.who].concat(R.search || []).forEach((x) => { if (STATIONS[x]) st.add(x); }); who.add(R.who); });
     if (cfg.types.includes('help')) st.add('sink');
     const rooms = new Set();
     if (cfg.place === 'home') {
@@ -229,12 +239,14 @@
   function moveRoom(a, room) { a.room = room; layer(room).appendChild(a.el); }
   function spawnNpc(who) {
     const h = HOMES[G.cfg.place][who]; if (!h) return null;
-    const [art, mood, w, hh] = NPC_ART[who];
-    const a = makeActor(who, A.person(art, { mood, nails: nailOf(who) }), w, hh, 'npc', h[0]);
+    const dog = who === 'biscuit';
+    const [art, mood, w, hh] = dog ? ['shiba', 'happy', 96, 76] : NPC_ART[who];
+    const a = makeActor(who, dog ? A.simba({ palette: 'shiba', collar: 'noeud' }) : A.person(art, { mood, nails: nailOf(who) }), w, hh, dog ? 'npc simba' : 'npc', h[0]);
     a.el.dataset.target = who;
+    a.mood = mood;
     place(a, h[1], h[2]);
     G.npcs[who] = a;
-    if (G.life) lifeAdd(who, a, {});
+    if (G.life) lifeAdd(who, a, dog ? { kind: 'dog', still: true, lines: ['Arf!', '*sniff sniff*', 'Yip yip!', '*wags*'] } : {});
     return a;
   }
 
@@ -259,6 +271,7 @@
     if (cfg.mod && cfg.mod.hearts) { G.hearts = cfg.mod.hearts; G.maxHearts = cfg.mod.hearts; }
     if (cfg.mod && cfg.mod.zoom) G.zoomT = 6;
     Object.keys(hudCache).forEach((k) => delete hudCache[k]);
+    G.joy = 60; G.joyT = 0; G.muddy = false; G.searched = new Set(); G.remoteSpot = null; G.lastPet = 0;
     G.tabsBuilt = ''; G.mc = null; G.miniT = null; G.miniN = 0; G.miniWon = 0; $('g-mini').hidden = true;
     G.giftT = (n >= 4 && (cfg.place === 'home' || cfg.place === 'clap')) || cfg.challenge ? 22 + rnd() * 30 : null;
     G.frStart = {}; FRIENDS.forEach((f) => { G.frStart[f.id] = friendLv(f.id); });
@@ -275,9 +288,11 @@
         e.style.left = pr.x + 'px'; e.style.top = pr.y + 'px'; e.style.width = pr.w + 'px'; e.style.height = pr.h + 'px'; e.style.zIndex = String(pr.z);
         d.appendChild(e);
       });
+      const party = cfg.party && RA.PARTY[cfg.party] && RA.PARTY[cfg.party][id];
+      if (party) { const e = document.createElement('div'); e.className = 'decor party'; e.innerHTML = `<svg viewBox="0 0 600 800">${party}</svg>`; d.appendChild(e); }
       DECOR.filter((x) => x.room === id && save.decor[x.id]).forEach((x) => { const e = document.createElement('div'); e.className = 'decor'; e.innerHTML = `<svg viewBox="0 0 600 800">${x.svg}</svg>`; d.appendChild(e); });
       if (RA.LIGHT[id]) { const e = document.createElement('div'); e.className = 'light'; e.innerHTML = RA.LIGHT[id](cfg); d.appendChild(e); }
-      (RA.FX[id] ? RA.FX[id](cfg) : []).forEach((f) => { const e = document.createElement('div'); e.className = 'fx ' + f.cls; e.innerHTML = f.html || ''; Object.assign(e.style, { left: f.x + 'px', top: f.y + 'px', width: f.w + 'px', height: f.h + 'px' }); d.appendChild(e); });
+      (RA.FX[id] ? RA.FX[id](cfg) : []).forEach((f) => { const e = document.createElement('div'); e.className = 'fx ' + f.cls; e.innerHTML = f.html || ''; Object.assign(e.style, { left: f.x + 'px', top: f.y + 'px', width: f.w + 'px', height: f.h + 'px' }); e.style.setProperty('--w', f.w + 'px'); d.appendChild(e); });
       const ev = ELEV[id];
       if (ev) { const e = document.createElement('div'); e.className = 'elev'; e.innerHTML = '<i></i><i></i>'; Object.assign(e.style, { left: ev[0] + 'px', top: ev[1] + 'px', width: ev[2] + 'px', height: ev[3] + 'px' }); d.appendChild(e); }
       st.appendChild(d);
@@ -288,7 +303,7 @@
       const s = STATIONS[id];
       G.st[id] = s;
       const b = document.createElement('button');
-      b.type = 'button'; b.className = 'hit station' + (s.enter ? ' room' : ''); b.dataset.target = id;
+      b.type = 'button'; b.className = 'hit station' + (s.enter ? ' room' : '') + (s.search ? ' search' : ''); b.dataset.target = id;
       b.setAttribute('aria-label', s.label);
       b.style.left = (s.x - s.r) + 'px'; b.style.top = (s.y - s.r) + 'px'; b.style.width = b.style.height = (s.r * 2) + 'px';
       b.innerHTML = `<span class="st-ico">${s.chip || ''}</span>`;
@@ -300,13 +315,13 @@
     place(G.nena, H.nena[1], H.nena[2]);
     G.nena.el.dataset.target = 'nena';
     if (H.simba) {
-      G.simba = makeActor('simba', A.simba({ collar: save.collar }), 112, 89, 'simba happy', H.simba[0]);
+      G.simba = makeActor('simba', simbaArt(), 112, 89, 'simba happy', H.simba[0]);
       G.simba.el.dataset.target = 'simba';
       place(G.simba, H.simba[1], H.simba[2]);
     }
     ['baba', 'fariba', 'negin', 'pourya'].forEach((w) => { if ((W.who.has(w) || (w === 'pourya' && cfg.place === 'clap')) && H[w]) spawnNpc(w); });
     G.guests = [];
-    if (cfg.place === 'clap') { GUESTS.forEach(([id, x, y, mood]) => { const g = makeActor(id, A.person(id, { mood }), 72, 126, 'npc guest' + (id.startsWith('witch') ? ' witch' : ''), 'clap'); place(g, x, y); G.guests.push([id, g]); G.npcs[id] = g; g.el.dataset.target = id; }); G.witchT = 14 + rnd() * 8; }
+    if (cfg.place === 'clap') { GUESTS.forEach(([id, x, y, mood]) => { const g = makeActor(id, A.person(id, { mood }), 72, 126, 'npc guest' + (id.startsWith('witch') ? ' witch' : ''), 'clap'); g.mood = mood; place(g, x, y); G.guests.push([id, g]); G.npcs[id] = g; g.el.dataset.target = id; }); G.witchT = 14 + rnd() * 8; }
     G.life = []; G.talk = new Set(); G.amb = []; G.ambT = 2;
     lifeAdd('nena', G.nena, { lines: LINES.nena, kind: 'think', still: true });
     if (G.simba) lifeAdd('simba', G.simba, {});
@@ -462,6 +477,158 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* Feelings: moods, emotes, reactions, particles, Simba's happiness    */
+  /* ------------------------------------------------------------------ */
+  const simbaArt = () => A.simba({ collar: save.collar || (G && G.cfg.party === 'wedding' ? 'noeud' : null), muddy: !!(G && G.muddy), hat: G && G.cfg.party === 'birthday' ? 'party' : null });
+  function swapSprite(a, html) {
+    const svg = a && a.el.querySelector('svg.sprite'); if (!svg) return;
+    const t = document.createElement('template'); t.innerHTML = html.trim();
+    svg.replaceWith(t.content.firstElementChild);
+  }
+  function refreshSimba() { if (G.simba) swapSprite(G.simba, simbaArt()); }
+  const defMood = (who) => (NPC_ART[who] ? NPC_ART[who][1] : (GUESTS.find((g) => g[0] === who) || [])[3] || 'happy');
+  const artOf = (who) => (NPC_ART[who] ? NPC_ART[who][0] : who);
+  function setMood(who, mood, ms) {
+    const a = G.npcs[who]; if (!a || who === 'biscuit' || !a.el.isConnected) return;
+    clearTimeout(a.moodT);
+    if (ms) a.moodT = setTimeout(() => { if (G && G.npcs[who] === a && !G.reqs.some((r) => r.who === who)) setMood(who, defMood(who)); }, ms);
+    if (a.mood === mood) return;
+    a.mood = mood;
+    swapSprite(a, A.person(artOf(who), { mood, nails: nailOf(who) }));
+  }
+  // a little emotion icon above someone's head (💢 ❤️ 💦 ❗ 😢 …)
+  function emo(a, ch, ms) {
+    if (!a || !a.el) return;
+    if (!a.emoEl) { a.emoEl = document.createElement('i'); a.emoEl.className = 'emo'; a.el.appendChild(a.emoEl); }
+    clearTimeout(a.emoT);
+    if (!ch) { a.emoEl.classList.remove('on'); return; }
+    a.emoEl.textContent = ch; a.emoEl.classList.remove('on'); void a.emoEl.offsetWidth; a.emoEl.classList.add('on');
+    if (ms) a.emoT = setTimeout(() => a.emoEl && a.emoEl.classList.remove('on'), ms);
+  }
+  const actorOf = (who) => (who === 'simba' ? G.simba : who === 'nena' ? G.nena : G.npcs[who]);
+  const WHO_NAME = { baba: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin', pourya: 'Pourya', aunt: 'Aunt Mahin', courier: 'Delivery', guest2: 'VIP', witch1: 'Witch', kids: 'Kids', nena: 'Nena' };
+  function talkAs(who, text, kind) {
+    const a = actorOf(who);
+    if (a && a.el.isConnected && !a.el.classList.contains('gone') && a.room === G.view) speak(a, text, kind || (who === 'simba' ? 'dog' : ''), 2400, true);
+    else if (who !== 'simba' && WHO_NAME[who]) toast(`${WHO_NAME[who]}: “${text}”`, '', 1600);
+  }
+  const URGENT = {
+    baba: ['Nenaaa! I’m waiting!', 'Is anybody in this house?!', 'My tea… my phone… my life!'],
+    fariba: ['Nena jan, quickly please!', 'The rice will burn!', 'I can’t do everything alone!'],
+    nasim: ['I’m leaving in 3… 2…', 'Hello?! I’m talking to you!', 'Ugh, forget it!'],
+    negin: ['zzz… (still asleep)', 'zzz… five more minutes…'],
+    pourya: ['Nena? Nena? Nenaaa?'], kids: ['Simbaaa! Come here!', 'Can we pet him or not?!'],
+    aunt: ['Where is my tea, azizam?', 'In my house, guests get tea right away!'], courier: ['Hellooo? Delivery!', 'I don’t have all day!'],
+    guest2: ['Excuse me! Service?', 'I’m a VIP, you know.'], witch1: ['Hehehe… the curse grows…', 'Your hookah is doomed…'],
+    simba: ['*whine*', '*whimper*', 'Woof?! WOOF!', '*paws at the floor*'], biscuit: ['Yip! Yip!'],
+  };
+  const THANKS = {
+    baba: ['Merci azizam! ❤️', 'That’s my girl!', 'Ahh, perfect!'], fariba: ['Khasteh nabashi, Nena jan!', 'You’re an angel!', 'Merci, my daughter!'],
+    nasim: ['…Thanks.', 'Fine. Good. Whatever.'], negin: ['Mmm, merci!', 'You’re the best!'], pourya: ['Merci, Nena!'],
+    guest2: ['Excellent service! Here, a big tip.', 'Bravo!'], courier: ['Have a nice day!'], kids: ['Yaaay!'],
+  };
+  const FAILS = {
+    baba: ['Forget it! I’ll watch the match alone.', 'Nobody listens to Baba…'], fariba: ['I’ll do it myself… as always.', 'Ay, Nena…'],
+    nasim: ['FINE. I’m going out!', 'Whatever!'], negin: ['zzz… (went back to sleep)'], pourya: ['Okay… next time!'],
+    aunt: ['Hmph! No tea for your old aunt?'], guest2: ['Terrible service!'], kids: ['Booo!'],
+  };
+  // request types whose finishing touch already has its own line
+  const SPEAKS = new Set(['tea', 'charger', 'cuddle', 'laundry', 'talk', 'wake', 'ready', 'study', 'bath', 'poop', 'calm', 'bread', 'juice', 'kids', 'phone', 'coals', 'chai', 'doze', 'snack', 'insta', 'aunt', 'curse', 'chase', 'flowers', 'choco', 'jtext', 'remote', 'plants', 'dogfriend', 'selfie']);
+  function moodFor(r, f) {
+    if (r.who === 'simba' || r.who === 'nena') return;
+    const def = defMood(r.who);
+    let m = def;
+    if (r.who === 'negin' && (r.type === 'wake' || r.type === 'doze')) m = 'sleepy';
+    else if (def === 'angry') m = 'angry';
+    else if (f < 0.3) m = 'angry';
+    else if (f < 0.6) m = 'neutral';
+    setMood(r.who, m);
+  }
+  function onUrgent(r) {
+    const a = actorOf(r.who); if (!a || r.who === 'nena') return;
+    emo(a, r.who === 'simba' ? '❗' : '💢', 0);
+    if (!r.said && URGENT[r.who]) { r.said = true; talkAs(r.who, pick(URGENT[r.who])); if (r.who === 'simba') joy(-4); }
+    if (r.who === 'simba' && G.simba && !G.simbaAway) { G.simba.el.classList.add('barking'); setTimeout(() => G.simba && G.simba.el.classList.remove('barking'), 1000); }
+  }
+  function reactDone(r, perfect) {
+    const a = actorOf(r.who), room = whoRoom(r.who);
+    if (a) emo(a, perfect ? '💖' : '❤️', 1500);
+    const [x, y] = anchorOf(r.who);
+    burst(x, y + 34, room, perfect ? 'stars' : 'hearts', perfect ? 7 : 4);
+    if (r.who === 'simba') { joy(perfect ? 12 : 8); if (G.simba && !G.simbaAway) { simbaHop(); if (rnd() < 0.5) speak(G.simba, pick(['Woof! ❤️', '*happy wiggle*', 'Arf arf!']), 'dog', 1400); } return; }
+    if (G.npcs[r.who]) setMood(r.who, 'happy', 2600);
+    if (!SPEAKS.has(r.type) && THANKS[r.who] && rnd() < 0.85) talkAs(r.who, pick(THANKS[r.who]));
+  }
+  function reactFail(r) {
+    const a = actorOf(r.who);
+    if (a) emo(a, r.who === 'simba' ? '😢' : '💢', 2600);
+    if (G.npcs[r.who]) setMood(r.who, r.who === 'fariba' ? 'sad' : 'angry', 3200);
+    if (r.who === 'simba') {
+      joy(-15);
+      if (r.type === 'bath' && G.muddy) { G.muddy = false; refreshSimba(); }
+      if (G.simba && !G.simbaAway && !G.simbaTask) { G.simba.el.classList.add('lying'); speak(G.simba, '*whimper*', 'dog', 1800); }
+    } else if (FAILS[r.who]) talkAs(r.who, pick(FAILS[r.who]));
+  }
+  // Simba's happiness (0–100): care and cuddles raise it, neglect lowers it
+  function joy(d) { if (!G.simba) return; G.joy = Math.max(0, Math.min(100, G.joy + d)); }
+  function petSimba() {
+    const s = G.simba; if (!s || G.simbaAway) return;
+    const now = performance.now(), fresh = now - (G.lastPet || 0) > 5000; G.lastPet = now;
+    if (fresh) { joy(6); G.score += 10; track('pet'); }
+    s.el.classList.remove('lying', 'sniff', 'roll', 'spin', 'hop');
+    void s.el.offsetWidth;
+    const k = pick(['roll', 'lick', 'paw', 'spin']);
+    if (k === 'roll') { s.el.classList.add('roll'); setTimeout(() => s.el.classList.remove('roll'), 1200); speak(s, '*rolls over for belly rubs*', 'dog', 1700); }
+    else if (k === 'lick') { simbaHop(); speak(s, '*lick lick* 💕', 'dog', 1500); speak(G.nena, pick(['Haha, Simba! That tickles!', 'Eww, dog kisses! 😂']), '', 1700); }
+    else if (k === 'paw') { simbaHop(); speak(s, '🐾 High five!', 'dog', 1400); }
+    else { s.el.classList.add('spin'); setTimeout(() => s.el.classList.remove('spin'), 1450); }
+    if (k !== 'lick') speak(G.nena, pick(['Good boy!', 'Who’s my little lion?', 'Aww, Simba!', 'Best dog in Tehran!']), '', 1500);
+    emo(s, '💕', 1500);
+    burst(s.x, s.y - 60, s.room, 'hearts', 6);
+  }
+  function simbaIdle() { const s = G.simba; return s && !G.simbaAway && !G.simbaTask && !s.el.classList.contains('cuddle') && !s.el.classList.contains('bath') && !findReq('simba') && s.room === 'salon'; }
+  // the doorbell: Simba runs to the door and barks
+  function simbaDoorbell() {
+    if (!simbaIdle()) return;
+    const s = G.simba; G.simbaTask = true; s.el.classList.remove('lying', 'sniff');
+    walkActor(s, FRONT[0] - 60, FRONT[1] + 120, () => {
+      if (!G || !G.simba) return;
+      emo(s, '❗', 1600); speak(s, 'WOOF! WOOF!', 'dog', 1600); s.el.classList.add('barking'); if (s.room === G.view) snd('bark');
+      setTimeout(() => { if (!G || !G.simba) return; s.el.classList.remove('barking'); const h = HOMES.home.simba; walkActor(s, h[1], h[2], () => { if (G) G.simbaTask = false; }, 110); }, 1800);
+    }, 170);
+  }
+  // particles: hearts, stars, drops, bubbles, dust, confetti
+  const BURST = { hearts: ['❤️', '💕', '💖'], stars: ['✨', '⭐', '✨'], drops: ['💧'], bubbles: ['🫧'], notes: ['🎵', '🎶'] };
+  function burst(x, y, room, kind, n) {
+    if (!G || room !== G.view) return;
+    const l = layer(room); n = n || 6;
+    for (let i = 0; i < n; i++) {
+      const e = document.createElement('i'); e.className = 'pt ' + kind;
+      if (BURST[kind]) e.textContent = pick(BURST[kind]); else if (kind === 'confetti') e.style.background = pick(['#ef8fb0', '#ffd36b', '#7fe0b4', '#86aaff', '#ffffff']);
+      l.appendChild(e);
+      const ang = (i / n) * Math.PI * 2 + rnd() * 0.7, d = 26 + rnd() * 44;
+      const floaty = kind === 'hearts' || kind === 'bubbles' || kind === 'notes';
+      const dx = Math.cos(ang) * d, dy = kind === 'drops' ? 18 + Math.abs(Math.sin(ang)) * d : Math.sin(ang) * d * 0.6 - (floaty ? 50 + rnd() * 40 : 0);
+      e.animate([{ transform: `translate(${x}px, ${y}px) scale(.4) rotate(0deg)`, opacity: 1 }, { transform: `translate(${(x + dx).toFixed(0)}px, ${(y + dy).toFixed(0)}px) scale(1.1) rotate(${kind === 'confetti' ? 300 : 0}deg)`, opacity: 0 }], { duration: 700 + rnd() * 450, easing: 'cubic-bezier(.2,.7,.4,1)' });
+      setTimeout(() => e.remove(), 1200);
+    }
+  }
+  function flashStage() { const f = document.createElement('div'); f.className = 'flash'; $('stage-wrap').appendChild(f); setTimeout(() => f.remove(), 500); }
+  // remote hunt: the ❓ spots
+  function searchSpots(on) {
+    stage().querySelectorAll('.hit.station.search').forEach((b) => b.classList.toggle('active', !!on && !G.searched.has(b.dataset.target)));
+  }
+  function searchSpot(id, rr) {
+    G.searched.add(id); searchSpots(G.reqs.includes(rr));
+    if (id === G.remoteSpot && G.reqs.includes(rr)) {
+      give('remote'); searchSpots(false);
+      speak(G.nena, pick(['Found it! 🎉', 'Under there, of course!', 'Got the remote!']), '', 1600);
+      burst(G.st[id].x, G.st[id].y, G.st[id].room, 'stars', 7); snd('coin');
+      if (!G.queue.some((q) => q.id === 'baba')) { G.queue.unshift({ id: 'baba', r: rr }); markQueue(); }
+    } else { speak(G.nena, pick(['Not here… 🤔', 'Hmm, not under there.', 'Nope! Somewhere else…']), 'think', 1400); burst(G.st[id].x, G.st[id].y, G.st[id].room, 'dust', 5); }
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Requests                                                            */
   /* ------------------------------------------------------------------ */
   function whoRoom(who) {
@@ -512,6 +679,9 @@
     const r = { type: t, who: R.who, left: max, max, el };
     if (R.vip) el.classList.add('vip');
     G.reqs.push(r);
+    if (R.who === 'courier' || R.who === 'aunt') simbaDoorbell();
+    if (t === 'bath') { G.muddy = true; refreshSimba(); }
+    if (t === 'remote') { G.remoteSpot = pick(R.search.filter((x) => G.st[x])); G.searched = new Set(); searchSpots(true); }
     posReq(r);
     if (R.special) { toast(R.hint, 'hint', 2400); snd('fanfare'); }
     else if (t === 'phone') { snd('fanfare'); buzz([30, 60, 30]); toast('📞 Baba is calling…', '', 1200); }
@@ -530,7 +700,9 @@
     const hue = Math.round(Math.max(0, Math.min(1, (f - 0.15) / 0.6)) * 10) * 12;  // red → amber → green
     if (r.hue !== hue && G.freezeT <= 0) { r.hue = hue; r.ring.style.stroke = `hsl(${hue}, 62%, 48%)`; }
     const u = f < 0.3 && G.freezeT <= 0, fr = G.freezeT > 0;
-    if (r.u !== u) { r.u = u; r.el.classList.toggle('urgent', u); }
+    if (r.u !== u) { r.u = u; r.el.classList.toggle('urgent', u); if (u) onUrgent(r); else { const a = actorOf(r.who); if (a && r.who !== 'nena') emo(a, ''); } }
+    const mb = f < 0.3 ? 0 : f < 0.6 ? 1 : 2;
+    if (r.mb !== mb) { r.mb = mb; moodFor(r, f); }
     if (r.fr !== fr) { r.fr = fr; r.el.classList.toggle('frozen', fr); if (fr) r.ring.style.stroke = ''; else r.hue = -1; }
   }
   // the little chip under a bubble says what Nena has to fetch first (or that she already has it)
@@ -538,7 +710,8 @@
     G.reqs.forEach((r) => {
       const R = REQ[r.type], chip = r.el.querySelector('.need-chip'); if (!chip) return;
       let txt = '', cls = '';
-      if (R.item) {
+      if (R.search && !holding(R.item)) txt = '🔍 ❓';
+      else if (R.item) {
         if (holding(R.item)) { txt = '✓ ' + ITEMS[R.item]; cls = 'ok'; }
         else if (R.src === 'simba') txt = '🐕';
         else { const S = STATIONS[R.src]; txt = (S.chip || ITEMS[R.item]) + (S.room !== whoRoom(r.who) ? ' ' + ROOMS[S.room].icon : ''); }
@@ -550,6 +723,8 @@
   }
   function removeReq(r) {
     r.el.remove(); G.reqs = G.reqs.filter((x) => x !== r);
+    const ra = actorOf(r.who); if (ra && r.who !== 'nena') emo(ra, '');
+    if (r.type === 'remote') { G.remoteSpot = null; searchSpots(false); if (holding('remote')) take('remote'); }
     if (TRANSIENT[r.who] && G.npcs[r.who]) { const n = G.npcs[r.who]; delete G.npcs[r.who]; n.el.classList.add('leave'); setTimeout(() => n.el.remove(), 500); }
     G.queue = G.queue.filter((q) => q.r !== r);
     markQueue();
@@ -565,13 +740,11 @@
     const [x, y] = anchorOf(r.who);
     floatText(x, y, '💔', 'bad', whoRoom(r.who));
     const R = REQ[r.type];
+    reactFail(r);
     if (r.type === 'walk') { addFur(true); toast('Oops! Simba couldn’t wait… a puddle to clean.', 'bad'); }
     else if (r.type === 'brush') { addFur(); addFur(); }
     else if (r.type === 'phone') toast('Baba: “WHY DON’T YOU ANSWER?!” 😤', 'bad');
     else if (r.type === 'calm') toast('Simba chased the cat across the street!', 'bad');
-    else if (r.who === 'baba') toast('Baba grumbles at the TV.', 'bad');
-    else if (r.who === 'nasim') toast('Nasim stormed off!', 'bad');
-    else if (r.who === 'negin') toast('Negin went back to sleep…', 'bad');
     if (R.item === 'pup' && holding('pup') && !G.reqs.some((x) => REQ[x.type].item === 'pup')) { take('pup'); releaseSimba(); }
     if (G.hearts <= 0) outOfHearts();
   }
@@ -605,6 +778,8 @@
     if (G.combo >= 3) toast(`Combo ×${G.combo}!`, 'combo', 900);
     removeReq(r);
     snd(G.combo >= 3 ? 'fanfare' : 'success'); buzz(12);
+    reactDone(r, perfect);
+    if (G.combo === 5 || G.combo === 8) burst(G.nena.x, G.nena.y - 90, G.nena.room, 'confetti', 14);
     checkObj();
   }
   const CONT_COST = 25;
@@ -648,10 +823,17 @@
   const take = (it) => { const i = G.hand.indexOf(it); if (i >= 0) G.hand.splice(i, 1); renderHand(); };
   const planned = (id) => G.queue.some((q) => q.id === id) || (G.busy && G.busy.id === id);
   // the next place Nena must go for a request
-  function nextStep(r) { const R = REQ[r.type]; return R.item && !holding(R.item) ? R.src : R.at; }
+  function nextStep(r) { const R = REQ[r.type]; if (R.search && !holding(R.item)) return (R.search.find((x) => G.st[x] && !G.searched.has(x))) || R.at; return R.item && !holding(R.item) ? R.src : R.at; }
   // One tap on a request (bubble, character or tab icon) plans the whole trip
   function chainFor(r) {
     const R = REQ[r.type], steps = [];
+    if (R.search && !holding(R.item)) {
+      const left = R.search.filter((x) => G.st[x] && !G.searched.has(x) && !G.queue.some((q) => q.id === x));
+      if (!left.length) return steps;
+      const here = left.filter((x) => G.st[x].room === G.nena.room);
+      toast('🔍 Search the ❓ spots to find the remote! (Tap a spot to choose)', 'hint', 1800);
+      return [{ id: (here.length ? here : left)[0], r }];
+    }
     if (R.item && !holding(R.item) && !G.queue.some((q) => q.r === r && q.id === R.src) && !(G.busy && G.busy.r === r)) steps.push({ id: R.src, r });
     if (!G.queue.some((q) => q.r === r && q.id === R.at)) steps.push({ id: R.at, r });
     return steps;
@@ -665,6 +847,7 @@
     if (!steps.length) return;
     if (G.queue.length + steps.length > 6) { toast('Nena can only plan 6 things at once!', 'bad', 1200); return; }
     steps.forEach((s) => G.queue.push(s));
+    if (G.queue.length >= 4) emo(G.nena, '💦', 1600);
     snd('click'); buzz(6);
     markQueue();
   }
@@ -745,6 +928,8 @@
     if (!G.bone) return;
     G.bone.el.remove(); G.bone = null;
     G.freezeT = 5; G.stats.treat++; G.score += 50;
+    if (G.simba && !G.simbaAway && G.simba.room === G.view) { emo(G.simba, '🦴', 1600); G.simba.el.classList.add('spin'); setTimeout(() => G.simba && G.simba.el.classList.remove('spin'), 1450); joy(5); }
+    burst(G.nena.x, G.nena.y - 120, G.nena.room, 'stars', 8);
     toast(G.cfg.place === 'clap' ? '🐱 Lucky cat! Everyone waits patiently for 5 s' : '🦴 Golden bone! Everyone waits patiently for 5 s', 'hint', 1800);
     snd('fanfare'); buzz([20, 40, 20]);
     checkObj();
@@ -756,6 +941,7 @@
     b.style.left = (FRONT[0] - 70) + 'px'; b.style.top = (FRONT[1] - 30) + 'px';
     layer('salon').appendChild(b);
     G.pkg = { el: b, t: 10 };
+    simbaDoorbell();
     toast('🔔 Ding-dong! A delivery at the front door', '', 1600);
     snd('pop');
   }
@@ -832,6 +1018,11 @@
     const sp = speedMul();
     const S = G.st[id];
     let r = intended && G.reqs.includes(intended) ? intended : null;
+    if (S && S.search) {
+      const rr = G.reqs.find((x) => x.type === 'remote');
+      if (!rr || holding('remote') || G.searched.has(id)) return { dur: 0.2, miss: 'Nothing interesting here.' };
+      return { dur: 0.9 * sp, snd: 'brush', done: () => searchSpot(id, rr) };
+    }
     // 1) picking up an item at its source
     const pickR = (r && REQ[r.type].src === id ? r : null) || (!r ? G.reqs.find((x) => REQ[x.type].src === id && !holding(REQ[x.type].item)) : null);
     if (pickR && !holding(REQ[pickR.type].item)) {
@@ -864,12 +1055,12 @@
       };
     }
     // 3) things with no request
-    if (id === 'simba') { if (!G.simba || G.simbaAway) return null; return { dur: 0.6, snd: 'happy', done: () => { G.score += 10; floatText(G.simba.x, G.simba.y - 100, '♥', 'heart', G.simba.room); simbaHop(); } }; }
+    if (id === 'simba') { if (!G.simba || G.simbaAway) return null; return { dur: 0.6, snd: 'happy', done: () => petSimba() }; }
     if (id === 'sink') { if (!G.dishes) return { dur: 0.2, miss: 'No dirty dishes.' }; return { dur: 1.6 * sp, snd: 'water', done: () => { G.dishes--; renderDishes(); G.score += 60; floatText(193, 230, '+60', 'good', 'kitchen'); } }; }
     if (id === 'laptop') return { dur: 3 * sp, done: () => { G.coins += 6; G.score += 40; floatText(345, 220, '+40 · +6 🪙', 'coin', 'bedroom'); snd('coin'); } };
     if (id === 'pkg') { if (!G.pkg) return null; return { dur: 0.8 * sp, done: () => { if (!G.pkg) return; G.pkg.el.remove(); G.pkg = null; G.score += 100; G.coins += 12; floatText(FRONT[0] - 40, FRONT[1] - 80, '+100 · +12 🪙', 'coin', 'salon'); toast('📦 A package for Baba!', '', 1300); snd('coin'); } }; }
     const f = G.furs.find((x) => x.id === id);
-    if (f) return { dur: (f.puddle ? 1.2 : 0.7) * sp, snd: 'brush', done: () => { f.el.remove(); G.furs = G.furs.filter((x) => x !== f); G.score += f.puddle ? 30 : 20; floatText(f.x, f.y - 20, f.puddle ? '+30' : '+20', 'good', 'salon'); } };
+    if (f) return { dur: (f.puddle ? 1.2 : 0.7) * sp, snd: 'brush', done: () => { burst(f.x, f.y, 'salon', f.puddle ? 'bubbles' : 'dust', 6); f.el.remove(); G.furs = G.furs.filter((x) => x !== f); G.score += f.puddle ? 30 : 20; floatText(f.x, f.y - 20, f.puddle ? '+30' : '+20', 'good', 'salon'); } };
     if (NOREQ[id]) return { dur: 0.2, miss: NOREQ[id] };
     return null;
   }
@@ -884,7 +1075,7 @@
   };
   const FX = {
     food: { after: () => { if (G.simba && !G.simbaAway) simbaGo(STATIONS.bowl.x + 50, STATIONS.bowl.y + 30, 2); } },
-    water: { snd: 'water' },
+    water: { snd: 'water', after: () => burst(STATIONS.water.x, STATIONS.water.y - 10, 'salon', 'drops', 7) },
     brush: { snd: 'brush' },
     play: { snd: 'happy', after: () => simbaHop() },
     blanket: { snd: 'happy', after: () => (G.photoHint = 'blankie') && floatText(G.simba.x, G.simba.y - 100, 'zzz…', 'hint', G.simba.room) },
@@ -897,7 +1088,7 @@
     wake: { snd: 'click', start: () => enterFx('Knock knock…')(), end: () => G.nena.el.classList.remove('gone'), after: () => say('Negin: “I’m up… I’m up…”') },
     ready: { snd: 'brush', after: () => say('Nena: “Okay. I look amazing. Next!” ✨') },
     study: { snd: 'click', after: () => say('Nena: “Chapter done! Simba, stop sitting on my notes.”') },
-    bath: { snd: 'splash', start: () => bathStart(), end: () => releaseSimba(), after: () => say('Simba is clean and fluffy again! 🫧') },
+    bath: { snd: 'splash', start: () => bathStart(), end: () => { burst(STATIONS.tub.x, STATIONS.tub.y - 20, 'bedroom', 'bubbles', 9); burst(STATIONS.tub.x, STATIONS.tub.y - 40, 'bedroom', 'drops', 6); G.muddy = false; refreshSimba(); releaseSimba(); }, after: () => say('Simba is clean and fluffy again! 🫧') },
     poop: { snd: 'swoosh', after: () => say('A neighbour: “What a polite young lady!”') },
     thirst: { snd: 'water', start: () => { if (G.simba) moveTo(G.simba, STATIONS.fountain.x - 40, STATIONS.fountain.y + 70, 0.4); }, after: () => { if (G.simba) moveTo(G.simba, HOMES.street.simba[1], HOMES.street.simba[2], 0.6); } },
     calm: { snd: 'happy', after: () => say('Simba: “*growls at the cat, then lies down*”') },
@@ -909,6 +1100,11 @@
     chai: { snd: 'water', after: () => say('Negin: “Ahh, chai. Wake me up when it’s cold.”') },
     doze: { snd: 'click', after: () => say('Negin: “I wasn’t sleeping! I was… resting my eyes.”') },
     snack: { after: () => say('Mochi time! 🍡') },
+    remote: { after: () => say(pick(['Baba: “My remote! Now, where was I… GOOOAL!”', 'Baba: “Who put it there?! …Nasim.”'])) },
+    plants: { snd: 'water', after: () => { burst(STATIONS.plant.x, STATIONS.plant.y, 'salon', 'stars', 6); burst(STATIONS.plant.x, STATIONS.plant.y + 20, 'salon', 'drops', 5); say(pick(['Nena: “Grow, little plant! 🌱”', 'Nena: “There you go, drink up!”'])); } },
+    dogfriend: { snd: 'happy', start: () => { const b = G.npcs.biscuit; if (G.simba && b && !G.simbaAway) { G.simbaTask = true; walkActor(G.simba, b.x - 100, b.y - 4, null, 160); } },
+      after: () => { const b = G.npcs.biscuit; joy(10); if (G.simba) { simbaHop(); emo(G.simba, '💕', 1600); speak(G.simba, 'WOOF! (Best friend!)', 'dog', 1700); burst(G.simba.x + 40, G.simba.y - 60, 'street', 'hearts', 6); setTimeout(() => { if (!G || !G.simba) return; const h = HOMES.street.simba; walkActor(G.simba, h[1], h[2], () => { if (G) G.simbaTask = false; }, 120); }, 1300); } if (b) emo(b, '💕', 1500); } },
+    selfie: { snd: 'click', start: () => { flashStage(); snd('pop'); }, after: () => say(pick(['Negin: “Perfect! Posting it! #CLAPnight 📸”', 'Negin: “Ugh, my eyes were closed. …It’s fine, posting it.”'])) },
     flowers: { snd: 'fanfare', after: () => giftFrom('flowers') },
     jtext: { snd: 'fail', start: () => G.nena.el.classList.add('talking'), end: () => G.nena.el.classList.remove('talking'), after: () => { track('gift'); toast('📱 Jesus: “' + pick(['Did you like the flowers? 🌹', 'Good morning beautiful ☀️', 'Can I call you? 🥺', 'Coffee tomorrow?']) + '”', '', 1800); speak(G.nena, pick(['Don’t call me, don’t text me EVER again!', 'Stop texting me or I’ll block you!', 'Jesus, NO. Leave me alone!', 'Blocked. …Okay, almost blocked. 😤']), '', 2600, true); } },
     choco: { snd: 'fanfare', after: () => giftFrom('choco') },
@@ -959,7 +1155,7 @@
         G.nena.el.classList.remove('gone'); G.simba.el.classList.remove('gone');
         complete(r, 1);
         const h = HOMES.home.simba;
-        moveTo(G.simba, h[1], h[2], 1.0, () => { G.simba.el.classList.remove('walking'); G.simbaAway = false; });
+        moveTo(G.simba, h[1], h[2], 1.0, () => { G.simba.el.classList.remove('walking'); G.simbaAway = false; joy(4); if (G.cfg.rain && G.cfg.types.includes('bath')) { G.muddy = true; refreshSimba(); speak(G.simba, '*muddy paws* 🐾', 'dog', 1600); setTimeout(() => G && !G.over && addReq('bath'), 1500); } });
         moveTo(G.nena, h[1] - 80, h[2] + 20, 1.0, () => { G.nena.el.classList.remove('walking'); G.busy = null; });
       }, away * 1000);
     });
@@ -1008,6 +1204,7 @@
     G.simbaTask = true;
     G.simba.el.classList.add('walking', 'zoom');
     toast('💨 ZOOMIES! Simba is running all over the living room!', 'combo', 1500);
+    if (G.nena.room === 'salon') setTimeout(() => G && speak(G.nena, pick(['Simbaaa, calm down!', 'Not on the clean floor!', 'Haha, crazy dog!']), '', 1600, true), 400);
     snd('bark');
     const h = HOMES.home.simba;
     const pts = [[180, 640], [470, 700], [420, 560], [200, 720], [h[1], h[2]]];
@@ -1119,6 +1316,13 @@
     const B = SIMBA_ZONE[s.room]; if (!B) return;
     s.el.classList.remove('lying', 'sniff');
     const r = rnd();
+    if (G.joy < 35 && r < 0.45) { s.el.classList.add('lying'); emo(s, '😢', 1800); speak(s, pick(['*whimper*', '*sighs*', '*sad eyes*']), 'dog', 1800); L.t = 5 + rnd() * 3; return; }
+    if (G.joy >= 75 && r < 0.2) {
+      if (G.st.toy && s.room === 'salon') {
+        walkActor(s, G.st.toy.x - 40, G.st.toy.y + 60, () => { if (!G || !G.simba) return; emo(s, '🎾', 1500); simbaHop(); speak(s, '*plays with his ball*', 'dog', 1500); }, 130);
+      } else { s.el.classList.add('spin'); emo(s, '✨', 1200); setTimeout(() => s.el.classList.remove('spin'), 1450); }
+      return;
+    }
     if (r < 0.32) {
       walkActor(s, B[0] + rnd() * (B[2] - B[0]), B[1] + rnd() * (B[3] - B[1]), () => { if (rnd() < 0.5 && G.simba) { s.el.classList.add('sniff'); setTimeout(() => s.el.classList.remove('sniff'), 1600); } }, 105);
     } else if (r < 0.47 && G.nena.room === s.room && !G.nena.el.classList.contains('gone')) {
@@ -1211,7 +1415,7 @@
       if (el.parentNode !== G.layers[G.view]) layer(G.view).appendChild(el);
       const [x, y] = G.nena.room === G.view ? [G.nena.x, G.nena.y - 70] : [-200, -200];
       el.style.background = `radial-gradient(circle at ${x.toFixed(0)}px ${y.toFixed(0)}px, rgba(10,8,24,0) 0, rgba(10,8,24,0) 95px, rgba(10,8,24,.9) 175px)`;
-      if (G.blackout.t <= 0) { el.remove(); G.blackout = null; toast('💡 The power is back!', '', 1200); }
+      if (G.blackout.t <= 0) { const hid = G.blackout.simba; el.remove(); G.blackout = null; toast('💡 The power is back!', '', 1200); if (hid && G.simba) { G.simba.el.classList.remove('lying'); emo(G.simba, ''); const h = HOMES.home.simba; walkActor(G.simba, h[1], h[2], () => { if (G) G.simbaTask = false; }, 120); } }
     }
     if (G.giftT != null) { G.giftT -= dt; if (G.giftT <= 0) { G.giftT = 45 + rnd() * 30; if (c.place === 'home' || c.place === 'clap') addReq(pick(['flowers', 'choco', 'jtext'])); } }
     if (G.evT == null) return;
@@ -1227,6 +1431,9 @@
       if (G.blackout) return;
       const el = document.createElement('div'); el.className = 'blackout';
       G.blackout = { t: 8, el };
+      Object.keys(G.npcs).forEach((w) => { const a = G.npcs[w]; if (a.room === G.view && rnd() < 0.7) { emo(a, '😱', 2000); speak(a, pick(['Aaah!', 'Who turned off the lights?!', 'I can’t see anything!', 'Nena?!']), w.startsWith('witch') ? 'witch' : '', 1800, true); } });
+      if (simbaIdle()) { const s = G.simba; G.simbaTask = true; walkActor(s, 250, 548, () => { if (!G || !G.simba) return; s.el.classList.add('lying'); emo(s, '😨', 7000); speak(s, '*hides behind the sofa*', 'dog', 2000); }, 170); G.blackout.simba = true; }
+      setTimeout(() => G && !G.over && speak(G.nena, pick(['Don’t worry Simba, I’m here!', 'Where are the candles?!', 'Not again!']), '', 1800, true), 900);
       toast('⚡ Blackout in the tower! Baba: “Who touched the fuses?!”', 'bad', 2200); snd('fail');
     } else if (e === 'chase') {
       if (!G.simba || G.simbaAway || G.simbaTask || findReq('simba')) return;
@@ -1317,6 +1524,7 @@
     eventTick(dt);
     photoTick(dt);
     miniTick(dt);
+    if (G.simba) { G.joyT = (G.joyT || 0) + dt; if (G.joyT > 6) { G.joyT = 0; joy(-1); } }
     if (G.cfg.endless) { G.elapsed += dt; G.time = 99999; }
     if (!G.cfg.endless && !G.rushHour && G.time <= 15) { G.rushHour = true; $('g-rush').hidden = false; toast('⏰ Rush hour! Points ×1.5', 'combo', 1800); snd('fanfare'); if (window.Sound) window.Sound.setIntensity(1); }
     if (G.time <= 5 && Math.ceil(G.time) !== G.lastTick) { G.lastTick = Math.ceil(G.time); snd('tick'); }
@@ -1456,10 +1664,12 @@
     put('g-fill', 'width', Math.min(100, (G.score / c.targets[2]) * 100).toFixed(1) + '%');
     put('g-star1', '.on', G.score >= c.targets[0]); put('g-star2', '.on', G.score >= c.targets[1]); put('g-star3', '.on', G.score >= c.targets[2]);
     put('g-hearts', 'html', Array.from({ length: G.maxHearts }, (_, i) => `<i class="${i < G.hearts ? 'on' : ''}">♥</i>`).join(''));
-    put('g-combo', 'html', G.combo > 1 ? `Combo ×${G.combo} <i style="width:${Math.round(Math.max(0, G.comboT / 6) * 20) * 5}%"></i>` : (G.boostT > 0 ? '⚡ Chai rush!' : G.freezeT > 0 ? '❄️ Treat time' : ''));
+    put('g-combo', 'html', G.combo > 1 ? `🔥×${G.combo} <i style="width:${Math.round(Math.max(0, G.comboT / 6) * 20) * 5}%"></i>` : (G.boostT > 0 ? '⚡ Rush!' : G.freezeT > 0 ? '❄️ Freeze' : ''));
     const starsNow = G.score >= c.targets[2] ? 3 : G.score >= c.targets[1] ? 2 : G.score >= c.targets[0] ? 1 : 0;
     if (starsNow > G.starsShown) { G.starsShown = starsNow; snd('coin'); const st = $('g-star' + starsNow); st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop'); }
     put('g-coins', 'text', String(save.coins + G.coins));
+    put('g-joy', '.off', !G.simba);
+    if (G.simba) { const j = Math.round(G.joy); put('g-joyb', 'width', j + '%'); put('g-joyf', 'text', j >= 75 ? '😄' : j >= 45 ? '🙂' : j >= 25 ? '😕' : '😢'); put('g-joy', '.low', j < 35); }
   }
 
   /* ------------------------------------------------------------------ */
@@ -1506,6 +1716,12 @@
     } else if (c.challenge) {
       const first = !(save.chal.date === today() && save.chal.done);
       if (stars > 0 && first) { earned += 60 + stars * 15; save.chal = { date: today(), done: true }; track('challenge'); extra = `<li class="ok"><span>🎯 Daily challenge done!</span><b>+${60 + stars * 15} 🪙</b></li>`; }
+    }
+    if (G.simba && !lost && !c.endless) {
+      const j = Math.round(G.joy), jb = Math.round(j / 5);
+      earned += jb; save.friend.simba = (save.friend.simba || 0) + Math.round(j / 25);
+      if (j >= 100) track('joy100');
+      extra += `<li class="${j >= 45 ? 'ok' : 'ko'}"><span>🐶 Simba’s happiness ${j}% ${j >= 75 ? '😄' : j >= 45 ? '🙂' : '😕'}</span><b>+${jb} 🪙</b></li>`;
     }
     save.coins += earned;
     save.losses = save.losses || {};
@@ -1609,6 +1825,9 @@
     { id: 'admirer', icon: '💐', name: 'Leave me alone, Jesus!', desc: 'Turn Jesus down 5 times', test: (t) => (t.gift || 0) >= 5, r: 60 },
     { id: 'nails', icon: '💅', name: 'Nail day', desc: 'Have your nails done with Leila', test: (t) => (t.nails || 0) >= 1, r: 30 },
     { id: 'mini10', icon: '⚡', name: 'Challenge accepted', desc: 'Win 10 mini challenges', test: (t) => (t.mini || 0) >= 10, r: 70 },
+    { id: 'joy100', icon: '🐶', name: 'Happiest dog', desc: 'End a day with Simba 100% happy', test: (t) => (t.joy100 || 0) >= 1, r: 80 },
+    { id: 'tricks8', icon: '🎓', name: 'Good boy!', desc: 'Simba does 8 tricks in a row', test: () => (save.games.tricksBest || 0) >= 8, r: 70 },
+    { id: 'tahdig', icon: '🍚', name: 'Tahdig queen', desc: 'Score 13+ in Tahdig master', test: () => (save.games.tahdigBest || 0) >= 13, r: 70 },
     { id: 'cuddle10', icon: '🦁', name: 'Baba’s lion', desc: 'Put Simba on Baba’s belly 10 times', test: (t) => (t.req_cuddle || 0) >= 10, r: 60 },
   ];
   const MISSIONS = [
@@ -1619,6 +1838,7 @@
     { k: 'photo', n: 2, label: 'Take 2 Simba photos', r: 100 }, { k: 'req_bread', n: 5, label: 'Buy 5 sangak breads', r: 80 },
     { k: 'gift', n: 3, label: 'Turn Jesus down 3 times', r: 90 },
     { k: 'mini', n: 6, label: 'Win 6 mini challenges', r: 100 },
+    { k: 'pet', n: 15, label: 'Pet Simba 15 times', r: 80 },
     { k: 'challenge', n: 2, label: 'Finish 2 daily challenges', r: 150 }, { k: 'req_cuddle', n: 4, label: 'Put Simba on Baba’s belly 4 times', r: 90 },
   ];
   const DAILY = [20, 30, 40, 50, 60, 80, 150];
@@ -1697,7 +1917,7 @@
       ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
       ['missions', '📋', 'Missions', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
       ['nails', '💅', 'Nail day', nailsReady() ? '!' : ''], ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
-      ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
+      ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
     ];
     $('m-hub').innerHTML = items.map(([id, ico, name, b]) => `<button type="button" class="hub-btn" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^\d+\/\d+$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
   }
@@ -1708,7 +1928,7 @@
   function openSheet(kind) {
     if (kind === 'nails') { startNailDay(); return; }
     sheetKind = kind;
-    const T = { settings: '⚙️ Settings', daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Weekly missions', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
+    const T = { games: '🎮 Mini-games', settings: '⚙️ Settings', daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Weekly missions', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
     $('sh2-title').textContent = T[kind] || '';
     $('sh2-coins').textContent = save.coins;
     $('sh2-body').innerHTML = SHEETS[kind]();
@@ -1716,6 +1936,13 @@
   }
   const bar = (v, n) => `<span class="pbar"><i style="width:${Math.min(100, (v / n) * 100)}%"></i></span>`;
   const SHEETS = {
+    games: () => {
+      const g = save.games, card = (act, ico, name, desc, best, daily) => `<div class="row-card game-card"><span class="rc-i">${ico}</span><span class="rc-t"><b>${name}</b><small>${desc}</small><small class="best">${best}${daily ? ' · <em>daily bonus +20 🪙</em>' : ''}</small></span><button type="button" class="btn btn-primary" data-act="${act}">Play</button></div>`;
+      return card('play-tricks', '🐾', 'Simba’s tricks', 'Watch Simba’s tricks, then repeat them in the same order.', `Best: ${g.tricksBest || 0} tricks`, g.tricksDay !== today())
+        + card('play-tahdig', '🍚', 'Tahdig master', 'Flip Maman’s tahdig at the perfect moment for a golden crust.', `Best: ${g.tahdigBest || 0}/15`, g.tahdigDay !== today())
+        + card('go-sort', '🧪', 'Color Sort', 'Three new glass puzzles every day.', `${sortLeft()} left today`, false)
+        + card('go-nails', '💅', 'Nail day', 'Leila comes once a week.', nailsReady() ? 'Available now!' : 'Done this week', false);
+    },
     settings: () => {
       const row = (k, ico, name, desc, on) => `<div class="row-card"><span class="rc-i">${ico}</span><span class="rc-t"><b>${name}</b><small>${desc}</small></span><button type="button" class="switch${on ? ' on' : ''}" data-act="set" data-k="${k}" aria-pressed="${on}"><i></i></button></div>`;
       return row('sound', '🔊', 'Sound effects', 'Clicks, barks, fanfares', save.sound !== false)
@@ -1760,6 +1987,10 @@
     const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
     const act = b.dataset.act;
     snd('click');
+    if (act === 'play-tricks') { openTricks(); return; }
+    if (act === 'play-tahdig') { openTahdig(); return; }
+    if (act === 'go-sort') { openSheet('sort'); return; }
+    if (act === 'go-nails') { startNailDay(); return; }
     if (act === 'set') { const k = b.dataset.k; save[k] = save[k] === false; persist(); wake(); $('p-sound').textContent = save.sound !== false ? 'Sound: on' : 'Sound: off'; }
     else if (act === 'howto') { showHowTo(); return; }
     else if (act === 'reset-hints') { const keep = save.seen._rooms; save.seen = {}; if (!keep) delete save.seen._rooms; persist(); toast('💡 Hints will show again', '', 1300); }
@@ -1856,6 +2087,115 @@
     $('hw-next').textContent = howI === HOWTO.length - 1 ? 'Let’s go! 🐾' : 'Next ›';
   }
 
+  /* ---- mini-game: Simba's tricks (watch, then repeat) ---- */
+  const TRICKS = [['sit', '🪑', 'Sit', 'lying'], ['paw', '🐾', 'Paw', 'hop'], ['spin', '🌀', 'Spin', 'spin'], ['bark', '🗣️', 'Bark', 'barking']];
+  let TK = null;
+  const tkSay = (t) => { const e = $('tk-say'); e.textContent = t; e.classList.remove('pop'); void e.offsetWidth; e.classList.add('pop'); };
+  function openTricks() {
+    TK = { seq: [], i: 0, state: 'idle' };
+    $('tk-dog').innerHTML = A.simba({ collar: save.collar });
+    $('tk-nena').innerHTML = A.nena({ dressed: true, outfit: save.outfit, nails: nailOf('nena'), eyes: 'open' });
+    $('tk-pads').innerHTML = TRICKS.map(([id, ico, name], i) => `<button type="button" class="pad p${i}" data-t="${i}"><span>${ico}</span>${name}</button>`).join('');
+    $('tk-best').textContent = `Best: ${save.games.tricksBest || 0}`;
+    $('tk-score').textContent = 'Ready?';
+    $('tk-go').hidden = false; $('tk-go').textContent = 'Start';
+    show('screen-tricks'); music('home');
+    tkSay('Watch my tricks, then do them in the same order! Woof!');
+  }
+  function tkDo(t) {
+    const pad = $('tk-pads').children[t]; if (pad) { pad.classList.remove('lit'); void pad.offsetWidth; pad.classList.add('lit'); setTimeout(() => pad.classList.remove('lit'), 320); }
+    const d = $('tk-dog'), cls = TRICKS[t][3];
+    d.classList.remove('lying', 'hop', 'spin', 'barking'); void d.offsetWidth; d.classList.add(cls);
+    setTimeout(() => d.classList.remove(cls), 520);
+    snd('tone', t);
+  }
+  function tkNext() {
+    TK.seq.push(Math.floor(rnd() * 4)); TK.i = 0; TK.state = 'show';
+    $('tk-score').textContent = `Round ${TK.seq.length}`;
+    tkSay(pick(['Watch closely…', 'Look at me!', 'Here we go…']));
+    const gap = Math.max(420, 760 - TK.seq.length * 30);
+    let k = 0;
+    const step = () => { if (!TK || TK.state !== 'show') return; if (k >= TK.seq.length) { TK.state = 'input'; tkSay('Your turn!'); return; } tkDo(TK.seq[k]); k++; setTimeout(step, gap); };
+    setTimeout(step, 700);
+  }
+  function tkPad(t) {
+    if (!TK || TK.state !== 'input') return;
+    tkDo(t);
+    if (t !== TK.seq[TK.i]) { tkEnd(); return; }
+    TK.i++;
+    if (TK.i === TK.seq.length) { TK.state = 'wait'; tkSay(pick(['Good boy! 🦴', 'Woof! 🐾', 'Yes!! ❤️', 'Treat time? 🦴'])); snd('success'); setTimeout(() => TK && TK.state === 'wait' && tkNext(), 900); }
+  }
+  function tkEnd() {
+    const score = TK.seq.length - 1; TK.state = 'over';
+    const daily = save.games.tricksDay !== today();
+    const coins = Math.min(40, score * 3) + (daily && score > 0 ? 20 : 0);
+    if (score > (save.games.tricksBest || 0)) save.games.tricksBest = score;
+    if (daily && score > 0) save.games.tricksDay = today();
+    save.coins += coins; save.friend.simba = (save.friend.simba || 0) + (score >= 3 ? 1 : 0); persist(); checkAch();
+    snd(score >= 5 ? 'win' : 'lose');
+    tkSay(score ? `Oops! ${score} trick${score > 1 ? 's' : ''} in a row. +${coins} 🪙` : 'Oops! Wrong trick. Try again!');
+    $('tk-best').textContent = `Best: ${save.games.tricksBest}`;
+    $('tk-go').hidden = false; $('tk-go').textContent = 'Play again';
+  }
+  /* ---- mini-game: Tahdig master (timing) ---- */
+  let TD = null, tdRaf = 0;
+  const TD_LOOK = { 3: ['#e8a93a', 'Golden and crispy! 😍'], 1: ['#c98a3a', 'Not bad, azizam!'], 0: ['#4a2a12', 'Ay! Burnt… 😅'], '-1': ['#f6ecc8', 'Too pale, still soft!'] };
+  const tdSay = (t) => { const e = $('td-say'); e.textContent = t; e.classList.remove('pop'); void e.offsetWidth; e.classList.add('pop'); };
+  const potSvg = (col) => `<svg viewBox="0 0 200 150"><ellipse cx="100" cy="132" rx="84" ry="10" fill="rgba(0,0,0,.15)"/><path d="M22 52 h156 l-10 74 q-68 14 -136 0z" fill="#3a3550"/><rect x="14" y="44" width="172" height="14" rx="7" fill="#4a4570"/><rect x="2" y="48" width="22" height="8" rx="4" fill="#2a2740"/><rect x="176" y="48" width="22" height="8" rx="4" fill="#2a2740"/>${col ? `<ellipse cx="100" cy="44" rx="78" ry="16" fill="${col}"/><path d="M40 42 q20 -8 40 0 M96 40 q20 -8 40 0" stroke="rgba(255,255,255,.35)" stroke-width="3" fill="none"/>` : '<ellipse cx="100" cy="44" rx="78" ry="16" fill="#fff8e6"/><g fill="#f3e2b8">' + [...Array(16)].map((_, i) => `<ellipse cx="${36 + (i % 8) * 18}" cy="${38 + Math.floor(i / 8) * 9}" rx="5" ry="2.4"/>`).join('') + '</g>'}</svg>`;
+  function openTahdig() {
+    TD = { pot: 0, pts: 0, res: [], run: false };
+    $('td-maman').innerHTML = A.person('fariba', { mood: 'happy' });
+    $('td-pot').innerHTML = potSvg(null);
+    $('td-pots').innerHTML = [0, 1, 2, 3, 4].map(() => '<i></i>').join('');
+    $('td-best').textContent = `Best: ${save.games.tahdigBest || 0}/15`;
+    $('td-score').textContent = '0 pts';
+    $('td-zone').style.cssText = 'left:40%;width:20%'; $('td-needle').style.left = '0%';
+    $('td-go').textContent = 'Start'; show('screen-tahdig'); music('home');
+    tdSay('Nena jan, the secret of tahdig is timing! Tap FLIP when the needle is in the gold.');
+  }
+  function tdPot() {
+    const w = [30, 24, 19, 15, 12][TD.pot];
+    TD.zone = [8 + rnd() * (84 - w), w]; TD.x = 0; TD.dir = 1; TD.speed = 52 + TD.pot * 15; TD.run = true;
+    $('td-zone').style.cssText = `left:${TD.zone[0]}%;width:${w}%`;
+    $('td-near').style.cssText = `left:${Math.max(0, TD.zone[0] - 8)}%;width:${Math.min(100, w + 16)}%`;
+    $('td-pot').innerHTML = potSvg(null); $('td-pot').classList.remove('flip');
+    $('td-go').textContent = 'FLIP! 🍳';
+    tdSay(pick(['The rice is sizzling…', 'Wait for it…', 'Listen to the crackle…', 'Almost… almost…']));
+    let last = performance.now();
+    cancelAnimationFrame(tdRaf);
+    const tick = (now) => {
+      if (!TD || !TD.run || $('screen-tahdig').hidden) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      TD.x += TD.dir * TD.speed * dt;
+      if (TD.x >= 100) { TD.x = 100; TD.dir = -1; } else if (TD.x <= 0) { TD.x = 0; TD.dir = 1; }
+      $('td-needle').style.left = TD.x.toFixed(1) + '%';
+      tdRaf = requestAnimationFrame(tick);
+    };
+    tdRaf = requestAnimationFrame(tick);
+  }
+  function tdFlip() {
+    if (!TD) return;
+    if (!TD.run) { if (TD.pot === 0 || TD.pot >= 5) { TD = { pot: 0, pts: 0, res: [], run: false }; $('td-pots').innerHTML = [0, 1, 2, 3, 4].map(() => '<i></i>').join(''); $('td-score').textContent = '0 pts'; tdPot(); } return; }
+    TD.run = false; cancelAnimationFrame(tdRaf);
+    const [z0, w] = TD.zone, c = z0 + w / 2, d = Math.abs(TD.x - c);
+    const res = d <= w / 2 ? 3 : d <= w / 2 + 8 ? 1 : TD.x < c ? -1 : 0;
+    TD.pts += Math.max(0, res); TD.res.push(res);
+    const [col, line] = TD_LOOK[res];
+    $('td-pot').innerHTML = potSvg(col); const pot = $('td-pot'); pot.classList.remove('flip'); void pot.offsetWidth; pot.classList.add('flip');
+    $('td-pots').children[TD.pot].style.background = col;
+    $('td-score').textContent = `${TD.pts} pts`;
+    $('td-maman').innerHTML = A.person('fariba', { mood: res === 3 ? 'happy' : res === 1 ? 'neutral' : 'surprised' });
+    tdSay(line); snd(res === 3 ? 'success' : res === 1 ? 'pop' : 'fail');
+    TD.pot++;
+    if (TD.pot < 5) { $('td-go').textContent = '…'; setTimeout(() => TD && !$('screen-tahdig').hidden && tdPot(), 1200); return; }
+    const daily = save.games.tahdigDay !== today();
+    const coins = TD.pts * 2 + (daily && TD.pts > 0 ? 20 : 0);
+    if (TD.pts > (save.games.tahdigBest || 0)) save.games.tahdigBest = TD.pts;
+    if (daily && TD.pts > 0) save.games.tahdigDay = today();
+    save.coins += coins; save.friend.fariba = (save.friend.fariba || 0) + (TD.pts >= 9 ? 1 : 0); persist(); checkAch();
+    setTimeout(() => { if (!TD) return; tdSay(TD.pts >= 13 ? `Perfect! You are a real tahdig queen! +${coins} 🪙` : TD.pts >= 8 ? `Very good, azizam! ${TD.pts}/15 · +${coins} 🪙` : `Practice makes perfect! ${TD.pts}/15 · +${coins} 🪙`); snd(TD.pts >= 8 ? 'win' : 'lose'); $('td-go').textContent = 'Play again'; $('td-best').textContent = `Best: ${save.games.tahdigBest}/15`; }, 900);
+  }
+
   /* ---- custom days: challenge and endless ---- */
   let CUSTOM = null;
   function challengeCfg(c) {
@@ -1902,7 +2242,7 @@
   /* Screens: title, map, story, shop                                    */
   /* ------------------------------------------------------------------ */
   function show(id) {
-    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
+    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
   }
   function renderMap() {
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
@@ -2052,6 +2392,11 @@
   $('na-body').addEventListener('click', (e) => { if (ND && ND.i < 99) nailsClick(e); });
   $('na-done').addEventListener('click', () => { if (!ND) return; if (ND.i === 99) { ND = null; renderMap(); } else nailsNext(); });
   $('na-back').addEventListener('click', () => { ND = null; renderMap(); });
+  $('tk-pads').addEventListener('pointerdown', (e) => { const b = e.target.closest('[data-t]'); if (b) tkPad(+b.dataset.t); });
+  $('tk-go').addEventListener('click', () => { snd('click'); $('tk-go').hidden = true; TK = { seq: [], i: 0, state: 'show' }; tkNext(); });
+  $('tk-back').addEventListener('click', () => { TK = null; snd('click'); openSheet('games'); });
+  $('td-go').addEventListener('click', () => tdFlip());
+  $('td-back').addEventListener('click', () => { if (TD) TD.run = false; cancelAnimationFrame(tdRaf); TD = null; snd('click'); openSheet('games'); });
   $('m-hub').addEventListener('click', (e) => { const b = e.target.closest('[data-hub]'); if (b) { snd('tab'); openSheet(b.dataset.hub); } });
   $('sh2-body').addEventListener('click', sheetAction);
   let sheetBackToPause = false;

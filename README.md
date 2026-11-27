@@ -29,3 +29,11 @@ Serve the folder (`python3 -m http.server`) and open it, or install it from the 
 - Family friendship levels with unlockable scenes, 16 trophies, a Simba photo album (tap the 📸 when Simba does something cute).
 - Decorate the flat (decor shows up in the rooms), wardrobe for Nena and collars for Simba, Endless mode with a high score.
 - Story chapters with ending scenes and a boss day: Cousin Sara's wedding. Surprise events: blackouts, Aunt Mahin, CLAP VIPs, the witches' curse, Simba the sangak thief.
+
+## Life & feelings
+
+- Faces change with patience (happy → neutral → angry), emotion icons (💢 ❤️ 😢 ❗ 💦), thank-you and grumpy lines, reactions to blackouts and gifts.
+- Simba's happiness meter: care, play and cuddles raise it; neglect lowers it. Tap Simba to pet him (belly rubs, licks, high fives). He barks at the doorbell, hides during blackouts, comes back muddy from rainy walks, wears a party hat on his birthday and has a shiba friend, Biscuit.
+- New activities: find Baba's lost remote (search the ❓ spots), water the plant, Simba's playdate with Biscuit, Negin's Instagram selfie at CLAP.
+- Living decor: wall clock, birds, rain on the windows, twinkling city lights, a football match on the TV, fairy lights, pigeons and a cat in the street, birthday and wedding decorations.
+- New mini-games: Simba's tricks (memory) and Tahdig master (timing), next to Color Sort and Nail day.

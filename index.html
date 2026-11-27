@@ -77,6 +77,7 @@
       <div class="hud-row small">
         <span class="hearts" id="g-hearts">♥♥♥♥♥</span>
         <span class="hud-score-w">⭐ <b class="hud-score" id="g-score">0</b></span>
+        <span class="joy" id="g-joy" title="Simba’s happiness"><b id="g-joyf">🙂</b><i class="joy-bar"><i id="g-joyb"></i></i></span>
         <span class="combo" id="g-combo"></span>
         <span class="rush-badge" id="g-rush" hidden>Rush ×1.5</span>
         <span class="pill coin">🪙 <b id="g-coins">0</b></span>
@@ -182,6 +183,41 @@
       <div class="hw-dots" id="hw-dots"></div>
       <button type="button" class="btn btn-primary btn-big" id="hw-next">Next ›</button>
     </div>
+  </section>
+
+  <!-- Mini-game: Simba's tricks -->
+  <section class="screen game2 tricks" id="screen-tricks" hidden>
+    <header class="bar">
+      <button type="button" class="icon-btn" id="tk-back" aria-label="Back">‹</button>
+      <h2>🐾 Simba’s tricks <small id="tk-best"></small></h2>
+      <span class="pill" id="tk-score">Ready?</span>
+    </header>
+    <div class="g2-stage tk-stage">
+      <div class="say g2-say" id="tk-say"></div>
+      <div class="g2-win" aria-hidden="true"></div><div class="tk-rug" aria-hidden="true"></div>
+      <div class="tk-nena" id="tk-nena"></div>
+      <div class="actor simba tk-dog" id="tk-dog"></div>
+    </div>
+    <div class="tk-pads" id="tk-pads"></div>
+    <footer class="map-foot"><button type="button" class="btn btn-primary btn-big" id="tk-go">Start</button></footer>
+  </section>
+
+  <!-- Mini-game: Tahdig master -->
+  <section class="screen game2 tahdig" id="screen-tahdig" hidden>
+    <header class="bar">
+      <button type="button" class="icon-btn" id="td-back" aria-label="Back">‹</button>
+      <h2>🍚 Tahdig master <small id="td-best"></small></h2>
+      <span class="pill" id="td-score">0 pts</span>
+    </header>
+    <div class="g2-stage td-stage">
+      <div class="td-tiles" aria-hidden="true"></div><div class="td-counter" aria-hidden="true"></div>
+      <div class="td-maman" id="td-maman"></div>
+      <div class="say g2-say" id="td-say"></div>
+      <div class="td-pot" id="td-pot"></div>
+    </div>
+    <div class="td-gauge"><i class="td-near" id="td-near"></i><i class="td-zone" id="td-zone"></i><i class="td-needle" id="td-needle"></i></div>
+    <div class="td-pots" id="td-pots"></div>
+    <footer class="map-foot"><button type="button" class="btn btn-primary btn-big" id="td-go">Start</button></footer>
   </section>
 
   <!-- Pause -->

@@ -190,6 +190,7 @@ window.Art = (function () {
       ${eyes}
       <path d="M45 85 q3.5 3 7 0 q3.5 3 7 0" stroke="#2a2130" stroke-width="2" fill="none" stroke-linecap="round"/>
       ${tongue}
+      ${o.hat === 'party' ? '<g class="party-hat"><path d="M37 40 L52 1 L67 40 Q52 47 37 40Z" fill="#7a5cff"/><path d="M42 28 L62 28 M46 17 L58 17" stroke="#ffd36b" stroke-width="4" stroke-linecap="round"/><path d="M39 36 L65 36" stroke="#ef6fa3" stroke-width="4" stroke-linecap="round"/><circle cx="52" cy="2" r="5.5" fill="#ffd36b"/></g>' : ''}
       </g>
     </svg>`;
   }

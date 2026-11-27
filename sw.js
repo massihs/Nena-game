@@ -1,5 +1,5 @@
 /* Service worker: caches the game so it plays offline. */
-const CACHE = 'nena-simba-v27-ten';
+const CACHE = 'nena-simba-v28-alive';
 const SHELL = [
   './', './index.html', './style.css', './manifest.webmanifest',
   './js/art.js', './js/audio.js', './js/rooms-art.js', './js/sort.js', './js/rush.js',

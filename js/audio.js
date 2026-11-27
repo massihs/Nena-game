@@ -121,6 +121,7 @@ window.Sound = (function () {
     swoosh() { const t = ctx.currentTime; noise(t, 0.3, 1200, 0.7, 0.16); },
     splash() { const t = ctx.currentTime; noise(t, 0.4, 600, 0.9, 0.3); },
     talk(pitch) { const t = ctx.currentTime; note((pitch || 520) * (0.9 + Math.random() * 0.25), t, 0.05, { type: 'triangle', vol: 0.05 }); },
+    tone(i) { const t = ctx.currentTime, f = [392, 494, 587, 784][i || 0]; note(f, t, 0.38, { type: 'triangle', vol: 0.13 }); note(f * 2, t, 0.22, { type: 'sine', vol: 0.04 }); },
     chime() { const t = ctx.currentTime; [1047, 1319, 1568].forEach((f, i) => note(f, t + i * 0.05, 0.5, { type: 'sine', vol: 0.07 })); },
     star(i) { const t = ctx.currentTime, f = [784, 988, 1175][i || 0]; note(f, t, 0.5, { type: 'triangle', vol: 0.12 }); note(f * 1.5, t + 0.06, 0.4, { type: 'sine', vol: 0.06 }); },
     win() { const t = ctx.currentTime; [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => note(f, t + i * 0.12, i === 6 ? 0.9 : 0.3, { type: 'triangle', vol: 0.11 })); },

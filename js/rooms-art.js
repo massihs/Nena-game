@@ -323,14 +323,51 @@
   };
   /* small living details: steam, TV flicker, smoke, lantern glow, clouds */
   const puffs = (n) => '<i></i>'.repeat(n);
+  // what you see through a window: birds by day, twinkling city lights at night, rain on rainy days
+  const winFx = (c, x, y, w, h) => {
+    if (c.rain) return [{ cls: 'rainfx', x, y, w, h, html: puffs(6) }];
+    if (c.night) return [{ cls: 'twinkle', x, y: y + h * 0.48, w, h: h * 0.5, html: [...Array(12)].map((_, i) => `<i style="left:${(hash(i * 3.1 + x) * 96).toFixed(1)}%;top:${(hash(i * 7.7 + y) * 90).toFixed(1)}%;animation-delay:-${(hash(i + x) * 3).toFixed(2)}s"></i>`).join('') }];
+    return [{ cls: 'birds', x, y: y + 10, w, h: h * 0.4, html: '<i></i><i></i><i></i>' }, { cls: 'sky', x, y, w, h: Math.min(140, h * 0.45), html: `<div class="cloud" style="position:absolute;top:18px;width:70px;height:16px;--cw:${w + 80}px"></div><div class="cloud" style="position:absolute;top:58px;width:50px;height:12px;--cw:${w + 80}px;animation-delay:-17s"></div>` }];
+  };
+  const clockFx = (x, y) => ({ cls: 'clock', x: x - 30, y: y - 30, w: 60, h: 60, html: '<i class="h"></i><i class="m"></i><b></b>' });
+  const pigeon = '<svg viewBox="0 0 40 30"><ellipse cx="20" cy="19" rx="12" ry="8" fill="#8e96a3"/><circle cx="31" cy="12" r="6" fill="#7a8290"/><path d="M36 12 l5 1.5 -5 1.5z" fill="#e0a43a"/><circle cx="32.5" cy="10.5" r="1.3" fill="#1c1a24"/><path d="M10 17 q-8 -2 -10 3 q6 2 12 0z" fill="#6a7280"/><path d="M17 26 v4 M23 26 v4" stroke="#d0705a" stroke-width="1.6"/></svg>';
+  const cat = '<svg viewBox="0 0 50 50"><path d="M14 46 q-2 -20 11 -24 q13 4 11 24z" fill="#3a3550"/><circle cx="25" cy="18" r="9" fill="#3a3550"/><path d="M17 13 l2 -9 5 6z M33 13 l-2 -9 -5 6z" fill="#3a3550"/><circle cx="21.5" cy="18" r="1.6" fill="#ffd36b"/><circle cx="28.5" cy="18" r="1.6" fill="#ffd36b"/><path class="cat-tail" d="M35 44 q14 -2 12 -16" stroke="#3a3550" stroke-width="4" fill="none" stroke-linecap="round"/></svg>';
+  const balloons = (cols) => cols.map((col, i) => `<span class="balloon" style="left:${i * 26}px;animation-delay:-${i * 0.9}s"><b style="background:${col}"></b><i></i></span>`).join('');
   const FX = {
-    kitchen: () => [{ cls: 'steam', x: 288, y: 186, w: 30, h: 40, html: puffs(3) }, { cls: 'steam', x: 228, y: 488, w: 30, h: 40, html: puffs(3) }],
-    tv: () => [{ cls: 'flicker', x: 328, y: 104, w: 234, h: 134 }],
+    kitchen: (c) => [{ cls: 'steam', x: 288, y: 186, w: 30, h: 40, html: puffs(3) }, { cls: 'steam', x: 228, y: 488, w: 30, h: 40, html: puffs(3) }].concat(winFx(c, 150, 22, 300, 226)),
+    tv: (c) => [{ cls: 'flicker', x: 328, y: 104, w: 234, h: 134 }, { cls: 'match', x: 328, y: 104, w: 234, h: 134, html: '<i class="ball"></i><i class="p a"></i><i class="p b"></i><i class="p c"></i>' }].concat(winFx(c, 46, 22, 240, 364)),
     clap: () => [{ cls: 'smoke', x: 312, y: 436, w: 24, h: 40, html: puffs(3) }, { cls: 'smoke', x: 226, y: 350, w: 24, h: 40, html: puffs(3) }]
       .concat([[90, 50], [210, 64], [470, 50], [560, 64]].map(([x, y]) => ({ cls: 'glow', x: x - 46, y: y - 46, w: 92, h: 92 }))),
-    salon: (c) => (c.night || c.rain ? [] : [{ cls: 'sky', x: 104, y: 22, w: 398, h: 140, html: '<div class="cloud" style="position:absolute;top:22px;width:80px;height:18px;--cw:420px"></div><div class="cloud" style="position:absolute;top:70px;width:56px;height:14px;--cw:420px;animation-delay:-19s"></div>' }]),
-    bedroom: (c) => (c.night || c.rain ? [] : [{ cls: 'sky', x: 24, y: 22, w: 262, h: 120, html: '<div class="cloud" style="position:absolute;top:30px;width:60px;height:14px;--cw:300px"></div>' }]),
+    salon: (c) => [clockFx(556, 104)].concat(winFx(c, 104, 22, 398, 364)).concat(c.party === 'birthday' ? [{ cls: 'balloons', x: 10, y: 40, w: 90, h: 160, html: balloons(['#ef6fa3', '#ffd36b', '#7fb2ff']) }, { cls: 'candles', x: 74, y: 556, w: 44, h: 20, html: puffs(3) }] : c.party === 'wedding' ? [{ cls: 'balloons', x: 10, y: 40, w: 90, h: 160, html: balloons(['#ffffff', '#f3e2b8', '#ffd1e6']) }] : []),
+    bedroom: (c) => [{ cls: 'fairy', x: 0, y: 0, w: 600, h: 120, html: [...Array(12)].map((_, i) => `<i style="left:${40 + i * 27 - 5}px;top:${(46 + Math.sin(i) * 6 - 5).toFixed(1)}px;animation-delay:-${(i * 0.37).toFixed(2)}s;background:${['#ffd98a', '#ef8fb0', '#86d1ff'][i % 3]}"></i>`).join('') }].concat(winFx(c, 24, 22, 262, 300)),
+    hall: (c) => winFx(c, 30, 24, 540, 150),
+    street: (c) => [{ cls: 'pigeons', x: 70, y: 222, w: 110, h: 40, html: `<i>${pigeon}</i><i>${pigeon}</i>` }, { cls: 'cat', x: 500, y: 214, w: 44, h: 44, html: cat }].concat(c.night ? [] : [{ cls: 'birds', x: 0, y: 30, w: 600, h: 120, html: '<i></i><i></i><i></i>' }]),
+  };
+  // special days: Simba's birthday and Cousin Sara's wedding
+  const bunting = (x0, x1, y, sag, cols) => {
+    let o = `<path d="M${x0} ${y} Q${(x0 + x1) / 2} ${y + sag * 2} ${x1} ${y}" stroke="#7a5c4e" stroke-width="2" fill="none"/>`;
+    const n = Math.floor((x1 - x0) / 26);
+    for (let i = 0; i <= n; i++) { const t = i / n, x = x0 + (x1 - x0) * t, yy = y + sag * 4 * t * (1 - t); o += `<path d="M${(x - 9).toFixed(0)} ${yy.toFixed(0)} L${(x + 9).toFixed(0)} ${yy.toFixed(0)} L${x.toFixed(0)} ${(yy + 18).toFixed(0)}Z" fill="${cols[i % cols.length]}"/>`; }
+    return o;
+  };
+  const banner = (cx, y, w, txt, bg, fg) => `<g><path d="M${cx - w / 2 - 14} ${y + 4} l14 12 -14 12 h20 v-24z M${cx + w / 2 + 14} ${y + 4} l-14 12 14 12 h-20 v-24z" fill="${bg}" opacity=".8"/><rect x="${cx - w / 2}" y="${y}" width="${w}" height="34" rx="6" fill="${bg}"/><text x="${cx}" y="${y + 23}" text-anchor="middle" font-size="17" font-family="Baloo 2, sans-serif" font-weight="800" fill="${fg}">${txt}</text></g>`;
+  const BDAY = ['#ef6fa3', '#ffd36b', '#7fb2ff', '#7fe0b4', '#c48bff'], WED = ['#ffffff', '#f3e2b8', '#ffd1e6', '#e0c27a'];
+  const cake = (x, y) => `<g><ellipse cx="${x}" cy="${y + 64}" rx="34" ry="8" fill="rgba(0,0,0,.15)"/><rect x="${x - 3}" y="${y + 30}" width="6" height="34" fill="#8a5a3a"/><ellipse cx="${x}" cy="${y + 30}" rx="34" ry="9" fill="#b07a48"/><rect x="${x - 24}" y="${y + 2}" width="48" height="24" rx="5" fill="#f6c3d3"/><path d="M${x - 24} ${y + 8} q6 6 12 0 q6 6 12 0 q6 6 12 0 q6 6 12 0" stroke="#fff" stroke-width="3" fill="none"/><rect x="${x - 15}" y="${y - 14}" width="30" height="18" rx="4" fill="#fff3f7"/>${[-8, 0, 8].map((d) => `<rect x="${x + d - 1.5}" y="${y - 26}" width="3" height="12" fill="${['#7fb2ff', '#ffd36b', '#ef6fa3'][(d + 8) / 8]}"/>`).join('')}</g>`;
+  const garland = (x0, x1, y) => { let o = ''; for (let x = x0; x <= x1; x += 22) o += `<circle cx="${x}" cy="${y + Math.sin(x * 0.05) * 6}" r="7" fill="${x % 44 ? '#ffd1e6' : '#ffffff'}" stroke="#e0c27a" stroke-width="1.2"/>`; return o; };
+  const PARTY = {
+    birthday: {
+      salon: bunting(110, 496, 30, 18, BDAY) + banner(303, 120, 250, 'HAPPY BIRTHDAY SIMBA! 🐾', '#c9496f', '#fff') + cake(96, 560),
+      kitchen: bunting(150, 450, 30, 14, BDAY),
+      tv: bunting(50, 286, 30, 12, BDAY),
+      hall: bunting(36, 564, 30, 14, BDAY),
+    },
+    wedding: {
+      salon: bunting(110, 496, 30, 18, WED) + garland(120, 490, 70) + banner(303, 120, 230, 'Mobarak, Sara & Ali! 💍', '#e0c27a', '#3f2a22'),
+      kitchen: bunting(150, 450, 30, 14, WED),
+      tv: bunting(50, 286, 30, 12, WED),
+      hall: bunting(36, 564, 30, 14, WED) + garland(40, 560, 190),
+    },
   };
 
-  window.RoomArt = { defs, ART, PROPS, LIGHT, FX };
+  window.RoomArt = { defs, ART, PROPS, LIGHT, FX, PARTY };
 })();
