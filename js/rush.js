@@ -9,6 +9,7 @@
   const A = window.Art;
   const RA = window.RoomArt;
   const snd = (n, a) => { if (save.sound !== false && window.Sound) window.Sound.play(n, a); };
+  const music = (name, night) => { if (!window.Sound) return; window.Sound.setTrack(name); window.Sound.setNight(!!night); window.Sound.setIntensity(0); };
   const buzz = (p) => { try { if (save.vibe !== false && navigator.vibrate) navigator.vibrate(p); } catch (e) { /* */ } };
   const rnd = Math.random;
   const pick = (a) => a[Math.floor(rnd() * a.length)];
@@ -240,6 +241,7 @@
   function startLevel(n) {
     const cfg = levelCfg(n);
     cancelAnimationFrame(raf);
+    music({ home: 'home', street: 'street', clap: 'clap' }[cfg.place] || 'home', cfg.night);
     $('s-bg').innerHTML = ''; $('s-bg').dataset.p = '';  // its gradients would shadow the room's
     const W = levelWorld(cfg);
     const st = stage();
@@ -1316,8 +1318,8 @@
     photoTick(dt);
     miniTick(dt);
     if (G.cfg.endless) { G.elapsed += dt; G.time = 99999; }
-    if (!G.cfg.endless && !G.rushHour && G.time <= 15) { G.rushHour = true; $('g-rush').hidden = false; toast('⏰ Rush hour! Points ×1.5', 'combo', 1800); snd('fanfare'); }
-    if (G.time <= 5 && Math.ceil(G.time) !== G.lastTick) { G.lastTick = Math.ceil(G.time); snd('click'); }
+    if (!G.cfg.endless && !G.rushHour && G.time <= 15) { G.rushHour = true; $('g-rush').hidden = false; toast('⏰ Rush hour! Points ×1.5', 'combo', 1800); snd('fanfare'); if (window.Sound) window.Sound.setIntensity(1); }
+    if (G.time <= 5 && Math.ceil(G.time) !== G.lastTick) { G.lastTick = Math.ceil(G.time); snd('tick'); }
     if (up('robot') && G.furs.length) { G.robotT -= dt; if (G.robotT <= 0) { const f = G.furs.find((x) => !x.puddle) || G.furs[0]; f.el.remove(); G.furs = G.furs.filter((x) => x !== f); floatText(f.x, f.y - 20, '🤖', 'hint', 'salon'); G.robotT = 8; } }
     // patience
     if (G.freezeT > 0) G.freezeT -= dt;
@@ -1346,6 +1348,14 @@
         else { G.busy = { t: 0, dur: act.dur, done: act.done, id: q.id, r: q.r }; if (act.snd) snd(act.snd); if (act.start) act.start(); if (act.dur > 0.5) { G.bar.hidden = false; G.nena.el.classList.add('working'); } }
       }
     }
+    // safety net: never leave Nena stuck
+    if (G.busy) {
+      G.busy.age = (G.busy.age || 0) + dt;
+      if ((G.busy.walking && G.busy.age > 12) || (!G.busy.walking && G.busy.age > G.busy.dur + 3)) {
+        G.busy = null; G.bar.hidden = true; G.simbaAway = false; G.simbaTask = false;
+        G.nena.el.classList.remove('gone', 'working', 'walking'); if (G.simba) G.simba.el.classList.remove('gone', 'walking');
+      }
+    } else if (G.nena.el.classList.contains('gone') && !G.intro) G.nena.el.classList.remove('gone');
     if (G.busy && !G.busy.walking) {
       G.busy.t += dt;
       G.bar.style.transform = `translate(${G.nena.x - 34}px, ${G.nena.y - G.nena.h - 26}px)`;
@@ -1523,7 +1533,9 @@
     $('screen-result').hidden = false;
     const tot = document.querySelector('#r-lines li.total b');
     if (tot) { const goal = final, t0 = performance.now(); const step = (t) => { const k = Math.min(1, (t - t0) / 900); tot.textContent = Math.round(goal * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); }
-    snd(stars >= 2 ? 'fanfare' : stars ? 'success' : 'fail');
+    snd(stars ? 'win' : 'lose');
+    if (window.Sound) window.Sound.setIntensity(0);
+    for (let i = 0; i < stars; i++) setTimeout(() => snd('star', i), 450 + i * 220);
     if (stars === 3) confetti();
     checkAch();
   }
@@ -1710,7 +1722,7 @@
         + row('music', '🎵', 'Music', 'Soft background music', save.music !== false)
         + row('vibe', '📳', 'Vibration', 'Little buzzes on your phone', save.vibe !== false)
         + row('hints', '💡', 'Tutorial hints', 'Explain new tasks the first time', save.hints !== false)
-        + `<button type="button" class="btn" data-act="reset-hints">↺ Show all tutorial hints again</button>`;
+        + `<button type="button" class="btn" data-act="howto">❓ How to play</button><button type="button" class="btn" data-act="reset-hints">↺ Show all tutorial hints again</button>`;
     },
     daily: () => {
       const streak = save.daily.last === today() ? save.daily.streak : (save.daily.last === dayKey(-1) ? save.daily.streak + 1 : 1);
@@ -1749,6 +1761,7 @@
     const act = b.dataset.act;
     snd('click');
     if (act === 'set') { const k = b.dataset.k; save[k] = save[k] === false; persist(); wake(); $('p-sound').textContent = save.sound !== false ? 'Sound: on' : 'Sound: off'; }
+    else if (act === 'howto') { showHowTo(); return; }
     else if (act === 'reset-hints') { const keep = save.seen._rooms; save.seen = {}; if (!keep) delete save.seen._rooms; persist(); toast('💡 Hints will show again', '', 1300); }
     else if (act === 'claim-daily') {
       const streak = save.daily.last === dayKey(-1) ? save.daily.streak + 1 : 1;
@@ -1827,6 +1840,22 @@
     $('na-done').textContent = 'Back to the map'; $('na-done').disabled = false; ND.i = 99;
   }
 
+  /* ---- how to play (first launch, and from settings) ---- */
+  const HOWTO = [
+    ['👆', 'Tap a request', 'Tap a bubble above someone, or the character. Nena plans every step by herself: fetch, walk, deliver.'],
+    ['🏠', 'Move between rooms', 'The room cards at the bottom show who needs what. Tap a card, swipe the floor or use the side arrows.'],
+    ['⏱️', 'Be quick', 'The ring around each bubble empties. Fast service = more points, combos and tips. Missing one costs a heart.'],
+    ['⭐', 'Earn stars', 'Reach the score goals for 1, 2 or 3 stars. Golden spots and dotted paths show what to do next.'],
+  ];
+  let howI = 0, howAfter = null;
+  function showHowTo(after) { howI = 0; howAfter = after || null; renderHow(); $('screen-howto').hidden = false; }
+  function renderHow() {
+    const [ico, t, d] = HOWTO[howI];
+    $('hw-card').innerHTML = `<span class="hw-i">${ico}</span><h3>${t}</h3><p>${d}</p>`;
+    $('hw-dots').innerHTML = HOWTO.map((_, i) => `<i class="${i === howI ? 'on' : ''}"></i>`).join('');
+    $('hw-next').textContent = howI === HOWTO.length - 1 ? 'Let’s go! 🐾' : 'Next ›';
+  }
+
   /* ---- custom days: challenge and endless ---- */
   let CUSTOM = null;
   function challengeCfg(c) {
@@ -1838,7 +1867,8 @@
 
   /* ---- story scenes (chapter endings, friendship) ---- */
   let storyAfter = null, storyTitle = '';
-  function playScene(lines, title, after) { storyLines = lines.slice(); storyAfter = after; storyTitle = title; show('screen-story'); nextLine(); }
+  let storyPlace = null;
+  function playScene(lines, title, after, place) { storyLines = lines.slice(); storyAfter = after; storyTitle = title; storyPlace = place || null; show('screen-story'); nextLine(); }
 
   /* ---- Color Sort screen ---- */
   let sortLv = 0;
@@ -1917,6 +1947,7 @@
     html = `<div class="path" style="height:${H}px">${bands}${deco}<svg class="path-line" viewBox="0 0 100 ${H}" preserveAspectRatio="none" style="height:${H}px"><path d="${d}" class="pl-all"/><path d="${dDone}" class="pl-done"/></svg>${html}</div>`;
     $('m-levels').innerHTML = html;
     renderHub();
+    music('menu');
     show('screen-map');
     if (dailyReady() && !dailyShown) { dailyShown = true; setTimeout(() => openSheet('daily'), 350); }
     const cur = document.querySelector('.node.current');
@@ -1926,7 +1957,7 @@
   const NAMES = { leila: 'Leila', courier: 'Delivery', aunt: 'Aunt Mahin', pourya: 'Pourya', nena: 'Nena', simba: 'Simba', mohsen: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin' };
   let storyLines = [], storyLevel = 1;
   function playStory(n) {
-    CUSTOM = null; storyAfter = null; storyTitle = '';
+    CUSTOM = null; storyAfter = null; storyTitle = ''; storyPlace = null;
     storyLevel = n;
     storyLines = (levelCfg(n).story || []).slice();
     show('screen-story');
@@ -1939,7 +1970,7 @@
     $('s-portrait').innerHTML = A.portrait(who, mood);
     $('s-name').textContent = NAMES[who] || who;
     $('s-text').textContent = text;
-    const place = storyTitle ? (storyTitle.includes('Nail') ? 'bedroom' : 'salon') : ({ home: 'salon', street: 'street', clap: 'clap' }[levelCfg(storyLevel).place] || 'salon');
+    const place = storyPlace || storyTitle ? (storyPlace || (storyTitle.includes('Nail') ? 'bedroom' : 'salon')) : ({ home: 'salon', street: 'street', clap: 'clap' }[levelCfg(storyLevel).place] || 'salon');
     if ($('s-bg').dataset.p !== place) { $('s-bg').dataset.p = place; const c = levelCfg(storyLevel); $('s-bg').innerHTML = `<svg width="0" height="0" style="position:absolute">${RA.defs(c)}</svg>` + RA.ART[place](c); }
     $('s-day').textContent = storyTitle || `Day ${storyLevel} · ${levelCfg(storyLevel).day}`;
     snd('talk', 600);
@@ -1974,6 +2005,7 @@
   /* Events                                                              */
   /* ------------------------------------------------------------------ */
   function wake() { if (window.Sound) { window.Sound.init(); window.Sound.setEnabled(save.sound !== false); window.Sound.setMusic(save.sound !== false && save.music !== false); } }
+  document.addEventListener('pointerdown', function first() { wake(); document.removeEventListener('pointerdown', first); }, { once: true });
   $('stage').addEventListener('pointerdown', onTap);
   window.addEventListener('pointerup', onSwipeEnd);
   $('g-rooms').addEventListener('pointerdown', onTabs);
@@ -1994,6 +2026,7 @@
   $('pr-boosts').addEventListener('click', (e) => { const b = e.target.closest('[data-boost]'); if (!b || b.disabled) return; prepPick[b.dataset.boost] = !prepPick[b.dataset.boost]; snd('click'); renderPrep(+$('pr-start').dataset.level); });
   $('pr-start').addEventListener('click', () => {
     const n = +$('pr-start').dataset.level;
+    if (!save.seen._howto) { save.seen._howto = 1; persist(); showHowTo(() => $('pr-start').click()); return; }
     const cost = BOOSTERS.reduce((a, b) => a + (prepPick[b.id] ? b.cost : 0), 0);
     if (cost > save.coins) return;
     save.coins -= cost; persist();
@@ -2003,6 +2036,7 @@
   $('pr-back').addEventListener('click', () => { prepPick = {}; renderMap(); });
   $('t-settings').addEventListener('click', () => { wake(); snd('tab'); openSheet('settings'); });
   $('p-settings').addEventListener('click', () => { snd('tab'); $('screen-pause').hidden = true; sheetBackToPause = true; openSheet('settings'); });
+  $('hw-next').addEventListener('click', () => { snd('click'); if (howI < HOWTO.length - 1) { howI++; renderHow(); } else { $('screen-howto').hidden = true; const f = howAfter; howAfter = null; if (f) f(); } });
   $('pr-easy').addEventListener('click', () => { prepPick.easy = !prepPick.easy; snd('click'); $('pr-easy').classList.toggle('on', !!prepPick.easy); });
   $('c-yes').addEventListener('click', () => {
     if (!G || G.over) return;
@@ -2011,7 +2045,7 @@
     show('screen-game'); snd('fanfare'); toast('💗 Second chance! Everyone waits patiently for 4 s', 'hint', 2000);
   });
   $('c-no').addEventListener('click', () => { if (!G || G.over) return; G.paused = false; show('screen-game'); endLevel(true); });
-  const afterScene = (fn) => { if (G.pendingScene) { const ch = G.pendingScene; G.pendingScene = null; playScene(ch.end, ch.title, fn); } else fn(); };
+  const afterScene = (fn) => { if (G.pendingScene) { const ch = G.pendingScene; G.pendingScene = null; playScene(ch.end, ch.title, fn, { home: 'salon', street: 'street', clap: 'clap' }[levelCfg(ch.to).place]); } else fn(); };
   $('r-next').addEventListener('click', () => { const n = G.n + 1; afterScene(() => playStory(n)); });
   $('r-retry').addEventListener('click', () => { if (G.cfg.n > 900) playCustom(G.cfg); else renderPrep(G.n); });
   $('r-map').addEventListener('click', () => afterScene(renderMap));

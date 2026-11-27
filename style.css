@@ -759,3 +759,13 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 .easy i { width: 22px; height: 22px; border-radius: 7px; border: 2px solid #6aa84f; background: #fff; }
 .easy.on i { background: #3f9a5a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 10l4 4 8-8' stroke='%23fff' stroke-width='3' fill='none'/%3E%3C/svg%3E") center/80% no-repeat; }
 #screen-continue .card { gap: 12px; }
+
+/* how to play */
+.howto { z-index: 20; }
+.hw-card { min-height: 190px; display: flex; flex-direction: column; align-items: center; gap: 6px; animation: rise .3s ease; }
+.hw-i { width: 86px; height: 86px; border-radius: 28px; display: grid; place-items: center; font-size: 2.8rem; background: linear-gradient(135deg, #ffe0ea, #fff2d9); box-shadow: inset 0 0 0 2px #f3c6d5; }
+.hw-card h3 { margin: 6px 0 0; font-family: var(--font-display); color: var(--pink-deep); font-size: 1.4rem; }
+.hw-card p { margin: 0; color: var(--cocoa-soft); line-height: 1.45; }
+.hw-dots { display: flex; justify-content: center; gap: 6px; }
+.hw-dots i { width: 8px; height: 8px; border-radius: 99px; background: #e4d2b8; transition: width .2s; }
+.hw-dots i.on { width: 22px; background: var(--pink-deep); }
