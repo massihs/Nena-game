@@ -12,6 +12,9 @@ window.Art = (function () {
     rose:    { top: '#f4a3c0', stripe: '#ffffff', bottom: '#3a3550' },
     persian: { top: '#2f6b3e', stripe: '#e0c27a', bottom: '#3a2418' },
     zen:     { top: '#eef3e8', stripe: '#8fb98a', bottom: '#f3efe6' },
+    yalda:   { top: '#b3263e', stripe: '#f2c94c', bottom: '#3a1f2b' },
+    souri:   { top: '#f08a3c', stripe: '#ffd36b', bottom: '#2b2b30' },
+    nowruz:  { top: '#86d39a', stripe: '#ffffff', bottom: '#3a6b4a' },
   };
   const COLLARS = {
     rouge:   { color: '#d4513f', kind: 'collar' },

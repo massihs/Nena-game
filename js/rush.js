@@ -294,6 +294,7 @@
     G.zen = n < 900 && save.wellness.zen === today();
     G.fit = n < 900 && save.wellness.gym === today();
     if (n < 900) { const w = weather(); setTimeout(() => { if (G && G.n === n) toast(`${w.ico} Tehran today: ${w.temp}°C, ${w.name.toLowerCase()}`, 'hint', 2000); }, 7800); }
+    eventDeco(); { const E = activeEvent(); if (E && n < 900) setTimeout(() => { if (G && G.n === n) toast(`${E.def.ico} ${E.def.name}! Win days to collect ${E.def.tokName}`, 'combo', 2000); }, 2600); }
     G.golden = goldenNow();
     if (G.golden) setTimeout(() => { if (G && G.n === n) toast('✨ Golden hour! Coins ×2 for this day', 'combo', 2000); }, 1200);
     G.slept = n < 900 && dayNum() - (save.wellness.bedN ?? -9) <= 1;
@@ -1766,6 +1767,7 @@
       if (j >= 100) track('joy100');
       extra += `<li class="${j >= 45 ? 'ok' : 'ko'}"><span>🐶 Simba’s happiness ${j}% ${j >= 75 ? '😄' : j >= 45 ? '🙂' : '😕'}</span><b>+${jb} 🪙</b></li>`;
     }
+    if (!lost && stars) { const evn = evGain(stars * 2 + Math.floor(G.done / 4)); if (evn) { const E = activeEvent(); extra += `<li class="ok"><span>${E.def.ico} ${E.def.name}</span><b>+${evn} ${E.def.tok}</b></li>`; } }
     if (G.golden && earned > 0) { extra += `<li class="ok"><span>✨ Golden hour</span><b>×2 · +${earned} 🪙</b></li>`; earned *= 2; }
     save.coins += earned;
     save.losses = save.losses || {};
@@ -1795,6 +1797,7 @@
     const fresh = nxt ? nxt.types.filter((t) => !c.types.includes(t)).map((t) => REQ[t].icon) : [];
     $('r-tease').innerHTML = nxt ? `<b>Tomorrow · ${nxt.title}</b>${fresh.length ? `<span>New: ${fresh.join(' ')}</span>` : `<span>${{ home: '🏠 At home', street: '🌳 Out in Tehran', clap: '🏮 At CLAP' }[nxt.place]}</span>`}` : '';
     $('r-tease').hidden = !nxt;
+    if (!lost && stars && !c.endless && !c.challenge) renderMyst(G.n); else $('r-myst').hidden = true;
     $('r-sub').textContent = lost ? 'The family lost patience. Try again, and watch the rings!' : stars ? `Goal: ${c.targets[0]} · ${c.targets[1]} · ${c.targets[2]}` : `You needed ${c.targets[0]} points for 1 star.`;
     $('r-next').hidden = !stars || !!c.endless || !!c.challenge;
     $('r-title').textContent = c.endless ? 'Endless day over!' : $('r-title').textContent;
@@ -1887,6 +1890,8 @@
     { id: 'journey', icon: '🗺️', name: 'Full journey', desc: 'Complete a 30-minute daily journey', test: (t) => (t.journey || 0) >= 1, r: 80 },
     { id: 'lv10', icon: '⭐', name: 'Level 10', desc: 'Reach player level 10', test: () => save.plv >= 10, r: 100 },
     { id: 'set1', icon: '🎴', name: 'Collector', desc: 'Complete a sticker set', test: (t) => (t.set || 0) >= 1, r: 80 },
+    { id: 'detective', icon: '🕵️‍♀️', name: 'Detective Nena', desc: 'Guess 5 mysteries right', test: (t) => (t.mystery || 0) >= 5, r: 100 },
+    { id: 'festival', icon: '🎉', name: 'Festival queen', desc: 'Complete a Persian festival track', test: (t) => (t.eventDone || 0) >= 1, r: 150 },
     { id: 'clock12', icon: '🕐', name: 'Around the clock', desc: 'Live hourly moments at 12 different hours', test: () => Object.keys(save.momHours || {}).length >= 12, r: 120 },
     { id: 'life10', icon: '🏠', name: 'Real life', desc: 'Do 10 daily chores (breakfast, groceries, laundry)', test: (t) => (t.breakfast || 0) + (t.grocery || 0) + (t.laundry || 0) >= 10, r: 100 },
     { id: 'bed7', icon: '🌙', name: 'Only in her arms', desc: 'Rock Simba to sleep on 7 nights', test: (t) => (t.bed || 0) >= 7, r: 100 },
@@ -1937,6 +1942,7 @@
     { id: 'basique', name: 'Everyday stripes', cost: 0 }, { id: 'sweat', name: 'Lilac sweater', cost: 60 }, { id: 'denim', name: 'Denim day', cost: 80 },
     { id: 'rose', name: 'Rose top', cost: 90 }, { id: 'cire', name: 'Yellow raincoat', cost: 100 }, { id: 'robe', name: 'Sunny dress', cost: 120 },
     { id: 'persian', name: 'Persian green', cost: 140 }, { id: 'night', name: 'CLAP night out', cost: 160 }, { id: 'zen', name: 'Zen linen', cost: 0, reward: true },
+    { id: 'yalda', name: 'Yalda red', cost: 0, reward: 'Yalda event' }, { id: 'souri', name: 'Souri sparks', cost: 0, reward: 'Souri event' }, { id: 'nowruz', name: 'Nowruz spring', cost: 0, reward: 'Nowruz event' },
   ];
   const COLLAR_SHOP = [
     { id: null, name: 'No collar', cost: 0 }, { id: 'rouge', name: 'Red collar', cost: 40 }, { id: 'bandana', name: 'Pink bandana', cost: 60 },
@@ -1986,6 +1992,7 @@
     ['wheel', 2, '🎡', 'Lucky wheel', 'Spin for coins, free boosters and stickers.'],
     ['stickers', 2, '🎴', 'Sticker album', 'Collect stickers and complete sets.'],
     ['bed', 2, '🌙', 'Bedtime', 'Simba only falls asleep in Nena’s arms.'],
+    ['event', 2, '🎉', 'Persian festivals', 'Yalda, Chaharshanbe Souri and Nowruz: decorations, activities and exclusive rewards.'],
     ['golden', 2, '✨', 'Golden hours', 'At 13:00 and 20:00, every day pays double coins for an hour.'],
     ['challenge', 3, '🎯', 'Daily challenge', 'A special day with a twist, every day.'],
     ['zen', 3, '🧘', 'Meditation', 'Light the oud and breathe — everyone is calmer.'],
@@ -2014,6 +2021,7 @@
   }
   function renderHub() {
     const items = [
+      ...(unlocked('event') ? [(() => { const E = activeEvent(), nx = eventList()[0]; return E ? ['event', E.def.ico, E.def.name.replace('Chaharshanbe ', '').replace('Shab-e ', ''), evState() && evState().act !== today() ? '!' : ''] : ['event', '🎉', EVENTS[nx.id].name.replace('Chaharshanbe ', '').replace('Shab-e ', ''), daysTo(nx.start) + 'd']; })()] : []),
       ['gift', '🐾', 'Surprise', giftState().n > 0 ? String(giftState().n) : giftMin() + 'm'], ['today', '📅', 'Today', routineNow() || ''], ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
       ['missions', '📋', 'Quests', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
       ['nails', '💅', 'Nail day', nailsReady() ? '!' : ''], ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
@@ -2023,7 +2031,7 @@
     const vis = items.filter(([id]) => unlocked(id)).map(([id, ico, name, b]) => [id, ico, name, b === '' && save.newF[id] ? 'new' : b]);
     const next = UNLOCKS.find((u) => !unlocked(u[0]));
     if (next) vis.push(['locked', '🔒', next[3], 'Soon']);
-    $('m-hub').innerHTML = vis.map(([id, ico, name, b]) => `<button type="button" class="hub-btn${id === 'locked' ? ' locked' : ''}" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^(\d+\/\d+|Soon|\d+m)$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
+    $('m-hub').innerHTML = vis.map(([id, ico, name, b]) => `<button type="button" class="hub-btn${id === 'locked' ? ' locked' : ''}" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^(\d+\/\d+|Soon|\d+m|\d+d)$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
   }
   let dailyShown = false;
 
@@ -2038,7 +2046,7 @@
     if (kind === 'breakfast' || kind === 'grocery' || kind === 'laundry') { openLife(kind); return; }
     if (kind === 'nails') { startNailDay(); return; }
     sheetKind = kind;
-    const T = { today: '📅 Nena’s day', stickers: '🎴 Sticker album', games: '🎮 Mini-games', settings: '⚙️ Settings', daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Quests', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
+    const T = { event: '🎉 Persian festivals', today: '📅 Nena’s day', stickers: '🎴 Sticker album', games: '🎮 Mini-games', settings: '⚙️ Settings', daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Quests', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
     $('sh2-title').textContent = T[kind] || '';
     $('sh2-coins').textContent = save.coins;
     $('sh2-body').innerHTML = SHEETS[kind]();
@@ -2046,6 +2054,19 @@
   }
   const bar = (v, n) => `<span class="pbar"><i style="width:${Math.min(100, (v / n) * 100)}%"></i></span>`;
   const SHEETS = {
+    event: () => {
+      const E = activeEvent(), s = evState();
+      let h = '';
+      if (E) {
+        const tok = s ? s.tok : 0, max = EV_MS[EV_MS.length - 1][0];
+        h += `<div class="ev-card ev-${E.id}"><span class="ev-big">${E.def.ico}</span><b>${E.def.name}${E.preview ? ' · preview' : ''}</b><small>${E.def.desc}</small>${E.preview ? '' : `<small>${daysTo(E.end)} day(s) left</small>`}</div>`;
+        if (!E.preview) h += `<div class="ev-track"><div class="ev-bar"><i style="width:${Math.min(100, tok / max * 100)}%"></i></div><p class="ev-tok">${tok} ${E.def.tok} collected</p>${EV_MS.map(([n, k, v], i) => { const ok = tok >= n, got = s.got[i]; const lab = k === 'coins' ? `${v} 🪙` : k === 'sticker' ? `${v} stickers 🎴` : `Outfit: ${OUTFIT_SHOP.find((o) => o.id === E.def.outfit).name} 👗`; return `<div class="row-card${got ? ' done' : ''}"><span class="rc-i">${E.def.tok}</span><span class="rc-t"><b>${n} ${E.def.tok}</b><small>${lab}</small></span>${got ? '<b class="ok">✓</b>' : `<button type="button" class="btn ${ok ? 'btn-primary' : ''}" data-act="ev-claim" data-i="${i}" ${ok ? '' : 'disabled'}>Claim</button>`}</div>`; }).join('')}</div>`;
+        h += `<button type="button" class="btn btn-primary btn-big" data-act="ev-act">${E.def.act[0]} Today’s activity: ${E.def.act[2]}${s && s.act === today() ? ' ✓' : ''}</button><p class="sh-lede small">Win days during the festival to collect ${E.def.tokName} (more stars, more ${E.def.tok}).</p>`;
+      } else h += '<p class="sh-lede">No festival right now — here is what’s coming. Each one brings decorations in the house, a special activity and exclusive rewards.</p>';
+      h += '<h4 class="sh-h">📅 Calendar</h4>' + eventList().map((w) => { const D = EVENTS[w.id], on = new Date() >= w.start; return `<div class="row-card"><span class="rc-i">${D.ico}</span><span class="rc-t"><b>${D.name}</b><small>${w.start.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – ${addD(w.end, -1).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · ${on ? 'now!' : 'in ' + daysTo(w.start) + ' days'}</small><small>${D.desc}</small></span><button type="button" class="btn" data-act="ev-preview" data-id="${w.id}">👀 Preview</button></div>`; }).join('');
+      if (EV_PREVIEW) h += '<button type="button" class="btn" data-act="ev-stop">Stop preview</button>';
+      return h;
+    },
     today: () => {
       const w = weather(), h = new Date().getHours(), P = dayPhase();
       return `<div class="now-card ${P.k}"><span class="now-ico">${P.ico}</span><span class="now-t"><b>${P.hello}</b><small>${persianDate()} · ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} in Tehran</small><small>${w.ico} ${w.temp}°C · ${w.name}</small></span></div><p class="sh-lede">${w.tip}</p><h4 class="sh-h">🗓️ Nena’s routine</h4>`
@@ -2098,7 +2119,7 @@
       return `<div class="fam"><span class="fam-p">${A.portrait(f.pic, 'happy')}</span><span class="fam-t"><b>${f.name} <small>${FR_TITLES[lv]}</small></b><span class="hearts-s">${'❤️'.repeat(lv)}${'🤍'.repeat(4 - lv)}</span>${next ? bar(pts - FR_LV[lv], next - FR_LV[lv]) : '<small>Max friendship!</small>'}<span class="scenes">${scenes}</span></span></div>`;
     }).join('') + '<p class="sh-lede small">Help someone to grow your friendship. Each level unlocks a little scene and makes them a bit more patient.</p>',
     decor: () => ['salon', 'kitchen', 'tv', 'hall', 'bedroom'].map((room) => `<h4 class="sh-h">${ROOMS[room].icon} ${ROOMS[room].name}</h4>` + DECOR.filter((d) => d.room === room).map((d) => { const own = save.decor[d.id]; return `<div class="row-card${own ? ' done' : ''}"><span class="rc-i">${d.icon}</span><span class="rc-t"><b>${d.name}</b><small>+1% patience for everyone</small></span>${own ? '<b class="ok">✓</b>' : `<button type="button" class="btn btn-primary" data-act="buy-decor" data-id="${d.id}" ${save.coins < d.cost ? 'disabled' : ''}>${d.cost} 🪙</button>`}</div>`; }).join('')).join(''),
-    wardrobe: () => `<h4 class="sh-h">Nena’s outfits</h4><div class="wardrobe">${OUTFIT_SHOP.map((o) => { const own = save.owned[o.id], on = save.outfit === o.id; return `<button type="button" class="ward${on ? ' on' : ''}" data-act="outfit" data-id="${o.id}" ${!own && (o.reward || save.coins < o.cost) ? 'disabled' : ''}><span class="ward-p">${A.nena({ dressed: true, outfit: o.id, eyes: 'open' })}</span><small>${o.name}</small><b>${on ? 'Wearing' : own ? 'Wear' : o.reward ? '🔒 30-min journey' : o.cost + ' 🪙'}</b></button>`; }).join('')}</div>
+    wardrobe: () => `<h4 class="sh-h">Nena’s outfits</h4><div class="wardrobe">${OUTFIT_SHOP.map((o) => { const own = save.owned[o.id], on = save.outfit === o.id; return `<button type="button" class="ward${on ? ' on' : ''}" data-act="outfit" data-id="${o.id}" ${!own && (o.reward || save.coins < o.cost) ? 'disabled' : ''}><span class="ward-p">${A.nena({ dressed: true, outfit: o.id, eyes: 'open' })}</span><small>${o.name}</small><b>${on ? 'Wearing' : own ? 'Wear' : o.reward ? (o.reward === true ? '🔒 30-min journey' : '🔒 ' + o.reward) : o.cost + ' 🪙'}</b></button>`; }).join('')}</div>
       <h4 class="sh-h">Simba’s collars</h4><div class="wardrobe">${COLLAR_SHOP.map((o) => { const k = 'c_' + o.id, own = o.cost === 0 || save.owned[k], on = save.collar === o.id; return `<button type="button" class="ward dog${on ? ' on' : ''}" data-act="collar" data-id="${o.id}" ${!own && save.coins < o.cost ? 'disabled' : ''}><span class="ward-p">${A.simba({ collar: o.id, eyes: 'open' })}</span><small>${o.name}</small><b>${on ? 'Wearing' : own ? 'Wear' : o.cost + ' 🪙'}</b></button>`; }).join('')}</div>`,
     album: () => `<p class="sh-lede">When Simba does something cute, a 📸 appears next to him. Tap it fast!</p><div class="album">${PHOTOS.map((p) => save.album[p.id] ? `<div class="photo"><span class="ph-pic ${p.cls || ''}">${A.simba({ collar: save.collar, eyes: p.cls === 'lying' ? 'closed' : 'open' })}<em>${p.ico}</em></span><small>${p.name}</small></div>` : '<div class="photo locked"><span class="ph-pic">?</span><small>???</small></div>').join('')}</div>`,
     trophies: () => `<div class="trophies">${ACH.map((a) => `<div class="troph${save.ach[a.id] ? ' got' : ''}"><span>${save.ach[a.id] ? a.icon : '🔒'}</span><b>${a.name}</b><small>${a.desc}</small><em>+${a.r} 🪙</em></div>`).join('')}</div>`,
@@ -2111,6 +2132,10 @@
     snd('click');
     if (act === 'play-tricks') { openTricks(); return; }
     if (act === 'play-zen') { openZen(); return; }
+    if (act === 'ev-act') { openEventAct(); return; }
+    if (act === 'ev-claim') { evClaim(+b.dataset.i); openSheet('event'); return; }
+    if (act === 'ev-preview') { EV_PREVIEW = b.dataset.id; toast(`👀 Preview: ${EVENTS[EV_PREVIEW].name} decorations are on (until you stop it)`, '', 2000); openSheet('event'); return; }
+    if (act === 'ev-stop') { EV_PREVIEW = null; openSheet('event'); return; }
     if (act === 'routine') { const r = routine().find((x) => x.k === b.dataset.k); if (r) r.go(); return; }
     if (act === 'play-hair') { openHair(); return; }
     if (act === 'play-tahdig') { openTahdig(); return; }
@@ -2853,13 +2878,13 @@
   const momentNow = () => MOMENTS[new Date().getHours()] || MOM_NIGHT[0];
   const MOM_FR = { simba: 'simba', mohsen: 'baba', fariba: 'fariba', negin: 'negin', nasim: 'nasim' };
   let MO = null;
-  function openMoment() {
-    if (save.moment === hourKey()) { toast(`✓ Already lived this hour. Next moment in ${60 - new Date().getMinutes()} min`, '', 1600); return; }
-    const m = momentNow(); MO = { m, t: 0, n: 0, miss: 0, done: false };
-    $('mo-head').innerHTML = `<span>${m[0]}</span><b>${m[2]}</b><small>${String(new Date().getHours()).padStart(2, '0')}:00</small>`;
+  function openMoment(custom) {
+    if (!custom && save.moment === hourKey()) { toast(`✓ Already lived this hour. Next moment in ${60 - new Date().getMinutes()} min`, '', 1600); return; }
+    const m = custom ? custom.m : momentNow(); MO = { m, t: 0, n: 0, miss: 0, got: 0, done: false, custom };
+    $('mo-head').innerHTML = `<span>${m[0]}</span><b>${m[2]}</b><small>${custom ? custom.tag : String(new Date().getHours()).padStart(2, '0') + ':00'}</small>`;
     $('mo-pic').innerHTML = A.portrait(m[1], 'happy'); $('mo-pic').className = 'mo-pic' + (m[4] === 'tap' ? ' tappable' : '');
     $('mo-say').textContent = m[3]; $('mo-ok').hidden = true; $('mo-res').textContent = '';
-    if (m[4] === 'pick') $('mo-play').innerHTML = `<div class="mo-picks">${m[5].map((o, i) => `<button type="button" class="mo-pick" data-i="${i}"><span>${o[0]}</span><small>${o[1]}</small></button>`).join('')}</div>`;
+    if (m[4] === 'pick' || m[4] === 'multi') $('mo-play').innerHTML = `${m[4] === 'multi' ? `<p class="mo-cnt" id="mo-cnt">0/${m[5].filter((o) => o[2]).length}</p>` : ''}<div class="mo-picks${m[4] === 'multi' ? ' multi' : ''}">${m[5].map((o, i) => `<button type="button" class="mo-pick" data-i="${i}"><span>${o[0]}</span><small>${o[1]}</small></button>`).join('')}</div>`;
     else if (m[4] === 'hold') $('mo-play').innerHTML = `<button type="button" class="mo-hold" id="mo-hold"><i id="mo-holdf"></i><span>Hold 💗</span></button>`;
     else $('mo-play').innerHTML = `<p class="mo-cnt" id="mo-cnt">Tap the picture! 0/${m[5]}</p><div class="mo-bar"><i id="mo-bar"></i></div>`;
     $('moment').hidden = false; snd('chime');
@@ -2875,6 +2900,10 @@
   }
   function momentDone(ok) {
     if (!MO || MO.done) return; MO.done = true;
+    if (MO.custom) {
+      snd(ok ? 'win' : 'pop'); haptic(ok ? 'star' : 'deliver'); if (ok) confettiOn($('moment'));
+      $('mo-res').textContent = MO.custom.done(ok); $('mo-ok').hidden = false; $('mo-ok').textContent = 'Back'; return;
+    }
     const coins = ok ? 15 : 6;
     save.moment = hourKey(); save.coins += coins; gainXP(ok ? 8 : 3);
     save.momHours = save.momHours || {}; save.momHours[new Date().getHours()] = 1;
@@ -2888,8 +2917,9 @@
   const goldenNow = () => { const h = new Date().getHours(); return unlocked('golden') && GOLD.some(([a, b]) => h >= a && h < b); };
   const nextGold = () => { const h = new Date().getHours(); const g = GOLD.find(([a]) => a > h) || GOLD[0]; return `${g[0]}:00`; };
   function renderNow() {
-    const w = weather(), P = dayPhase();
-    let html = `<div class="m-chips"><span>${P.ico} ${P.name}</span><span>${persianDate()}</span><span>${w.ico} ${w.temp}°C</span>${unlocked('golden') ? (goldenNow() ? '<span class="gold on">✨ Golden hour · coins ×2</span>' : `<span class="gold">✨ ×2 at ${nextGold()}</span>`) : ''}</div>`;
+    const w = weather(), P = dayPhase(), EV = unlocked('event') ? activeEvent() : null;
+    $('screen-map').dataset.ev = EV ? EV.id : '';
+    let html = (EV ? `<button type="button" class="ev-banner ev-${EV.id}" data-evb="1"><span class="ev-garl">${EV.def.deco}</span><b>${EV.def.ico} ${EV.def.name}${EV.preview ? ' (preview)' : ''}</b><em>${evState() ? evState().tok + ' ' + EV.def.tok : 'Open ›'}</em></button>` : '') + `<div class="m-chips"><span>${P.ico} ${P.name}</span><span>${persianDate()}</span><span>${w.ico} ${w.temp}°C</span>${unlocked('golden') ? (goldenNow() ? '<span class="gold on">✨ Golden hour · coins ×2</span>' : `<span class="gold">✨ ×2 at ${nextGold()}</span>`) : ''}</div>`;
     if (unlocked('moment')) {
       const m = momentNow();
       html += save.moment === hourKey()
@@ -2899,6 +2929,98 @@
     $('m-now').innerHTML = html;
   }
   setInterval(() => { if (!$('screen-map').hidden) { renderNow(); renderHub(); } }, 30000);
+
+  /* ---- Persian festivals: Shab-e Yalda, Chaharshanbe Souri, Nowruz ---- */
+  const EVENTS = {
+    yalda: { name: 'Shab-e Yalda', ico: '🍉', tok: '🍉', tokName: 'watermelon slices', outfit: 'yalda', deco: '🍉 🕯️ 📜 🌰 🍷 🕯️ 🍉 📜 🌰 🕯️',
+      desc: 'The longest night of the year: pomegranates, watermelon, nuts, poems of Hafez and the whole family awake until late.',
+      act: ['📜', 'fariba', 'Fal-e Hafez', 'Maman opens the Divan of Hafez. Make a wish… hold the book and let Hafez answer!', 'hold'],
+      fal: ['Hafez says: a door you thought was closed will open soon. 🌙', 'Hafez says: the friend you are waiting for is thinking of you too. 💌', 'Hafez says: after the longest night comes the sun. ☀️', 'Hafez says: be patient, the sweetest fruit ripens slowly. 🍉', 'Hafez says: your heart already knows the answer. ❤️'] },
+    souri: { name: 'Chaharshanbe Souri', ico: '🔥', tok: '🔥', tokName: 'sparks', outfit: 'souri', deco: '🏮 ✨ 🔥 🎇 🏮 ✨ 🔥 🎇 🏮',
+      desc: 'The last Tuesday night before Nowruz: little bonfires in the street, sparklers, and everyone jumps over the fire.',
+      act: ['🔥', 'negin', 'Jump over the fire!', 'Negin: “Zardi-ye man az to, sorkhi-ye to az man!” Tap fast to jump over every bonfire!', 'tap', 9] },
+    nowruz: { name: 'Nowruz', ico: '🌱', tok: '🌱', tokName: 'sabzeh sprouts', outfit: 'nowruz', deco: '🌷 🐟 🌱 🪞 🥚 🌷 🐟 🌱 🪞 🥚',
+      desc: 'Persian New Year: spring cleaning, the haft-sin table, goldfish, family visits and the Sizdah Bedar picnic.',
+      act: ['🌱', 'fariba', 'Set the haft-sin', 'Maman: “Help me set the haft-sin — find the seven S things!”', 'multi', [['🌱', 'Sabzeh', 1], ['🍮', 'Samanu', 1], ['🫒', 'Senjed', 1], ['🧄', 'Seer', 1], ['🍎', 'Sib', 1], ['🥣', 'Somāq', 1], ['🫙', 'Serkeh', 1], ['🍕', 'Pizza', 0], ['🧦', 'A sock', 0], ['📱', 'A phone', 0]]] },
+  };
+  const EV_MS = [[10, 'coins', 100], [25, 'sticker', 2], [45, 'outfit'], [70, 'coins', 300]];
+  const addD = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  function evWindows(y) {
+    const nr = new Date(y, 2, 20), tue = new Date(nr);
+    do tue.setDate(tue.getDate() - 1); while (tue.getDay() !== 2);
+    return [{ id: 'souri', start: addD(tue, -6), end: addD(tue, 2) }, { id: 'nowruz', start: nr, end: addD(nr, 14) }, { id: 'yalda', start: new Date(y, 11, 14), end: new Date(y, 11, 23) }];
+  }
+  let EV_PREVIEW = null;
+  function activeEvent() {
+    if (EV_PREVIEW) return { id: EV_PREVIEW, def: EVENTS[EV_PREVIEW], preview: true, end: addD(new Date(), 1), key: 'preview' };
+    const now = new Date();
+    for (const w of evWindows(now.getFullYear())) if (now >= w.start && now < w.end) return { id: w.id, def: EVENTS[w.id], start: w.start, end: w.end, key: w.id + '-' + w.start.getFullYear() };
+    return null;
+  }
+  function eventList() {
+    const now = new Date(), y = now.getFullYear();
+    const all = evWindows(y).concat(evWindows(y + 1)).filter((w) => w.end > now).sort((a, b) => a.start - b.start);
+    const seen = new Set(); return all.filter((w) => !seen.has(w.id) && seen.add(w.id));
+  }
+  const daysTo = (d) => Math.max(0, Math.ceil((d - new Date()) / 86400000));
+  function evState() {
+    const E = activeEvent(); if (!E || E.preview) return null;
+    if (!save.ev || save.ev.key !== E.key) save.ev = { key: E.key, tok: 0, got: {}, act: '' };
+    return save.ev;
+  }
+  function evGain(n) { const s = evState(); if (!s || n <= 0) return 0; s.tok += n; persist(); return n; }
+  function evClaim(i) {
+    const s = evState(), E = activeEvent(); if (!s || s.got[i] || s.tok < EV_MS[i][0]) return;
+    const [, k, v] = EV_MS[i]; s.got[i] = 1;
+    if (k === 'coins') save.coins += v; else if (k === 'sticker') dropStickers(v); else { save.owned[E.def.outfit] = 1; toast(`👗 New outfit unlocked: ${OUTFIT_SHOP.find((o) => o.id === E.def.outfit).name}!`, 'combo', 2000); }
+    if (i === EV_MS.length - 1) track('eventDone');
+    persist(); checkAch(); snd('fanfare'); haptic('star');
+  }
+  function openEventAct() {
+    const E = activeEvent(); if (!E) return;
+    const s = evState(), first = s && s.act !== today();
+    renderMap();
+    openMoment({ m: E.def.act, tag: E.preview ? 'Preview' : E.def.name, back: 'event', done: (ok) => {
+      const fal = E.id === 'yalda' ? pick(E.def.fal) + ' ' : '';
+      if (E.preview) return fal + 'Preview — the real event gives ' + E.def.tok + ' and rewards!';
+      if (!first) return fal + 'Already done today — come back tomorrow!';
+      s.act = today(); const n = evGain(ok ? 12 : 6); save.coins += 10; track('event'); persist(); checkAch();
+      return `${fal}+${n} ${E.def.tok} · +10 🪙`;
+    } });
+  }
+  function eventDeco() {
+    const E = activeEvent(), w = $('stage-wrap'); w.querySelectorAll('.ev-garland').forEach((e) => e.remove());
+    w.dataset.ev = E ? E.id : '';
+    if (E) w.insertAdjacentHTML('beforeend', `<div class="ev-garland" aria-hidden="true">${E.def.deco}</div>`);
+  }
+
+  /* ---- a little mystery at the end of every day, solved the next morning ---- */
+  const MYST = {
+    1: { q: 'Last night, the leftover tahdig disappeared from the kitchen… Who ate it?', sus: [['simba', 'Simba'], ['negin', 'Negin'], ['mohsen', 'Baba']], a: 1, rev: ['negin', 'sleepy', 'Okay, okay… it was me. Midnight tahdig is the best tahdig. 🍚'] },
+    2: { q: 'Something keeps buzzing inside the sofa…', sus: [['mohsen', 'Baba’s phone'], ['simba', 'Simba’s toy'], ['nasim', 'Nasim’s alarm']], a: 0, rev: ['mohsen', 'surprised', 'My phone! I looked for it all day… in the sofa, of course.'] },
+    3: { q: 'Simba stares at the balcony for hours. What is out there?', sus: [['simba', 'A cat'], ['fariba', 'A pigeon'], ['pourya', 'Pourya']], a: 1, rev: ['fariba', 'happy', 'A pigeon built a nest in my geraniums! We have babies on the balcony. 🐣'] },
+    4: { q: 'Maman’s saffron box is empty!', sus: [['nasim', 'Nasim'], ['simba', 'Simba'], ['fariba', 'Maman herself']], a: 2, rev: ['fariba', 'happy', 'It was me! I made sholeh zard for the whole building. Oops. 😅'] },
+    5: { q: 'A mysterious package arrived with Nena’s name on it…', sus: [['courier', 'Jesus'], ['negin', 'Negin'], ['mohsen', 'Baba']], a: 0, rev: ['nena', 'surprised', 'It’s from Jesus. AGAIN. Another teddy bear… What do I do with him?! 🙄'] },
+    6: { q: 'The TV remote vanished. Baba is panicking.', sus: [['simba', 'Simba'], ['nasim', 'Nasim'], ['negin', 'Negin']], a: 0, rev: ['simba', 'happy', '*proudly digs the remote out of his bed* Woof!'] },
+    7: { q: 'Strange footsteps on the roof last night…', sus: [['simba', 'The neighbour’s cat'], ['pourya', 'A burglar'], ['mohsen', 'Baba sleepwalking']], a: 0, rev: ['mohsen', 'happy', 'The neighbour’s cat and all his friends. A cat party on our roof! 🐈'] },
+    8: { q: 'Negin whispers on the phone and hides when Nena comes in…', sus: [['negin', 'A secret boyfriend'], ['fariba', 'A surprise for Nena'], ['pourya', 'Ordering pizza']], a: 1, rev: ['negin', 'happy', 'Shhh! It’s a surprise for you… you’ll see. 🤫'] },
+    9: { q: 'Baba came home with a HUGE box…', sus: [['mohsen', 'A new TV'], ['fariba', 'A samovar'], ['simba', 'A bed for Simba']], a: 2, rev: ['mohsen', 'happy', 'A royal bed for our lion! …But Simba still sleeps in Nena’s arms. 🙄'] },
+    10: { q: 'Nasim smiled today. Nobody knows why.', sus: [['nasim', 'A good grade'], ['simba', 'Simba licked her'], ['negin', 'Chocolate']], a: 0, rev: ['nasim', 'happy', 'I got 20/20 in maths. Don’t make a big deal of it. …Okay, you can clap.'] },
+    11: { q: 'CLAP’s door says “Closed tonight”?!', sus: [['pourya', 'Pourya is sick'], ['negin', 'A secret party'], ['mohsen', 'New furniture']], a: 1, rev: ['pourya', 'happy', 'Closed for a private party… and you’ll soon find out who it’s for. 😏'] },
+    12: { q: 'Someone left red roses at the door…', sus: [['courier', 'Jesus'], ['mohsen', 'Baba'], ['pourya', 'Pourya']], a: 1, rev: ['mohsen', 'happy', 'For Maman! It’s our anniversary. Don’t tell her I almost forgot.'] },
+    13: { q: 'Simba’s collar is missing!', sus: [['simba', 'Simba ate it'], ['negin', 'Negin took it'], ['nasim', 'Nasim hid it']], a: 1, rev: ['negin', 'happy', 'I was embroidering his name on a new one! Look: “SIMBA” in gold. ✨'] },
+    14: { q: 'Everyone acts strange around Nena… even Simba.', sus: [['fariba', 'They’re angry'], ['pourya', 'A surprise party'], ['mohsen', 'They forgot something']], a: 1, rev: ['pourya', 'happy', 'SURPRISE! The party at CLAP was for YOU, Nena! 🎉'] },
+  };
+  save.myst = save.myst || { seen: {}, guess: {}, done: {} };
+  function renderMyst(n) {
+    const M = MYST[n], el = $('r-myst'); if (!M) { el.hidden = true; return; }
+    save.myst.seen[n] = 1; persist();
+    const g = save.myst.guess[n];
+    el.innerHTML = `<b>🔍 Mystery · ${M.q}</b>` + (g == null
+      ? `<small>Who do you think? The answer tomorrow morning (right guess: +25 🪙)</small><div class="my-sus">${M.sus.map(([w, l], i) => `<button type="button" data-g="${i}"><span>${A.portrait(w, 'neutral')}</span><small>${l}</small></button>`).join('')}</div>`
+      : `<small>Your guess: <b>${M.sus[g][1]}</b>. To be continued tomorrow…</small>`);
+    el.hidden = false;
+  }
 
   /* ---- daily chores mini-games: breakfast (orders), groceries (memory), laundry (pairs) ---- */
   const BF_ITEMS = { bread: ['🫓', 'Sangak'], panir: ['🧀', 'Panir'], walnut: ['🌰', 'Walnuts'], honey: ['🍯', 'Honey'], butter: ['🧈', 'Butter'], egg: ['🍳', 'Fried egg'], tomato: ['🍅', 'Tomato'], cucumber: ['🥒', 'Cucumber'], sabzi: ['🌿', 'Sabzi'], tea: ['🍵', 'Chai'], jam: ['🍓', 'Morabba'], haleem: ['🥣', 'Haleem'] };
@@ -3235,6 +3357,13 @@
     CUSTOM = null; storyAfter = null; storyTitle = ''; storyPlace = null;
     storyLevel = n;
     storyLines = (levelCfg(n).story || []).slice();
+    const P = MYST[n - 1];
+    if (P && save.myst.seen[n - 1] && !save.myst.done[n - 1]) {
+      save.myst.done[n - 1] = 1; const g = save.myst.guess[n - 1], right = g === P.a;
+      if (right) { save.coins += 25; track('mystery'); }
+      storyLines.unshift(['nena', 'surprised', `🔍 Yesterday’s mystery: “${P.q}”`], P.rev, ['nena', right ? 'happy' : 'neutral', g == null ? 'So that was it!' : right ? 'I knew it! 🕵️‍♀️ (+25 🪙)' : `I thought it was ${P.sus[g][1]}… wrong guess!`]);
+      persist(); checkAch();
+    }
     show('screen-story');
     nextLine();
   }
@@ -3376,13 +3505,19 @@
     if (save.newF[id]) { delete save.newF[id]; persist(); }
     snd('tab'); openSheet(id);
   });
-  $('m-now').addEventListener('click', (e) => { if (e.target.closest('[data-mo]')) { snd('tab'); openMoment(); } });
+  $('m-now').addEventListener('click', (e) => { if (e.target.closest('[data-mo]')) { snd('tab'); openMoment(); } else if (e.target.closest('[data-evb]')) { snd('tab'); openSheet('event'); } });
   $('gf-boxes').addEventListener('click', (e) => { const b = e.target.closest('.gf-box'); if (b) pickGift(b); });
   $('gf-ok').addEventListener('click', () => { snd('click'); $('gf-boxes').classList.remove('done'); if (giftState().n > 0) openGift(); else { $('gift').hidden = true; renderHub(); } });
   $('gf-x').addEventListener('click', () => { $('gift').hidden = true; $('gf-boxes').classList.remove('done'); renderHub(); });
   $('mo-pic').addEventListener('pointerdown', (e) => { e.preventDefault(); momentTap(); });
   $('mo-play').addEventListener('click', (e) => {
     const b = e.target.closest('.mo-pick'); if (!b || !MO || MO.done) return;
+    if (MO.m[4] === 'multi') {
+      const need = MO.m[5].filter((o) => o[2]).length;
+      if (MO.m[5][+b.dataset.i][2]) { b.classList.add('right'); b.disabled = true; MO.got++; snd('pop'); haptic('tap'); $('mo-cnt').textContent = `${MO.got}/${need}`; if (MO.got >= need) momentDone(MO.miss <= 1); }
+      else { MO.miss++; b.classList.add('wrong'); b.disabled = true; snd('fail'); haptic('fail'); $('mo-say').textContent = pick(['That doesn’t start with S! 😄', 'Not on a haft-sin!', 'Hmm… no!']); }
+      return;
+    }
     if (MO.m[5][+b.dataset.i][2]) { b.classList.add('right'); momentDone(MO.miss === 0); }
     else { MO.miss++; b.classList.add('wrong'); b.disabled = true; snd('fail'); haptic('fail'); $('mo-say').textContent = pick(['Hmm… not that one! 😅', 'Nope! Try again.', 'Are you sure? 🤔']); }
   });
@@ -3393,8 +3528,9 @@
     requestAnimationFrame(tick);
   });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => $('mo-play').addEventListener(ev, () => { if (MO && MO.hold) { MO.hold = false; const b = $('mo-hold'); if (b) b.classList.remove('on'); } }, true));
-  $('mo-ok').addEventListener('click', () => { snd('click'); $('moment').hidden = true; if (MO) clearInterval(MO.iv); MO = null; renderNow(); renderHub(); });
+  $('mo-ok').addEventListener('click', () => { snd('click'); $('moment').hidden = true; const back = MO && MO.custom && MO.custom.back; if (MO) clearInterval(MO.iv); MO = null; renderNow(); renderHub(); if (back) openSheet(back); });
   $('mo-x').addEventListener('click', () => { $('moment').hidden = true; if (MO) clearInterval(MO.iv); MO = null; renderNow(); });
+  $('r-myst').addEventListener('click', (e) => { const b = e.target.closest('[data-g]'); if (!b) return; const n = G ? G.n : 0; if (!MYST[n]) return; save.myst.guess[n] = +b.dataset.g; persist(); snd('pop'); haptic('tap'); renderMyst(n); });
   $('ul-ok').addEventListener('click', () => { snd('click'); $('unlock').hidden = true; renderHub(); if (dailyReady() && !dailyShown && daysDone() >= 1) { dailyShown = true; setTimeout(() => openSheet('daily'), 300); } });
   $('m-play').addEventListener('click', () => { snd('click'); const n = Math.min(save.level, LEVELS.length); if (save.level > LEVELS.length) openSheet('endless'); else playStory(n); });
   $('sh2-body').addEventListener('click', sheetAction);
