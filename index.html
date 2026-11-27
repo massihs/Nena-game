@@ -45,6 +45,7 @@
       <span class="pill">★ <b id="m-stars">0</b></span>
       <span class="pill coin">🪙 <b id="m-coins">0</b></span>
     </header>
+    <div class="journey" id="m-journey"></div>
     <div class="hub" id="m-hub"></div>
     <div class="levels" id="m-levels"></div>
     <footer class="map-foot"><button type="button" class="btn btn-primary btn-big" id="m-shop">🛍️ Upgrades</button></footer>
@@ -96,6 +97,7 @@
       <h2 id="r-title">Great day!</h2>
       <div class="stars" id="r-stars"></div>
       <ul class="r-lines" id="r-lines"></ul>
+      <p class="r-tease" id="r-tease" hidden></p>
       <p class="r-sub" id="r-sub"></p>
       <div class="row">
         <button type="button" class="btn btn-primary" id="r-next">Next day</button>
@@ -218,6 +220,51 @@
     <div class="td-gauge"><i class="td-near" id="td-near"></i><i class="td-zone" id="td-zone"></i><i class="td-needle" id="td-needle"></i></div>
     <div class="td-pots" id="td-pots"></div>
     <footer class="map-foot"><button type="button" class="btn btn-primary btn-big" id="td-go">Start</button></footer>
+  </section>
+
+  <!-- Meditation -->
+  <section class="screen zen" id="screen-zen" hidden>
+    <div class="zn-bg" id="zn-bg" aria-hidden="true"></div>
+    <header class="bar"><button type="button" class="icon-btn" id="zn-back" aria-label="Back">‹</button><h2>🧘 Meditation <small id="zn-round"></small></h2></header>
+    <div class="zn-stage">
+      <p class="say zn-say" id="zn-say"></p>
+      <div class="zn-ring" id="zn-ring"><span id="zn-cue"></span></div>
+      <div class="zn-cushion"></div>
+      <div class="zn-nena" id="zn-nena"></div>
+      <button type="button" class="zn-oud" id="zn-oud" aria-label="Light the oud"></button>
+      <div class="fx smoke zn-smoke"><i></i><i></i><i></i></div>
+    </div>
+    <div class="zn-calm"><span>Calm</span><i><i id="zn-calm"></i></i></div>
+    <footer class="map-foot col">
+      <button type="button" class="btn btn-primary btn-big" id="zn-btn">Start</button>
+      <div class="zn-after" id="zn-after" hidden><p id="zn-res"></p><div class="row"><button type="button" class="btn btn-primary" id="zn-walk">🌳 Go for a walk</button><button type="button" class="btn" id="zn-home">Back</button></div></div>
+    </footer>
+  </section>
+
+  <!-- Tree hug -->
+  <section class="screen tree" id="screen-tree" hidden>
+    <header class="bar"><button type="button" class="icon-btn" id="tr-back" aria-label="Back">‹</button><h2>🌳 Good energy</h2></header>
+    <div class="tr-stage" id="tr-stage">
+      <div class="tr-bg" id="tr-bg" aria-hidden="true"></div>
+      <p class="say tr-say" id="tr-say"></p>
+      <div class="tr-tree" id="tr-tree"></div>
+      <div class="actor tr-nena" id="tr-nena"></div>
+    </div>
+    <div class="zn-calm tr-energy"><span>Energy</span><i><i id="tr-fill"></i></i></div>
+    <footer class="map-foot col"><button type="button" class="btn btn-primary btn-big" id="tr-btn">Hold to hug the tree 🌳</button><div id="tr-done" hidden><p class="tr-res" id="tr-res"></p><button type="button" class="btn btn-primary btn-big">Back home</button></div></footer>
+  </section>
+
+  <!-- Hair day -->
+  <section class="screen hair" id="screen-hair" hidden>
+    <header class="bar"><button type="button" class="icon-btn" id="hd-back" aria-label="Back">‹</button><h2>💇‍♀️ Hair day</h2><span class="pill" id="hd-time">0:28</span></header>
+    <div class="hd-stage" id="hd-stage">
+      <p class="say hd-say" id="hd-say"></p>
+      <div class="hd-maman" id="hd-maman"></div>
+      <div class="hd-head" id="hd-head"><div class="hd-nena" id="hd-nena"></div><div class="hd-zones" id="hd-zones"></div></div>
+      <div class="hd-dryer" id="hd-dryer"></div>
+    </div>
+    <div class="zn-calm hd-heatbar"><span>🔥 Heat</span><i><i id="hd-heat"></i></i></div>
+    <footer class="map-foot"><button type="button" class="btn btn-primary btn-big" id="hd-go">Start drying 💨</button></footer>
   </section>
 
   <!-- Pause -->

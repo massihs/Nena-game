@@ -21,6 +21,10 @@ window.Sound = (function () {
       chords: [[0, [0, 4, 7]], [7, [0, 4, 7]], [9, [0, 3, 7]], [5, [0, 4, 7]]],
       mel: '5.5.6.5.3...1.2.3.3.4.3.2...5.6.7.7.8.7.5...6.5.4.3.2.3.1.......',
       kick: 'x...x...x...x...', snare: '....x.......x...', hat: '..x...x...x...x.' },
+    zen: { bpm: 60, key: 2, scale: [0, 2, 4, 7, 9, 12, 14], pluck: 'koto',  // pentatonic, very calm
+      chords: [[0, [0, 7, 12, 16]], [-3, [0, 7, 12, 15]], [5, [0, 7, 12, 16]], [-5, [0, 7, 12, 14]]],
+      mel: '5.......3.......6.......2.......5.......8.......7.......3.......',
+      kick: '................', snare: '................', hat: '................' },
     clap: { bpm: 82, key: 2, scale: [0, 2, 3, 7, 8, 12, 14], pluck: 'koto',  // D in-scale, lounge
       chords: [[0, [0, 3, 7, 10]], [-4, [0, 4, 7, 11]], [-2, [0, 4, 7, 9]], [-5, [0, 3, 7, 10]]],
       mel: '1...3.4.5-----4.3.1...----5...6.5.4.3.1...----3.4.5.6.7-----6.5.',
@@ -122,6 +126,7 @@ window.Sound = (function () {
     splash() { const t = ctx.currentTime; noise(t, 0.4, 600, 0.9, 0.3); },
     talk(pitch) { const t = ctx.currentTime; note((pitch || 520) * (0.9 + Math.random() * 0.25), t, 0.05, { type: 'triangle', vol: 0.05 }); },
     tone(i) { const t = ctx.currentTime, f = [392, 494, 587, 784][i || 0]; note(f, t, 0.38, { type: 'triangle', vol: 0.13 }); note(f * 2, t, 0.22, { type: 'sine', vol: 0.04 }); },
+    bell() { const t = ctx.currentTime; note(528, t, 3.2, { type: 'sine', vol: 0.12, attack: 0.005 }); note(1056, t, 2.2, { type: 'sine', vol: 0.04, attack: 0.005 }); note(1584, t, 1.2, { type: 'sine', vol: 0.02, attack: 0.005 }); },
     chime() { const t = ctx.currentTime; [1047, 1319, 1568].forEach((f, i) => note(f, t + i * 0.05, 0.5, { type: 'sine', vol: 0.07 })); },
     star(i) { const t = ctx.currentTime, f = [784, 988, 1175][i || 0]; note(f, t, 0.5, { type: 'triangle', vol: 0.12 }); note(f * 1.5, t + 0.06, 0.4, { type: 'sine', vol: 0.06 }); },
     win() { const t = ctx.currentTime; [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => note(f, t + i * 0.12, i === 6 ? 0.9 : 0.3, { type: 'triangle', vol: 0.11 })); },

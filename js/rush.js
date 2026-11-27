@@ -31,6 +31,8 @@
   save.outfit = save.outfit || 'basique';
   if (save.collar === undefined) save.collar = null;
   save.endless = save.endless || 0;
+  save.journey = save.journey || { date: '', sec: 0, got: [] };
+  save.wellness = save.wellness || {};
   save.games = save.games || { tricksBest: 0, tahdigBest: 0, tricksDay: '', tahdigDay: '' };
   const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* */ } };
   const up = (k) => save.up[k] || 0;
@@ -276,6 +278,9 @@
     G.giftT = (n >= 4 && (cfg.place === 'home' || cfg.place === 'clap')) || cfg.challenge ? 22 + rnd() * 30 : null;
     G.frStart = {}; FRIENDS.forEach((f) => { G.frStart[f.id] = friendLv(f.id); });
     if (G.boosts.heart) { G.hearts++; G.maxHearts++; }
+    G.zen = n < 900 && save.wellness.zen === today();
+    if (n < 900 && save.wellness.tree === today()) { G.hearts++; G.maxHearts++; }
+    if (G.zen || (n < 900 && save.wellness.tree === today())) setTimeout(() => { if (G && G.n === n) toast((G.zen ? '🧘 Zen: everyone is 10% more patient today. ' : '') + (save.wellness.tree === today() ? '🌳 Good energy: +1 heart!' : ''), 'hint', 2600); }, 600);
     pendingBoosts = {};
     // room layers
     W.layers.forEach((id) => {
@@ -654,6 +659,7 @@
     m *= 1 + 0.01 * cozy();
     if (G.cfg.mod && G.cfg.mod.patienceMul) m *= G.cfg.mod.patienceMul;
     if (G.boosts.easy) m *= 1.3;
+    if (G.zen) m *= 1.1;
     return m;
   }
   function spawn() {
@@ -1742,6 +1748,10 @@
     $('r-title').textContent = lost ? 'Too many upset faces…' : stars ? ['', 'Day done!', 'Great day!', 'Perfect day!'][stars] : 'Not quite…';
     $('r-stars').innerHTML = [0, 1, 2].map((i) => `<span class="${i < stars ? 'on' : ''}">★</span>`).join('');
     $('r-lines').innerHTML = `<li><span>Requests done</span><b>${G.done}</b></li><li><span>Missed</span><b>${G.failed}</b></li>${mess ? `<li><span>Mess left (${mess})</span><b>−${penalty}</b></li>` : ''}${c.obj ? `<li class="${objOk ? 'ok' : 'ko'}"><span>🏅 ${c.obj.label}</span><b>${objOk ? (medalNew ? '+25 🪙' : '✓') : '✗'}</b></li>` : ''}<li class="total"><span>Score</span><b>${final}</b></li><li><span>Coins earned</span><b>+${earned} 🪙</b></li>${extra}`;
+    const nxt = !lost && stars && !c.endless && !c.challenge && G.n < LEVELS.length ? levelCfg(G.n + 1) : null;
+    const fresh = nxt ? nxt.types.filter((t) => !c.types.includes(t)).map((t) => REQ[t].icon) : [];
+    $('r-tease').innerHTML = nxt ? `<b>Tomorrow · ${nxt.title}</b>${fresh.length ? `<span>New: ${fresh.join(' ')}</span>` : `<span>${{ home: '🏠 At home', street: '🌳 Out in Tehran', clap: '🏮 At CLAP' }[nxt.place]}</span>`}` : '';
+    $('r-tease').hidden = !nxt;
     $('r-sub').textContent = lost ? 'The family lost patience. Try again, and watch the rings!' : stars ? `Goal: ${c.targets[0]} · ${c.targets[1]} · ${c.targets[2]}` : `You needed ${c.targets[0]} points for 1 star.`;
     $('r-next').hidden = !stars || !!c.endless || !!c.challenge;
     $('r-title').textContent = c.endless ? 'Endless day over!' : $('r-title').textContent;
@@ -1828,6 +1838,10 @@
     { id: 'joy100', icon: '🐶', name: 'Happiest dog', desc: 'End a day with Simba 100% happy', test: (t) => (t.joy100 || 0) >= 1, r: 80 },
     { id: 'tricks8', icon: '🎓', name: 'Good boy!', desc: 'Simba does 8 tricks in a row', test: () => (save.games.tricksBest || 0) >= 8, r: 70 },
     { id: 'tahdig', icon: '🍚', name: 'Tahdig queen', desc: 'Score 13+ in Tahdig master', test: () => (save.games.tahdigBest || 0) >= 13, r: 70 },
+    { id: 'zen7', icon: '🧘', name: 'Inner peace', desc: 'Meditate on 7 different days', test: (t) => (t.zen || 0) >= 7, r: 100 },
+    { id: 'tree', icon: '🌳', name: 'Tree hugger', desc: 'Hug a tree for good energy', test: (t) => (t.tree || 0) >= 1, r: 40 },
+    { id: 'hair3', icon: '💇‍♀️', name: 'Salon Maman', desc: '3 stars in Hair day', test: () => (save.games.hairBest || 0) >= 3, r: 60 },
+    { id: 'journey', icon: '🗺️', name: 'Full journey', desc: 'Complete a 30-minute daily journey', test: (t) => (t.journey || 0) >= 1, r: 80 },
     { id: 'cuddle10', icon: '🦁', name: 'Baba’s lion', desc: 'Put Simba on Baba’s belly 10 times', test: (t) => (t.req_cuddle || 0) >= 10, r: 60 },
   ];
   const MISSIONS = [
@@ -1873,7 +1887,7 @@
   const OUTFIT_SHOP = [
     { id: 'basique', name: 'Everyday stripes', cost: 0 }, { id: 'sweat', name: 'Lilac sweater', cost: 60 }, { id: 'denim', name: 'Denim day', cost: 80 },
     { id: 'rose', name: 'Rose top', cost: 90 }, { id: 'cire', name: 'Yellow raincoat', cost: 100 }, { id: 'robe', name: 'Sunny dress', cost: 120 },
-    { id: 'persian', name: 'Persian green', cost: 140 }, { id: 'night', name: 'CLAP night out', cost: 160 },
+    { id: 'persian', name: 'Persian green', cost: 140 }, { id: 'night', name: 'CLAP night out', cost: 160 }, { id: 'zen', name: 'Zen linen', cost: 0, reward: true },
   ];
   const COLLAR_SHOP = [
     { id: null, name: 'No collar', cost: 0 }, { id: 'rouge', name: 'Red collar', cost: 40 }, { id: 'bandana', name: 'Pink bandana', cost: 60 },
@@ -1917,8 +1931,9 @@
       ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
       ['missions', '📋', 'Missions', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
       ['nails', '💅', 'Nail day', nailsReady() ? '!' : ''], ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
-      ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
+      ['zen', '🧘', 'Zen', save.wellness.zen !== today() ? '!' : ''], ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
     ];
+    renderJourney();
     $('m-hub').innerHTML = items.map(([id, ico, name, b]) => `<button type="button" class="hub-btn" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^\d+\/\d+$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
   }
   let dailyShown = false;
@@ -1926,6 +1941,7 @@
   /* ---- generic sheet ---- */
   let sheetKind = '';
   function openSheet(kind) {
+    if (kind === 'zen') { openZen(); return; }
     if (kind === 'nails') { startNailDay(); return; }
     sheetKind = kind;
     const T = { games: '🎮 Mini-games', settings: '⚙️ Settings', daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Weekly missions', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
@@ -1940,6 +1956,8 @@
       const g = save.games, card = (act, ico, name, desc, best, daily) => `<div class="row-card game-card"><span class="rc-i">${ico}</span><span class="rc-t"><b>${name}</b><small>${desc}</small><small class="best">${best}${daily ? ' · <em>daily bonus +20 🪙</em>' : ''}</small></span><button type="button" class="btn btn-primary" data-act="${act}">Play</button></div>`;
       return card('play-tricks', '🐾', 'Simba’s tricks', 'Watch Simba’s tricks, then repeat them in the same order.', `Best: ${g.tricksBest || 0} tricks`, g.tricksDay !== today())
         + card('play-tahdig', '🍚', 'Tahdig master', 'Flip Maman’s tahdig at the perfect moment for a golden crust.', `Best: ${g.tahdigBest || 0}/15`, g.tahdigDay !== today())
+        + card('play-zen', '🧘', 'Meditation', 'Light the oud and breathe with Nena. Gives a Zen bonus for today.', save.wellness.zen === today() ? 'Done today ✓' : 'Not done today', save.wellness.zen !== today())
+        + card('play-hair', '💇‍♀️', 'Hair day with Maman', 'After her shower, Maman dries Nena’s hair. Don’t burn her!', `Best: ${save.games.hairBest || 0}★`, save.wellness.hair !== today())
         + card('go-sort', '🧪', 'Color Sort', 'Three new glass puzzles every day.', `${sortLeft()} left today`, false)
         + card('go-nails', '💅', 'Nail day', 'Leila comes once a week.', nailsReady() ? 'Available now!' : 'Done this week', false);
     },
@@ -1976,7 +1994,7 @@
       return `<div class="fam"><span class="fam-p">${A.portrait(f.pic, 'happy')}</span><span class="fam-t"><b>${f.name} <small>${FR_TITLES[lv]}</small></b><span class="hearts-s">${'❤️'.repeat(lv)}${'🤍'.repeat(4 - lv)}</span>${next ? bar(pts - FR_LV[lv], next - FR_LV[lv]) : '<small>Max friendship!</small>'}<span class="scenes">${scenes}</span></span></div>`;
     }).join('') + '<p class="sh-lede small">Help someone to grow your friendship. Each level unlocks a little scene and makes them a bit more patient.</p>',
     decor: () => ['salon', 'kitchen', 'tv', 'hall', 'bedroom'].map((room) => `<h4 class="sh-h">${ROOMS[room].icon} ${ROOMS[room].name}</h4>` + DECOR.filter((d) => d.room === room).map((d) => { const own = save.decor[d.id]; return `<div class="row-card${own ? ' done' : ''}"><span class="rc-i">${d.icon}</span><span class="rc-t"><b>${d.name}</b><small>+1% patience for everyone</small></span>${own ? '<b class="ok">✓</b>' : `<button type="button" class="btn btn-primary" data-act="buy-decor" data-id="${d.id}" ${save.coins < d.cost ? 'disabled' : ''}>${d.cost} 🪙</button>`}</div>`; }).join('')).join(''),
-    wardrobe: () => `<h4 class="sh-h">Nena’s outfits</h4><div class="wardrobe">${OUTFIT_SHOP.map((o) => { const own = save.owned[o.id], on = save.outfit === o.id; return `<button type="button" class="ward${on ? ' on' : ''}" data-act="outfit" data-id="${o.id}" ${!own && save.coins < o.cost ? 'disabled' : ''}><span class="ward-p">${A.nena({ dressed: true, outfit: o.id, eyes: 'open' })}</span><small>${o.name}</small><b>${on ? 'Wearing' : own ? 'Wear' : o.cost + ' 🪙'}</b></button>`; }).join('')}</div>
+    wardrobe: () => `<h4 class="sh-h">Nena’s outfits</h4><div class="wardrobe">${OUTFIT_SHOP.map((o) => { const own = save.owned[o.id], on = save.outfit === o.id; return `<button type="button" class="ward${on ? ' on' : ''}" data-act="outfit" data-id="${o.id}" ${!own && (o.reward || save.coins < o.cost) ? 'disabled' : ''}><span class="ward-p">${A.nena({ dressed: true, outfit: o.id, eyes: 'open' })}</span><small>${o.name}</small><b>${on ? 'Wearing' : own ? 'Wear' : o.reward ? '🔒 30-min journey' : o.cost + ' 🪙'}</b></button>`; }).join('')}</div>
       <h4 class="sh-h">Simba’s collars</h4><div class="wardrobe">${COLLAR_SHOP.map((o) => { const k = 'c_' + o.id, own = o.cost === 0 || save.owned[k], on = save.collar === o.id; return `<button type="button" class="ward dog${on ? ' on' : ''}" data-act="collar" data-id="${o.id}" ${!own && save.coins < o.cost ? 'disabled' : ''}><span class="ward-p">${A.simba({ collar: o.id, eyes: 'open' })}</span><small>${o.name}</small><b>${on ? 'Wearing' : own ? 'Wear' : o.cost + ' 🪙'}</b></button>`; }).join('')}</div>`,
     album: () => `<p class="sh-lede">When Simba does something cute, a 📸 appears next to him. Tap it fast!</p><div class="album">${PHOTOS.map((p) => save.album[p.id] ? `<div class="photo"><span class="ph-pic ${p.cls || ''}">${A.simba({ collar: save.collar, eyes: p.cls === 'lying' ? 'closed' : 'open' })}<em>${p.ico}</em></span><small>${p.name}</small></div>` : '<div class="photo locked"><span class="ph-pic">?</span><small>???</small></div>').join('')}</div>`,
     trophies: () => `<div class="trophies">${ACH.map((a) => `<div class="troph${save.ach[a.id] ? ' got' : ''}"><span>${save.ach[a.id] ? a.icon : '🔒'}</span><b>${a.name}</b><small>${a.desc}</small><em>+${a.r} 🪙</em></div>`).join('')}</div>`,
@@ -1988,6 +2006,8 @@
     const act = b.dataset.act;
     snd('click');
     if (act === 'play-tricks') { openTricks(); return; }
+    if (act === 'play-zen') { openZen(); return; }
+    if (act === 'play-hair') { openHair(); return; }
     if (act === 'play-tahdig') { openTahdig(); return; }
     if (act === 'go-sort') { openSheet('sort'); return; }
     if (act === 'go-nails') { startNailDay(); return; }
@@ -2004,7 +2024,7 @@
     else if (act === 'claim-mission') { const i = +b.dataset.i, m = weekMissions()[i]; save.week.claimed[i] = true; save.coins += m.r; persist(); snd('coin'); toast(`📋 Mission complete! +${m.r} 🪙`, 'combo', 1600); }
     else if (act === 'scene') { const f = b.dataset.f, l = +b.dataset.l; save.scenes[f + l] = 1; persist(); playScene(SCENES[f][l - 1], `${FRIENDS.find((x) => x.id === f).name} · ${FR_TITLES[l]}`, () => openSheet('family')); return; }
     else if (act === 'buy-decor') { const d = DECOR.find((x) => x.id === b.dataset.id); if (save.coins < d.cost) return; save.coins -= d.cost; save.decor[d.id] = 1; persist(); snd('coin'); toast(`${d.icon} ${d.name} added to the ${ROOMS[d.room].name.toLowerCase()}!`, 'hint', 1800); checkAch(); }
-    else if (act === 'outfit') { const o = OUTFIT_SHOP.find((x) => x.id === b.dataset.id); if (!save.owned[o.id]) { if (save.coins < o.cost) return; save.coins -= o.cost; save.owned[o.id] = 1; snd('coin'); } save.outfit = o.id; persist(); }
+    else if (act === 'outfit') { const o = OUTFIT_SHOP.find((x) => x.id === b.dataset.id); if (!save.owned[o.id]) { if (o.reward) return; if (save.coins < o.cost) return; save.coins -= o.cost; save.owned[o.id] = 1; snd('coin'); } save.outfit = o.id; persist(); }
     else if (act === 'collar') { const id = b.dataset.id === 'null' ? null : b.dataset.id; const o = COLLAR_SHOP.find((x) => String(x.id) === String(id)); const k = 'c_' + o.id; if (o.cost && !save.owned[k]) { if (save.coins < o.cost) return; save.coins -= o.cost; save.owned[k] = 1; snd('coin'); } save.collar = id; persist(); }
     openSheet(sheetKind);
   }
@@ -2196,6 +2216,212 @@
     setTimeout(() => { if (!TD) return; tdSay(TD.pts >= 13 ? `Perfect! You are a real tahdig queen! +${coins} 🪙` : TD.pts >= 8 ? `Very good, azizam! ${TD.pts}/15 · +${coins} 🪙` : `Practice makes perfect! ${TD.pts}/15 · +${coins} 🪙`); snd(TD.pts >= 8 ? 'win' : 'lose'); $('td-go').textContent = 'Play again'; $('td-best').textContent = `Best: ${save.games.tahdigBest}/15`; }, 900);
   }
 
+  /* ---- Today's journey: play time chests (5, 10, 20, 30 minutes) ---- */
+  const JOURNEY = [{ m: 5, c: 20, ico: '🎁' }, { m: 10, c: 40, ico: '🎁' }, { m: 20, c: 70, ico: '💎' }, { m: 30, c: 150, ico: '👑', outfit: 'zen' }];
+  let lastInput = Date.now(), jReadyShown = -1;
+  document.addEventListener('pointerdown', () => { lastInput = Date.now(); }, true);
+  const ACTIVE = ['screen-game', 'screen-tricks', 'screen-tahdig', 'screen-sort', 'screen-nails', 'screen-zen', 'screen-hair', 'screen-tree'];
+  function journeyToday() { if (save.journey.date !== today()) save.journey = { date: today(), sec: 0, got: [] }; return save.journey; }
+  setInterval(() => {
+    if (document.hidden || Date.now() - lastInput > 60000) return;
+    const on = ACTIVE.some((id) => !$(id).hidden) && !(G && !$('screen-game').hidden && (G.paused || G.over));
+    if (!on) return;
+    const J = journeyToday(); J.sec++;
+    if (J.sec % 15 === 0) persist();
+    const ready = JOURNEY.findIndex((j, i) => !J.got[i] && J.sec >= j.m * 60);
+    if (ready >= 0 && ready !== jReadyShown) { jReadyShown = ready; toast(`${JOURNEY[ready].ico} ${JOURNEY[ready].m}-minute chest ready! Open it on the map.`, 'combo', 2200); snd('chime'); }
+  }, 1000);
+  function renderJourney() {
+    const J = journeyToday(), min = J.sec / 60, pct = Math.min(100, (min / 30) * 100);
+    $('m-journey').innerHTML = `<div class="jr-top"><b>🗺️ Today’s journey</b><span>${Math.floor(min)}/30 min</span></div>
+      <div class="jr-bar"><i style="width:${pct.toFixed(1)}%"></i>${JOURNEY.map((j, i) => { const ok = J.sec >= j.m * 60, got = J.got[i]; return `<button type="button" class="jr-chest${got ? ' got' : ok ? ' ready' : ''}" data-chest="${i}" style="left:${(j.m / 30) * 100}%" ${ok && !got ? '' : 'disabled'}><span>${got ? '✓' : j.ico}</span><small>${j.m}′</small></button>`; }).join('')}</div>`;
+  }
+  function openChest(i) {
+    const J = journeyToday(), j = JOURNEY[i];
+    if (J.got[i] || J.sec < j.m * 60) return;
+    J.got[i] = true; save.coins += j.c;
+    let extra = '';
+    if (j.outfit && !save.owned[j.outfit]) { save.owned[j.outfit] = 1; extra = ' + Zen linen outfit 👗'; }
+    if (i === JOURNEY.length - 1) track('journey');
+    persist(); snd('fanfare'); confetti();
+    toast(`${j.ico} +${j.c} 🪙${extra}`, 'combo', 2200);
+    renderMap();
+  }
+
+  /* ---- Meditation: light the oud, then breathe ---- */
+  let ZN = null, znRaf = 0;
+  const OUD = '<svg viewBox="0 0 80 90"><ellipse cx="40" cy="84" rx="26" ry="5" fill="rgba(0,0,0,.18)"/><path d="M22 84 h36 l-4 -8 h-28z" fill="#a8761b"/><rect x="34" y="58" width="12" height="20" rx="3" fill="#c9952a"/><path d="M14 58 q26 -16 52 0 q-2 10 -26 12 q-24 -2 -26 -12z" fill="#e0b84a"/><path d="M20 56 q20 -10 40 0" stroke="#fff3c4" stroke-width="2" fill="none" opacity=".7"/><g class="oud-coal"><ellipse cx="40" cy="52" rx="10" ry="4" fill="#3a2418"/><ellipse cx="40" cy="51" rx="6" ry="2.4" fill="#5a3a26"/></g></svg>';
+  function openZen() {
+    ZN = { phase: 'light', score: 0, total: 0, t: 0, breaths: 0 };
+    const c = { n: 3, night: true };
+    $('zn-bg').innerHTML = `<svg width="0" height="0" style="position:absolute">${RA.defs(c)}</svg>` + RA.ART.bedroom(c);
+    $('zn-nena').innerHTML = A.portrait('nena', 'sleepy');
+    $('zn-oud').innerHTML = OUD; $('zn-oud').classList.remove('lit');
+    $('zn-ring').className = 'zn-ring'; $('zn-cue').textContent = '';
+    $('zn-calm').style.width = '0%';
+    $('zn-btn').textContent = 'Tap the oud to light it 🔥'; $('zn-btn').disabled = true;
+    $('zn-after').hidden = true; $('zn-btn').hidden = false;
+    $('zn-say').textContent = save.wellness.zen === today() ? 'Again? A little more calm never hurts.' : 'Time for my daily meditation. First, the oud…';
+    show('screen-zen'); music('zen');
+  }
+  function lightOud() {
+    if (!ZN || ZN.phase !== 'light') return;
+    ZN.phase = 'ready'; $('zn-oud').classList.add('lit'); snd('bell');
+    $('zn-say').textContent = 'Mmm… the smell of oud. Now, breathe with the circle.';
+    $('zn-btn').disabled = false; $('zn-btn').textContent = 'Start breathing 🧘';
+  }
+  const ZCYCLE = [['in', 4, 'Breathe in…'], ['hold', 1.5, 'Hold…'], ['out', 4, 'Breathe out…']];
+  function zenStart() {
+    if (!ZN) return;
+    if (ZN.phase === 'ready') { ZN.phase = 'breathe'; ZN.t = 0; ZN.score = 0; ZN.total = 0; ZN.held = false; $('zn-btn').textContent = 'Hold while breathing in'; $('zn-btn').classList.add('hold'); let last = performance.now(); const tick = (now) => { if (!ZN || ZN.phase !== 'breathe' || $('screen-zen').hidden) return; const dt = Math.min(0.05, (now - last) / 1000); last = now; zenTick(dt); znRaf = requestAnimationFrame(tick); }; znRaf = requestAnimationFrame(tick); snd('bell'); }
+  }
+  function zenTick(dt) {
+    ZN.t += dt;
+    const len = ZCYCLE.reduce((a, c) => a + c[1], 0), cyc = Math.floor(ZN.t / len), tt = ZN.t % len;
+    if (cyc >= 4) { zenEnd(); return; }
+    let acc = 0, ph = ZCYCLE[0], k = 0;
+    for (const c of ZCYCLE) { if (tt < acc + c[1]) { ph = c; k = (tt - acc) / c[1]; break; } acc += c[1]; }
+    const scale = ph[0] === 'in' ? 0.55 + 0.45 * k : ph[0] === 'hold' ? 1 : 1 - 0.45 * k;
+    $('zn-ring').style.transform = `scale(${scale.toFixed(3)})`;
+    if ($('zn-cue').textContent !== ph[2]) { $('zn-cue').textContent = ph[2]; if (ph[0] === 'in') snd('tone', 0); }
+    const want = ph[0] !== 'out', good = want === !!ZN.held;
+    ZN.total += dt; if (good) ZN.score += dt;
+    $('zn-ring').classList.toggle('good', good); $('zn-ring').classList.toggle('bad', !good);
+    $('zn-calm').style.width = Math.min(100, (ZN.score / (len * 4)) * 100).toFixed(1) + '%';
+    $('zn-round').textContent = `Breath ${cyc + 1}/4`;
+  }
+  function zenEnd() {
+    ZN.phase = 'done'; cancelAnimationFrame(znRaf);
+    const pct = Math.round((ZN.score / Math.max(1, ZN.total)) * 100), first = save.wellness.zen !== today();
+    const coins = first ? 15 + Math.round(pct / 4) : 0;
+    if (first) { save.wellness.zen = today(); save.coins += coins; track('zen'); }
+    persist(); checkAch(); snd('bell');
+    $('zn-btn').classList.remove('hold'); $('zn-btn').hidden = true;
+    $('zn-cue').textContent = `${pct}% calm`; $('zn-ring').className = 'zn-ring done';
+    $('zn-say').textContent = pct >= 75 ? 'Ahh… I feel so light. Namaste. 🙏' : pct >= 45 ? 'Better. My mind is calmer now.' : 'Hmm, my mind kept wandering… Next time.';
+    $('zn-res').innerHTML = first ? `🧘 Zen bonus for today: everyone 10% more patient · +${coins} 🪙` : 'Zen bonus already active today ✓';
+    // sometimes, Nena feels like going out for a walk to hug a tree
+    const walk = save.wellness.tree !== today() && (rnd() < 0.6 || !save.tot.tree);
+    $('zn-walk').hidden = !walk;
+    $('zn-after').hidden = false;
+  }
+
+  /* ---- Tree hug: a walk in the park and good energy ---- */
+  let TR = null, trRaf = 0;
+  const TREE = '<svg viewBox="0 0 220 300"><ellipse cx="110" cy="292" rx="80" ry="8" fill="rgba(0,0,0,.18)"/><path d="M92 292 q6 -60 -2 -120 q14 6 20 0 q-6 60 10 120z" fill="#7a5a3e"/><path d="M98 220 q-4 -30 2 -50 M112 250 q6 -40 0 -70" stroke="#5a3e28" stroke-width="3" fill="none"/><circle cx="110" cy="96" r="70" fill="#4d8044"/><circle cx="60" cy="130" r="46" fill="#5a9150"/><circle cx="160" cy="128" r="48" fill="#3f6f3a"/><circle cx="84" cy="60" r="40" fill="#5a9150"/><circle cx="142" cy="66" r="40" fill="#4d8044"/><circle cx="76" cy="104" r="10" fill="#e2433a" opacity=".85"/><circle cx="150" cy="96" r="9" fill="#e2433a" opacity=".85"/><circle cx="118" cy="140" r="8" fill="#e2433a" opacity=".85"/></svg>';
+  function openTree() {
+    TR = { e: 0, hold: false, done: false };
+    const c = { n: 3 };
+    $('tr-bg').innerHTML = `<svg width="0" height="0" style="position:absolute">${RA.defs(c)}</svg>` + RA.ART.street(c);
+    $('tr-tree').innerHTML = TREE;
+    $('tr-nena').innerHTML = A.nena({ dressed: true, outfit: save.outfit, nails: nailOf('nena') });
+    $('tr-nena').className = 'actor tr-nena walking'; $('tr-nena').style.left = '4%';
+    $('tr-fill').style.width = '0%'; $('tr-say').textContent = 'A little walk in the fresh air… that big tree looks wise.';
+    $('tr-btn').textContent = 'Hold to hug the tree 🌳'; $('tr-btn').disabled = true; $('tr-done').hidden = true;
+    show('screen-tree'); music('menu');
+    setTimeout(() => { $('tr-nena').style.left = '42%'; }, 50);
+    setTimeout(() => { if (!TR) return; $('tr-nena').classList.remove('walking'); $('tr-btn').disabled = false; }, 2300);
+    let last = performance.now();
+    const tick = (now) => {
+      if (!TR || $('screen-tree').hidden) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (!TR.done) {
+        TR.e = Math.max(0, Math.min(1, TR.e + (TR.hold ? dt / 3.2 : -dt / 5)));
+        $('tr-fill').style.width = (TR.e * 100).toFixed(1) + '%';
+        $('tr-nena').classList.toggle('hug', TR.hold);
+        if (TR.hold && rnd() < dt * 6) leaf();
+        if (TR.e >= 1) treeDone();
+      }
+      trRaf = requestAnimationFrame(tick);
+    };
+    trRaf = requestAnimationFrame(tick);
+  }
+  function leaf() {
+    const st = $('tr-stage'), e = document.createElement('i');
+    e.className = 'leaf'; e.textContent = pick(['🍃', '✨', '💚', '🌿']);
+    e.style.left = (45 + rnd() * 30) + '%'; e.style.top = (20 + rnd() * 30) + '%';
+    st.appendChild(e); setTimeout(() => e.remove(), 1600);
+  }
+  function treeDone() {
+    TR.done = true; TR.hold = false;
+    const first = save.wellness.tree !== today();
+    if (first) { save.wellness.tree = today(); save.coins += 15; track('tree'); }
+    persist(); checkAch(); snd('win');
+    for (let i = 0; i < 10; i++) setTimeout(leaf, i * 70);
+    $('tr-nena').classList.remove('hug');
+    $('tr-say').textContent = pick(['I can feel the good energy flowing… 💚', 'Thank you, tree. I feel recharged!', 'Nature is the best therapy.']);
+    $('tr-btn').hidden = true; $('tr-done').hidden = false;
+    $('tr-res').textContent = first ? '🌳 Good energy: +1 heart in today’s days · +15 🪙' : 'Good energy already collected today ✓';
+  }
+
+  /* ---- Hair day: Maman dries Nena's hair after her shower ---- */
+  const HZONES = [[50, 9], [28, 17], [72, 17], [15, 46], [85, 46], [14, 75], [86, 75]];
+  let HD = null, hdRaf = 0;
+  const DRYER = '<svg viewBox="0 0 90 70"><rect x="34" y="34" width="16" height="34" rx="6" fill="#c9496f"/><path d="M8 14 h50 a20 20 0 0 1 0 28 h-50z" fill="#ef8fb0"/><rect x="2" y="16" width="10" height="24" rx="3" fill="#c9496f"/><circle cx="60" cy="28" r="9" fill="#fff" opacity=".5"/><rect x="38" y="44" width="8" height="6" rx="2" fill="#ffd36b"/></svg>';
+  function openHair() {
+    HD = { z: HZONES.map(() => ({ wet: 1, heat: 0 })), t: 28, burns: 0, run: false, x: 50, y: 50, near: false };
+    $('hd-nena').innerHTML = A.portrait('nena', 'happy');
+    $('hd-maman').innerHTML = A.portrait('fariba', 'happy');
+    $('hd-zones').innerHTML = HZONES.map(([x, y], i) => `<i class="wet" data-z="${i}" style="left:${x}%;top:${y}%"><b></b></i>`).join('');
+    $('hd-dryer').innerHTML = DRYER + '<span class="air"><i></i><i></i><i></i></span>';
+    $('hd-time').textContent = '0:28'; $('hd-heat').style.width = '0%';
+    $('hd-go').hidden = false; $('hd-go').textContent = 'Start drying 💨';
+    hdSay('fariba', 'Come, azizam, sit down. I’ll dry your hair before you catch a cold!');
+    show('screen-hair'); music('home');
+  }
+  function hdSay(who, t) { const e = $('hd-say'); e.textContent = (who === 'fariba' ? 'Maman: ' : 'Nena: ') + t; e.classList.remove('pop'); void e.offsetWidth; e.classList.add('pop'); }
+  function hdStart() {
+    if (!HD) return;
+    if (HD.over) { openHair(); return; }
+    HD.run = true; $('hd-go').hidden = true;
+    hdSay('fariba', 'Move the dryer over the wet hair. Not too long in one place!');
+    let last = performance.now(), hum = 0;
+    const tick = (now) => {
+      if (!HD || !HD.run || $('screen-hair').hidden) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      HD.t -= dt;
+      let maxHeat = 0;
+      HD.z.forEach((z, i) => {
+        const [zx, zy] = HZONES[i], d = Math.hypot(HD.x - zx, (HD.y - zy) * 0.9), near = HD.near && d < 15;
+        if (near) { z.wet = Math.max(0, z.wet - dt * 0.6); z.heat += dt * (z.wet > 0 ? 0.25 : 0.9); } else z.heat = Math.max(0, z.heat - dt * 0.5);
+        if (z.heat >= 1) { z.heat = 0; HD.burns++; snd('fail'); buzz(40); $('hd-nena').innerHTML = A.portrait('nena', 'surprised'); hdSay('nena', pick(['Ouch! Too hot, Maman!', 'Aaah! It burns!', 'Careful!! 🔥'])); setTimeout(() => { if (HD) $('hd-nena').innerHTML = A.portrait('nena', 'happy'); }, 1200); }
+        maxHeat = Math.max(maxHeat, z.heat);
+        const el = $('hd-zones').children[i]; el.style.opacity = (0.15 + z.wet * 0.85).toFixed(2); el.classList.toggle('dry', z.wet <= 0);
+      });
+      $('hd-heat').style.width = (maxHeat * 100).toFixed(0) + '%';
+      hum += dt; if (HD.near && hum > 0.6) { hum = 0; snd('swoosh'); }
+      const t = Math.max(0, Math.ceil(HD.t)); $('hd-time').textContent = `0:${String(t).padStart(2, '0')}`;
+      const left = HD.z.filter((z) => z.wet > 0).length;
+      if (left === 0 || HD.t <= 0) { hairEnd(); return; }
+      hdRaf = requestAnimationFrame(tick);
+    };
+    hdRaf = requestAnimationFrame(tick);
+  }
+  function hairMove(e) {
+    if (!HD) return;
+    const r = $('hd-head').getBoundingClientRect();
+    HD.x = ((e.clientX - r.left) / r.width) * 100; HD.y = ((e.clientY - r.top) / r.height) * 100;
+    HD.near = e.type !== 'pointerleave' && e.type !== 'pointerup' && (e.buttons > 0 || e.pointerType === 'touch' || e.type === 'pointerdown');
+    const st = $('hd-stage').getBoundingClientRect();
+    $('hd-dryer').style.transform = `translate(${(e.clientX - st.left + 6).toFixed(0)}px, ${(e.clientY - st.top - 30).toFixed(0)}px)`;
+    $('hd-dryer').classList.toggle('on', HD.near && HD.run);
+  }
+  function hairEnd() {
+    HD.run = false; HD.over = true; cancelAnimationFrame(hdRaf);
+    const dry = HD.z.filter((z) => z.wet <= 0).length / HD.z.length;
+    const stars = dry >= 1 ? (HD.burns === 0 ? 3 : HD.burns <= 2 ? 2 : 1) : dry >= 0.7 ? 1 : 0;
+    const first = save.wellness.hair !== today();
+    const coins = 8 * stars + (first && stars ? 20 : 0);
+    if (stars > (save.games.hairBest || 0)) save.games.hairBest = stars;
+    if (first && stars) save.wellness.hair = today();
+    save.coins += coins; save.friend.fariba = (save.friend.fariba || 0) + stars; persist(); checkAch();
+    snd(stars >= 2 ? 'win' : 'lose'); $('hd-dryer').classList.remove('on');
+    $('hd-nena').innerHTML = A.portrait('nena', stars >= 2 ? 'happy' : 'neutral');
+    hdSay('fariba', stars === 3 ? `Perfect! Soft and shiny, like a princess. ${'★'.repeat(stars)} +${coins} 🪙` : stars ? `Good, azizam! ${'★'.repeat(stars)} +${coins} 🪙` : 'Still wet… you’ll catch a cold! Try again.');
+    if (stars === 3) confettiOn($('screen-hair'));
+    $('hd-go').hidden = false; $('hd-go').textContent = 'Again';
+  }
+
   /* ---- custom days: challenge and endless ---- */
   let CUSTOM = null;
   function challengeCfg(c) {
@@ -2242,7 +2468,7 @@
   /* Screens: title, map, story, shop                                    */
   /* ------------------------------------------------------------------ */
   function show(id) {
-    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
+    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig', 'screen-zen', 'screen-hair', 'screen-tree'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
   }
   function renderMap() {
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
@@ -2397,6 +2623,21 @@
   $('tk-back').addEventListener('click', () => { TK = null; snd('click'); openSheet('games'); });
   $('td-go').addEventListener('click', () => tdFlip());
   $('td-back').addEventListener('click', () => { if (TD) TD.run = false; cancelAnimationFrame(tdRaf); TD = null; snd('click'); openSheet('games'); });
+  $('m-journey').addEventListener('click', (e) => { const b = e.target.closest('[data-chest]'); if (b && !b.disabled) openChest(+b.dataset.chest); });
+  $('zn-oud').addEventListener('click', lightOud);
+  $('zn-btn').addEventListener('click', zenStart);
+  const zHold = (v) => (e) => { if (ZN && ZN.phase === 'breathe') { ZN.held = v; e.preventDefault(); } };
+  $('zn-btn').addEventListener('pointerdown', zHold(true)); ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => $('zn-btn').addEventListener(ev, zHold(false)));
+  $('zn-walk').addEventListener('click', () => { snd('tab'); openTree(); });
+  $('zn-back').addEventListener('click', () => { if (ZN) ZN.phase = 'done'; cancelAnimationFrame(znRaf); ZN = null; renderMap(); });
+  $('zn-home').addEventListener('click', () => { ZN = null; renderMap(); });
+  const tHold = (v) => (e) => { if (TR && !TR.done && !$('tr-btn').disabled) { TR.hold = v; e.preventDefault(); } };
+  $('tr-btn').addEventListener('pointerdown', tHold(true)); ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => $('tr-btn').addEventListener(ev, tHold(false)));
+  $('tr-done').addEventListener('click', () => { TR = null; cancelAnimationFrame(trRaf); renderMap(); });
+  $('tr-back').addEventListener('click', () => { TR = null; cancelAnimationFrame(trRaf); renderMap(); });
+  $('hd-go').addEventListener('click', hdStart);
+  ['pointerdown', 'pointermove', 'pointerup', 'pointerleave'].forEach((ev) => $('hd-stage').addEventListener(ev, hairMove));
+  $('hd-back').addEventListener('click', () => { if (HD) HD.run = false; cancelAnimationFrame(hdRaf); HD = null; openSheet('games'); });
   $('m-hub').addEventListener('click', (e) => { const b = e.target.closest('[data-hub]'); if (b) { snd('tab'); openSheet(b.dataset.hub); } });
   $('sh2-body').addEventListener('click', sheetAction);
   let sheetBackToPause = false;

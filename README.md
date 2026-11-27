@@ -37,3 +37,11 @@ Serve the folder (`python3 -m http.server`) and open it, or install it from the 
 - New activities: find Baba's lost remote (search the ❓ spots), water the plant, Simba's playdate with Biscuit, Negin's Instagram selfie at CLAP.
 - Living decor: wall clock, birds, rain on the windows, twinkling city lights, a football match on the TV, fairy lights, pigeons and a cat in the street, birthday and wedding decorations.
 - New mini-games: Simba's tricks (memory) and Tahdig master (timing), next to Color Sort and Nail day.
+
+## Wellness & daily journey
+
+- Today's journey: chests after 5, 10, 20 and 30 minutes of active play each day (the 30-minute chest unlocks the Zen linen outfit). Nothing ever stops the player from leaving.
+- Daily meditation: Nena lights her oud, then breathes with the circle (hold to breathe in, release to breathe out). Gives a Zen bonus: the family is 10% more patient today.
+- Sometimes Nena then goes for a walk and hugs a tree for good energy (+1 heart today).
+- Hair day: after her shower, Maman dries Nena's hair. Sweep the dryer over the wet hair without burning her.
+- The result screen shows what tomorrow brings.

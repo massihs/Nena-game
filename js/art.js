@@ -11,6 +11,7 @@ window.Art = (function () {
     denim:   { top: '#9cc2d9', stripe: '#ffffff', bottom: '#2f4a6a' },
     rose:    { top: '#f4a3c0', stripe: '#ffffff', bottom: '#3a3550' },
     persian: { top: '#2f6b3e', stripe: '#e0c27a', bottom: '#3a2418' },
+    zen:     { top: '#eef3e8', stripe: '#8fb98a', bottom: '#f3efe6' },
   };
   const COLLARS = {
     rouge:   { color: '#d4513f', kind: 'collar' },
