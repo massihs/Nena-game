@@ -25,6 +25,7 @@
 
   <!-- Title -->
   <section class="screen title" id="screen-title">
+    <button type="button" class="icon-btn t-gear" id="t-settings" aria-label="Settings">⚙️</button>
     <div class="title-art"><img src="assets/nena-simba.jpg" alt="Nena and Simba asleep, snuggled under the duvet"><div class="title-glow"></div><div class="sparkles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
     <div class="title-panel">
       <div class="t-cast" id="t-cast" aria-hidden="true"></div>
@@ -111,6 +112,7 @@
       <p class="pr-obj" id="pr-obj"></p>
       <div class="pr-head"><span>Boosters for today</span><span class="pill coin">🪙 <b id="pr-coins">0</b></span></div>
       <div class="pr-boosts" id="pr-boosts"></div>
+      <button type="button" class="easy" id="pr-easy" hidden><span>🤝</span><span><b>Easy mode</b><small>This day is tough! Everyone waits 30% longer. Free.</small></span><i></i></button>
       <div class="row">
         <button type="button" class="btn" id="pr-back">Map</button>
         <button type="button" class="btn btn-primary btn-big" id="pr-start">Start the day</button>
@@ -160,6 +162,19 @@
     <footer class="map-foot"><button type="button" class="btn btn-primary btn-big" id="na-done">Next ›</button></footer>
   </section>
 
+  <!-- Second chance -->
+  <section class="screen modal" id="screen-continue" hidden>
+    <div class="card result">
+      <div class="r-portrait" id="c-portrait"></div>
+      <h2>Out of hearts!</h2>
+      <p class="r-sub" id="c-msg"></p>
+      <div class="row col">
+        <button type="button" class="btn btn-primary btn-big" id="c-yes">💗 Continue · +2 hearts · <span id="c-cost">25</span> 🪙</button>
+        <button type="button" class="btn" id="c-no">End the day</button>
+      </div>
+    </div>
+  </section>
+
   <!-- Pause -->
   <section class="screen modal" id="screen-pause" hidden>
     <div class="card">
@@ -168,6 +183,7 @@
       <div class="row col">
         <button type="button" class="btn btn-primary" id="p-resume">Resume</button>
         <button type="button" class="btn" id="p-sound">Sound: on</button>
+        <button type="button" class="btn" id="p-settings">⚙️ Settings</button>
         <button type="button" class="btn" id="p-retry">↻ Restart the day</button>
         <button type="button" class="btn" id="p-quit">Quit to map</button>
       </div>

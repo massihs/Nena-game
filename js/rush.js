@@ -9,7 +9,7 @@
   const A = window.Art;
   const RA = window.RoomArt;
   const snd = (n, a) => { if (save.sound !== false && window.Sound) window.Sound.play(n, a); };
-  const buzz = (p) => { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) { /* */ } };
+  const buzz = (p) => { try { if (save.vibe !== false && navigator.vibrate) navigator.vibrate(p); } catch (e) { /* */ } };
   const rnd = Math.random;
   const pick = (a) => a[Math.floor(rnd() * a.length)];
 
@@ -330,6 +330,7 @@
     // tutorial hints for newly introduced mechanics, one after another
     const fresh = cfg.types.filter((t) => !save.seen[t]);
     if (W.tabs.length > 1 && !save.seen._rooms) { fresh.unshift('_rooms'); }
+    if (save.hints === false) fresh.length = 0;
     fresh.forEach((t, i) => setTimeout(() => { if (G && G.n === n && !G.over) toast(t === '_rooms' ? 'Several rooms! Tap the room cards at the bottom (or the side arrows) to look around. Tap a request icon to send Nena.' : REQ[t].hint, 'hint', 4800); }, i * 5200));
     cfg.types.forEach((t) => { save.seen[t] = 1; });
     if (W.tabs.length > 1) save.seen._rooms = 1;
@@ -412,12 +413,22 @@
     G.tabKey = '';
     renderTabs();
   }
+  // room thumbnails: rasterised once per day as small images instead of live SVG copies
+  const thumbCache = {};
+  function thumbOf(room) {
+    const k = G.n + room;
+    if (thumbCache[k]) return thumbCache[k];
+    const bg = G.layers[room] && G.layers[room].querySelector('svg.stage-bg');
+    if (!bg) return '';
+    const svg = bg.outerHTML.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ').replace(/class="stage-bg"/, '').replace(/aria-hidden="true">/, `aria-hidden="true">${RA.defs(G.cfg)}`);
+    thumbCache[k] = `<img alt="" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}">`;
+    return thumbCache[k];
+  }
   function buildTabs(tabs) {
     G.tabsBuilt = tabs.join();
     $('g-rooms').innerHTML = tabs.map((room, i) => {
-      const bg = G.layers[room] && G.layers[room].querySelector('svg.stage-bg');
       return `${i ? '<i class="rdoor" aria-hidden="true"></i>' : ''}<button type="button" class="rtab" data-room="${room}" aria-label="${ROOMS[room].name}">
-        <span class="rt-thumb">${bg ? bg.outerHTML : ''}</span><span class="rt-me">${A.portrait('nena', 'happy')}</span>
+        <span class="rt-thumb">${thumbOf(room)}</span><span class="rt-me">${A.portrait('nena', 'happy')}</span>
         <span class="rt-n">${ROOMS[room].icon} ${ROOMS[room].short}</span><span class="rt-b"></span></button>`;
     }).join('');
   }
@@ -473,6 +484,7 @@
     const f = FR_OF[who]; if (f) m *= 1 + 0.04 * friendLv(f);
     m *= 1 + 0.01 * cozy();
     if (G.cfg.mod && G.cfg.mod.patienceMul) m *= G.cfg.mod.patienceMul;
+    if (G.boosts.easy) m *= 1.3;
     return m;
   }
   function spawn() {
@@ -493,7 +505,7 @@
     const el = document.createElement('div');
     el.className = 'req';
     el.dataset.target = R.who;
-    el.innerHTML = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" class="ring-bg"/><circle cx="20" cy="20" r="17" class="ring"/></svg><span>${R.icon}</span>`;
+    el.innerHTML = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" class="ring-bg"/><circle cx="20" cy="20" r="17" class="ring"/></svg><span>${R.icon}</span><i class="need-chip" hidden></i>`;
     layer(whoRoom(R.who)).appendChild(el);
     const r = { type: t, who: R.who, left: max, max, el };
     if (R.vip) el.classList.add('vip');
@@ -507,13 +519,32 @@
     const room = whoRoom(r.who);
     if (room && r.el.parentNode !== G.layers[room]) layer(room).appendChild(r.el);
     const [x, y] = anchorOf(r.who);
-    r.el.style.transform = `translate(${x - 24}px, ${y - 48}px)`;
+    const px = Math.round(x), py = Math.round(y);
+    if (r.px !== px || r.py !== py) { r.px = px; r.py = py; r.el.style.transform = `translate(${px - 24}px, ${py - 48}px)`; }
     const f = r.left / r.max;
     if (!r.ring) r.ring = r.el.querySelector('.ring');
-    r.ring.style.strokeDashoffset = ((1 - f) * 106.8).toFixed(1);
+    const off = Math.round((1 - f) * 1068) / 10;
+    if (r.off !== off) { r.off = off; r.ring.style.strokeDashoffset = off; }
+    const hue = Math.round(Math.max(0, Math.min(1, (f - 0.15) / 0.6)) * 10) * 12;  // red → amber → green
+    if (r.hue !== hue && G.freezeT <= 0) { r.hue = hue; r.ring.style.stroke = `hsl(${hue}, 62%, 48%)`; }
     const u = f < 0.3 && G.freezeT <= 0, fr = G.freezeT > 0;
     if (r.u !== u) { r.u = u; r.el.classList.toggle('urgent', u); }
-    if (r.fr !== fr) { r.fr = fr; r.el.classList.toggle('frozen', fr); }
+    if (r.fr !== fr) { r.fr = fr; r.el.classList.toggle('frozen', fr); if (fr) r.ring.style.stroke = ''; else r.hue = -1; }
+  }
+  // the little chip under a bubble says what Nena has to fetch first (or that she already has it)
+  function updateChips() {
+    G.reqs.forEach((r) => {
+      const R = REQ[r.type], chip = r.el.querySelector('.need-chip'); if (!chip) return;
+      let txt = '', cls = '';
+      if (R.item) {
+        if (holding(R.item)) { txt = '✓ ' + ITEMS[R.item]; cls = 'ok'; }
+        else if (R.src === 'simba') txt = '🐕';
+        else { const S = STATIONS[R.src]; txt = (S.chip || ITEMS[R.item]) + (S.room !== whoRoom(r.who) ? ' ' + ROOMS[S.room].icon : ''); }
+      }
+      const k = txt + cls;
+      if (r.chipK === k) return; r.chipK = k;
+      chip.hidden = !txt; chip.textContent = txt; chip.className = 'need-chip ' + cls;
+    });
   }
   function removeReq(r) {
     r.el.remove(); G.reqs = G.reqs.filter((x) => x !== r);
@@ -540,7 +571,7 @@
     else if (r.who === 'nasim') toast('Nasim stormed off!', 'bad');
     else if (r.who === 'negin') toast('Negin went back to sleep…', 'bad');
     if (R.item === 'pup' && holding('pup') && !G.reqs.some((x) => REQ[x.type].item === 'pup')) { take('pup'); releaseSimba(); }
-    if (G.hearts <= 0) endLevel(true);
+    if (G.hearts <= 0) outOfHearts();
   }
   function complete(r, bonusMul) {
     if (!G.reqs.includes(r)) return;
@@ -573,6 +604,15 @@
     removeReq(r);
     snd(G.combo >= 3 ? 'fanfare' : 'success'); buzz(12);
     checkObj();
+  }
+  const CONT_COST = 25;
+  function outOfHearts() {
+    if (G.continued || G.cfg.endless || save.coins + G.coins < CONT_COST) { endLevel(true); return; }
+    G.paused = true;
+    $('c-cost').textContent = CONT_COST;
+    $('c-msg').textContent = pick(['The family is losing patience…', 'Baba is grumbling, Simba is sulking…', 'Everyone is upset… but there is still time!']);
+    $('c-portrait').innerHTML = A.portrait('nena', 'sad');
+    show('screen-continue');
   }
   function addFur(puddle) {
     if (G.furs.length >= 7 || !G.layers.salon) return;
@@ -716,6 +756,23 @@
     G.pkg = { el: b, t: 10 };
     toast('🔔 Ding-dong! A delivery at the front door', '', 1600);
     snd('pop');
+  }
+  function drawRoute() {
+    if (!G.route) { G.route = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); G.route.setAttribute('class', 'route'); G.route.setAttribute('viewBox', '0 0 600 800'); G.route.innerHTML = '<path/><circle r="7"/>'; }
+    const room = G.nena.room, l = G.layers[room];
+    if (G.route.parentNode !== l) l.appendChild(G.route);
+    if (!G.queue.length || G.nena.el.classList.contains('gone')) { if (G.routeK !== '') { G.routeK = ''; G.route.style.display = 'none'; } return; }
+    const pts = [[G.nena.x, G.nena.y - 6]];
+    for (const q of G.queue) {
+      const r = targetRoom(q.id);
+      if (r !== room) { const d = ROOMS[room].door; pts.push([d[0], d[1]]); break; }
+      const p = targetPoint(q.id, false); if (p) pts.push([p[0], p[1] - 6]);
+    }
+    const d = pts.map((p, i) => `${i ? 'L' : 'M'}${Math.round(p[0])} ${Math.round(p[1])}`).join(' ');
+    if (d === G.routeK) return;
+    G.routeK = d; G.route.style.display = '';
+    G.route.firstChild.setAttribute('d', d);
+    const e = pts[pts.length - 1]; G.route.lastChild.setAttribute('cx', Math.round(e[0])); G.route.lastChild.setAttribute('cy', Math.round(e[1]));
   }
   function markQueue() {
     stage().querySelectorAll('.qmark').forEach((m) => m.remove());
@@ -1302,7 +1359,8 @@
     ambientTick(dt);
     talkTick(dt);
     highlights();
-    G.tabT = (G.tabT || 0) - dt; if (G.tabT <= 0) { G.tabT = 0.14; renderTabs(); }
+    G.tabT = (G.tabT || 0) - dt; if (G.tabT <= 0) { G.tabT = 0.14; renderTabs(); updateChips(); }
+    drawRoute();
     if (G.time <= 0) { G.time = 0; endLevel(false); }
     hud();
   }
@@ -1440,6 +1498,8 @@
       if (stars > 0 && first) { earned += 60 + stars * 15; save.chal = { date: today(), done: true }; track('challenge'); extra = `<li class="ok"><span>🎯 Daily challenge done!</span><b>+${60 + stars * 15} 🪙</b></li>`; }
     }
     save.coins += earned;
+    save.losses = save.losses || {};
+    if (!c.endless && !c.challenge) save.losses[G.n] = stars > 0 ? 0 : (save.losses[G.n] || 0) + 1;
     if (!lost) { track('day'); if (stars === 3) track('perfect'); if (G.failed === 0) track('nohit'); }
     const ups = FRIENDS.filter((f) => friendLv(f.id) > (G.frStart[f.id] || 0));
     if (G.miniN) extra += `<li class="${G.miniWon ? 'ok' : 'ko'}"><span>⚡ Mini challenges</span><b>${G.miniWon}/${G.miniN}</b></li>`;
@@ -1625,7 +1685,7 @@
       ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
       ['missions', '📋', 'Missions', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
       ['nails', '💅', 'Nail day', nailsReady() ? '!' : ''], ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
-      ['endless', '♾️', 'Endless', ''],
+      ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
     ];
     $('m-hub').innerHTML = items.map(([id, ico, name, b]) => `<button type="button" class="hub-btn" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^\d+\/\d+$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
   }
@@ -1636,7 +1696,7 @@
   function openSheet(kind) {
     if (kind === 'nails') { startNailDay(); return; }
     sheetKind = kind;
-    const T = { daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Weekly missions', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
+    const T = { settings: '⚙️ Settings', daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Weekly missions', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
     $('sh2-title').textContent = T[kind] || '';
     $('sh2-coins').textContent = save.coins;
     $('sh2-body').innerHTML = SHEETS[kind]();
@@ -1644,6 +1704,14 @@
   }
   const bar = (v, n) => `<span class="pbar"><i style="width:${Math.min(100, (v / n) * 100)}%"></i></span>`;
   const SHEETS = {
+    settings: () => {
+      const row = (k, ico, name, desc, on) => `<div class="row-card"><span class="rc-i">${ico}</span><span class="rc-t"><b>${name}</b><small>${desc}</small></span><button type="button" class="switch${on ? ' on' : ''}" data-act="set" data-k="${k}" aria-pressed="${on}"><i></i></button></div>`;
+      return row('sound', '🔊', 'Sound effects', 'Clicks, barks, fanfares', save.sound !== false)
+        + row('music', '🎵', 'Music', 'Soft background music', save.music !== false)
+        + row('vibe', '📳', 'Vibration', 'Little buzzes on your phone', save.vibe !== false)
+        + row('hints', '💡', 'Tutorial hints', 'Explain new tasks the first time', save.hints !== false)
+        + `<button type="button" class="btn" data-act="reset-hints">↺ Show all tutorial hints again</button>`;
+    },
     daily: () => {
       const streak = save.daily.last === today() ? save.daily.streak : (save.daily.last === dayKey(-1) ? save.daily.streak + 1 : 1);
       const idx = (streak - 1) % 7;
@@ -1680,7 +1748,9 @@
     const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
     const act = b.dataset.act;
     snd('click');
-    if (act === 'claim-daily') {
+    if (act === 'set') { const k = b.dataset.k; save[k] = save[k] === false; persist(); wake(); $('p-sound').textContent = save.sound !== false ? 'Sound: on' : 'Sound: off'; }
+    else if (act === 'reset-hints') { const keep = save.seen._rooms; save.seen = {}; if (!keep) delete save.seen._rooms; persist(); toast('💡 Hints will show again', '', 1300); }
+    else if (act === 'claim-daily') {
       const streak = save.daily.last === dayKey(-1) ? save.daily.streak + 1 : 1;
       const gain = DAILY[(streak - 1) % 7];
       save.daily = { last: today(), streak }; save.coins += gain; persist(); snd('coin'); confetti(); toast(`🎁 +${gain} coins! Streak: ${streak} day${streak > 1 ? 's' : ''}`, 'combo', 1800); checkAch();
@@ -1802,7 +1872,7 @@
   /* Screens: title, map, story, shop                                    */
   /* ------------------------------------------------------------------ */
   function show(id) {
-    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game'); });
+    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
   }
   function renderMap() {
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
@@ -1884,6 +1954,9 @@
     $('pr-coins').textContent = save.coins - cost;
     $('pr-boosts').innerHTML = BOOSTERS.map((b) => `<button type="button" class="boost${prepPick[b.id] ? ' on' : ''}" data-boost="${b.id}" ${!prepPick[b.id] && save.coins - cost < b.cost ? 'disabled' : ''}>
       <span class="b-i">${b.icon}</span><span class="b-t"><b>${b.name}</b><small>${b.desc}</small></span><span class="b-c">${prepPick[b.id] ? '✓' : b.cost + ' 🪙'}</span></button>`).join('');
+    const losses = (save.losses || {})[n] || 0;
+    $('pr-easy').hidden = losses < 2;
+    $('pr-easy').classList.toggle('on', !!prepPick.easy);
     $('pr-start').dataset.level = String(n);
     show('screen-prep');
   }
@@ -1900,7 +1973,7 @@
   /* ------------------------------------------------------------------ */
   /* Events                                                              */
   /* ------------------------------------------------------------------ */
-  function wake() { if (window.Sound) { window.Sound.init(); window.Sound.setEnabled(save.sound !== false); window.Sound.setMusic(save.music !== false); } }
+  function wake() { if (window.Sound) { window.Sound.init(); window.Sound.setEnabled(save.sound !== false); window.Sound.setMusic(save.sound !== false && save.music !== false); } }
   $('stage').addEventListener('pointerdown', onTap);
   window.addEventListener('pointerup', onSwipeEnd);
   $('g-rooms').addEventListener('pointerdown', onTabs);
@@ -1928,6 +2001,16 @@
     show('screen-game'); startLevel(n);
   });
   $('pr-back').addEventListener('click', () => { prepPick = {}; renderMap(); });
+  $('t-settings').addEventListener('click', () => { wake(); snd('tab'); openSheet('settings'); });
+  $('p-settings').addEventListener('click', () => { snd('tab'); $('screen-pause').hidden = true; sheetBackToPause = true; openSheet('settings'); });
+  $('pr-easy').addEventListener('click', () => { prepPick.easy = !prepPick.easy; snd('click'); $('pr-easy').classList.toggle('on', !!prepPick.easy); });
+  $('c-yes').addEventListener('click', () => {
+    if (!G || G.over) return;
+    const fromRun = Math.min(G.coins, CONT_COST); G.coins -= fromRun; save.coins -= CONT_COST - fromRun; persist();
+    G.continued = true; G.hearts = 2; G.maxHearts = Math.max(G.maxHearts, 2); G.freezeT = 4; G.paused = false; last = performance.now();
+    show('screen-game'); snd('fanfare'); toast('💗 Second chance! Everyone waits patiently for 4 s', 'hint', 2000);
+  });
+  $('c-no').addEventListener('click', () => { if (!G || G.over) return; G.paused = false; show('screen-game'); endLevel(true); });
   const afterScene = (fn) => { if (G.pendingScene) { const ch = G.pendingScene; G.pendingScene = null; playScene(ch.end, ch.title, fn); } else fn(); };
   $('r-next').addEventListener('click', () => { const n = G.n + 1; afterScene(() => playStory(n)); });
   $('r-retry').addEventListener('click', () => { if (G.cfg.n > 900) playCustom(G.cfg); else renderPrep(G.n); });
@@ -1937,7 +2020,8 @@
   $('na-back').addEventListener('click', () => { ND = null; renderMap(); });
   $('m-hub').addEventListener('click', (e) => { const b = e.target.closest('[data-hub]'); if (b) { snd('tab'); openSheet(b.dataset.hub); } });
   $('sh2-body').addEventListener('click', sheetAction);
-  $('sh2-back').addEventListener('click', () => { snd('click'); renderMap(); });
+  let sheetBackToPause = false;
+  $('sh2-back').addEventListener('click', () => { snd('click'); if (sheetBackToPause) { sheetBackToPause = false; show('screen-pause'); } else renderMap(); });
   $('so-back').addEventListener('click', () => openSheet('sort'));
   $('so-tubes').addEventListener('click', (e) => { const g = e.target.closest('[data-i]'); if (g) window.ColorSort.tap(+g.dataset.i); });
   $('so-undo').addEventListener('click', () => window.ColorSort.undo());
@@ -1946,7 +2030,7 @@
   $('p-resume').addEventListener('click', () => { G.paused = false; last = performance.now(); show('screen-game'); });
   $('p-retry').addEventListener('click', () => { if (!G) return; G.over = true; cancelAnimationFrame(raf); if (G.cfg.n > 900) playCustom(G.cfg); else { pendingBoosts = {}; show('screen-game'); startLevel(G.n); } });
   $('p-quit').addEventListener('click', () => { G.over = true; cancelAnimationFrame(raf); CUSTOM = null; renderMap(); });
-  $('p-sound').addEventListener('click', () => { save.sound = save.sound === false; save.music = save.sound; persist(); wake(); $('p-sound').textContent = save.sound ? 'Sound: on' : 'Sound: off'; });
+  $('p-sound').addEventListener('click', () => { save.sound = save.sound === false; persist(); wake(); $('p-sound').textContent = save.sound ? 'Sound: on' : 'Sound: off'; });
   document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !G.paused) { G.paused = true; show('screen-pause'); } });
   $('p-sound').textContent = save.sound === false ? 'Sound: off' : 'Sound: on';
   (function cast() {

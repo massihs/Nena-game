@@ -738,3 +738,24 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 .mini.win .mc-p { color: #7fe0b4; }
 .mini.lose { opacity: .6; }
 .mini.lose .mc-p { color: #ff8a8a; }
+
+/* ---- optimisation & UX pass ---- */
+.rt-thumb img { width: 100%; height: 100%; display: block; object-fit: cover; transform: scale(1.35); transform-origin: 50% 62%; }
+.req .ring { transition: none; }
+.need-chip { position: absolute; left: 50%; bottom: -19px; transform: translateX(-50%); font-style: normal; white-space: nowrap; font-size: 12px; font-weight: 900; line-height: 1; padding: 3px 6px; border-radius: 99px; background: rgba(38,35,64,.88); color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.3); pointer-events: none; }
+.need-chip.ok { background: #3f9a5a; }
+.req::after { display: none; }
+.route { position: absolute; left: 0; top: 0; width: 600px; height: 800px; pointer-events: none; z-index: 3; overflow: visible; }
+.route path { fill: none; stroke: rgba(255,255,255,.9); stroke-width: 5; stroke-dasharray: 2 12; stroke-linecap: round; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); animation: march .6s linear infinite; }
+.route circle { fill: rgba(239,143,176,.55); stroke: #fff; stroke-width: 3; }
+@keyframes march { to { stroke-dashoffset: -14; } }
+.switch { position: relative; width: 50px; height: 28px; border: 0; border-radius: 99px; background: #d9cdb9; transition: background .2s; flex: 0 0 auto; }
+.switch i { position: absolute; left: 3px; top: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.25); transition: transform .2s; }
+.switch.on { background: #3f9a5a; } .switch.on i { transform: translateX(22px); }
+.t-gear { position: absolute; right: max(16px, var(--safe-r)); top: calc(14px + var(--safe-t)); width: 42px; height: 42px; font-size: 1.2rem; z-index: 3; }
+.easy { display: grid; grid-template-columns: 34px 1fr 26px; gap: 10px; align-items: center; text-align: left; border: 0; border-radius: 14px; padding: 8px 10px; background: #e5f3dc; box-shadow: inset 0 0 0 1.5px #9cc98a; }
+.easy span:first-child { font-size: 1.5rem; text-align: center; }
+.easy b { display: block; font-size: .9rem; } .easy small { font-size: .74rem; color: var(--cocoa-soft); }
+.easy i { width: 22px; height: 22px; border-radius: 7px; border: 2px solid #6aa84f; background: #fff; }
+.easy.on i { background: #3f9a5a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 10l4 4 8-8' stroke='%23fff' stroke-width='3' fill='none'/%3E%3C/svg%3E") center/80% no-repeat; }
+#screen-continue .card { gap: 12px; }
