@@ -33,7 +33,8 @@
     hall:    { name: 'Bedroom hallway', short: 'Hall', icon: '🚪', door: [300, 700] },
     bedroom: { name: 'Nena’s room', short: 'Nena', icon: '🛏️', door: [40, 700] },
     street:  { name: 'Tehran street', short: 'Street', icon: '🌳', door: [30, 530] },
-    clap:    { name: 'CLAP', short: 'CLAP', icon: '🏮', door: [300, 760] },
+    clap:    { name: 'CLAP', short: 'CLAP', icon: '🏮', door: [334, 440] },
+    parking: { name: 'Hayat Sabz parking', short: 'Parking', icon: '🅿️', door: [490, 420] },
   };
   const HOME_ORDER = ['salon', 'kitchen', 'tv', 'hall', 'bedroom'];
   const STATIONS = {
@@ -41,9 +42,9 @@
     brush:   { room: 'salon', x: 528, y: 690, r: 34, stand: [495, 706], label: 'Brush', gives: 'brush', chip: '🪮' },
     bowl:    { room: 'salon', x: 100, y: 712, r: 34, stand: [150, 702], label: 'Food bowl', chip: '👇' },
     water:   { room: 'salon', x: 184, y: 716, r: 34, stand: [222, 702], label: 'Water bowl', chip: '💧' },
-    sink:    { room: 'kitchen', x: 55, y: 288, r: 38, stand: [75, 440], label: 'Sink', chip: '🧽' },
-    samovar: { room: 'kitchen', x: 240, y: 286, r: 36, stand: [240, 440], label: 'Samovar', gives: 'tea', dur: 2, chip: '☕' },
-    kibble:  { room: 'kitchen', x: 331, y: 294, r: 34, stand: [331, 440], label: 'Kibble', gives: 'food', chip: '🥣' },
+    sink:    { room: 'kitchen', x: 193, y: 278, r: 36, stand: [193, 440], label: 'Sink', chip: '🧽' },
+    samovar: { room: 'kitchen', x: 300, y: 282, r: 36, stand: [300, 440], label: 'Samovar', gives: 'tea', dur: 2, chip: '☕' },
+    kibble:  { room: 'kitchen', x: 402, y: 288, r: 34, stand: [402, 440], label: 'Kibble', gives: 'food', chip: '🥣' },
     nasimroom:   { room: 'hall', x: 226, y: 340, r: 46, stand: [226, 480], label: 'Nasim’s room', gives: 'laundry', dur: 1.4, enter: true, chip: '🧺' },
     negin:       { room: 'hall', x: 364, y: 340, r: 46, stand: [364, 480], label: 'Negin’s room', enter: true, chip: '⏰' },
     parentsroom: { room: 'hall', x: 512, y: 340, r: 52, stand: [512, 480], label: 'Parents’ room', gives: 'charger', dur: 1.4, enter: true, chip: '🔌' },
@@ -56,22 +57,24 @@
     bags:    { room: 'street', x: 440, y: 405, r: 30, stand: [440, 492], label: 'Poop bags', gives: 'bag', chip: '🛍️' },
     fountain: { room: 'street', x: 545, y: 445, r: 34, stand: [515, 512], label: 'Fountain', chip: '⛲' },
     car:     { room: 'street', x: 172, y: 650, r: 56, stand: [172, 556], label: 'The white 4×4', chip: '🚙' },
-    teabar:  { room: 'clap', x: 100, y: 300, r: 44, stand: [115, 470], label: 'Tea bar', gives: 'teapot', dur: 1.4, chip: '🫖' },
-    brazier: { room: 'clap', x: 240, y: 410, r: 34, stand: [240, 500], label: 'Coal brazier', gives: 'coal', dur: 0.8, chip: '🔥' },
+    teabar:  { room: 'clap', x: 96, y: 300, r: 44, stand: [96, 446], label: 'Tea bar', gives: 'teapot', dur: 1.4, chip: '🫖' },
+    brazier: { room: 'clap', x: 237, y: 400, r: 34, stand: [252, 452], label: 'Pourya’s hookah bar', gives: 'coal', dur: 1, chip: '🔥', say: ['Pourya: “Fresh head for you! …So, what’s your Instagram?”', 'Pourya: “Special mint, just for you. Instagram? No? Okay…”', 'Pourya: “Here! By the way, I followed you. Follow back?”', 'Pourya: “Double apple, like last time. Your Insta is…?”'] },
     sushi:   { room: 'clap', x: 500, y: 300, r: 44, stand: [490, 470], label: 'Sushi counter', gives: 'mochi', dur: 1.2, chip: '🍡' },
-    hookah:  { room: 'clap', x: 320, y: 550, r: 36, stand: [278, 690], label: 'Hookah', chip: '💨' },
-    table:   { room: 'clap', x: 412, y: 600, r: 30, stand: [405, 705], label: 'Table', chip: '🍽️' },
+    hookah:  { room: 'clap', x: 320, y: 548, r: 36, stand: [278, 692], label: 'Hookah', chip: '💨' },
+    table:   { room: 'clap', x: 430, y: 592, r: 30, stand: [430, 705], label: 'Table', chip: '🍽️' },
   };
   // where each character lives, per place
   const HOMES = {
     home: { nena: ['salon', 300, 670], simba: ['salon', 330, 600], baba: ['tv', 250, 560], fariba: ['kitchen', 160, 470], nasim: ['salon', 545, 470] },
     street: { nena: ['street', 250, 545], simba: ['street', 330, 535], nasim: ['street', 520, 600], kids: ['street', 70, 548] },
-    clap: { nena: ['clap', 250, 680], negin: ['clap', 505, 668] },
+    clap: { nena: ['clap', 222, 690], negin: ['clap', 446, 642], pourya: ['clap', 176, 452] },
   };
   const FUR_ZONE = { x0: 270, x1: 560, y0: 600, y1: 780 };
   const FRONT = [548, 430];
-  const NPC_ART = { baba: ['mohsen', 'happy', 84, 147], fariba: ['fariba', 'happy', 80, 140], nasim: ['nasim', 'angry', 80, 140], negin: ['negin', 'happy', 76, 132], kids: ['mia', 'happy', 64, 112] };
+  const NPC_ART = { baba: ['mohsen', 'happy', 84, 147], fariba: ['fariba', 'happy', 80, 140], nasim: ['nasim', 'angry', 80, 140], negin: ['negin', 'happy', 76, 132], kids: ['mia', 'happy', 64, 112], pourya: ['pourya', 'happy', 84, 147] };
+  const GUESTS = [['guest1', 46, 496], ['guest2', 136, 498], ['guest3', 478, 726], ['guest4', 562, 728]];
   const TRANSIENT = { nasim: 1, kids: 1 };
+  const ELEV = { clap: [282, 206, 104, 214], parking: [436, 214, 112, 186] };
 
   /* request catalogue: who asks, what item is needed (src = where to get it), where to deliver (at) */
   const REQ = {
@@ -98,13 +101,14 @@
     juice:   { who: 'nasim', icon: '🧃', pts: 140, pat: 24, item: 'juice', src: 'juice', at: 'nasim', dur: 0.6, hint: 'Nasim wants a cantaloupe juice. Now. Don’t ask.' },
     kids:    { who: 'kids', icon: '🧒', pts: 110, pat: 20, at: 'kids', dur: 1.4, hint: 'Neighbour kids want to pet Simba: tap them for tips.' },
     phone:   { who: 'nena', icon: '📞', pts: 120, pat: 14, at: 'phone', dur: 1.4, hint: 'Baba is calling! Tap the 📞 to answer before it stops ringing.' },
-    coals:   { who: 'hookah', icon: '🔥', pts: 130, pat: 24, item: 'coal', src: 'brazier', at: 'hookah', dur: 0.8, hint: 'The hookah coals are dying: fresh coals from the brazier!' },
+    coals:   { who: 'hookah', icon: '🔥', pts: 130, pat: 24, item: 'coal', src: 'brazier', at: 'hookah', dur: 0.8, hint: 'The hookah needs a fresh head: Pourya prepares it at his hookah bar.' },
+    insta:   { who: 'pourya', icon: '📸', pts: 90, pat: 18, at: 'pourya', dur: 1, hint: 'Pourya asks for Nena’s Instagram. Again. Answer him (politely)!' },
     chai:    { who: 'negin', icon: '🍵', pts: 120, pat: 24, item: 'teapot', src: 'teabar', at: 'negin', dur: 0.6, hint: 'Negin wants tea: bring the teapot from the tea bar.' },
     doze:    { who: 'negin', icon: '😴', pts: 110, pat: 20, at: 'negin', dur: 1.2, hint: 'Negin fell asleep at the table. Of course. Wake her up!' },
     snack:   { who: 'table', icon: '🍡', pts: 130, pat: 26, item: 'mochi', src: 'sushi', at: 'table', dur: 0.6, hint: 'Snack time: mochi from the sushi counter to your table.' },
   };
   const ITEMS = { food: '🥣', tea: '🍵', brush: '🪮', ball: '🎾', charger: '🔌', laundry: '🧺', blanket: '🧸', pup: '🐕', bread: '🫓', juice: '🧃', bag: '🛍️', teapot: '🫖', coal: '🔥', mochi: '🍡' };
-  const NOREQ = { baba: 'Baba is happily watching football.', fariba: 'Maman is fine for now.', nasim: 'Nasim doesn’t want to talk.', negin: 'Shh… Negin is sleeping. Leave her be.', mirror: 'Nena looks great already!', car: 'Nothing to put in the car yet.', hookah: 'The hookah is fine.', table: 'Nothing to bring to the table.', kids: 'The kids are playing.', bowl: 'Simba isn’t hungry right now.', water: 'The water bowl is already full.', fountain: 'Simba isn’t thirsty.', tub: 'No bath needed.', negin_door: '' };
+  const NOREQ = { baba: 'Baba is happily watching football.', fariba: 'Maman is fine for now.', nasim: 'Nasim doesn’t want to talk.', negin: 'Shh… Negin is sleeping. Leave her be.', mirror: 'Nena looks great already!', car: 'Nothing to put in the car yet.', hookah: 'The hookah is fine.', table: 'Nothing to bring to the table.', kids: 'The kids are playing.', bowl: 'Simba isn’t hungry right now.', water: 'The water bowl is already full.', fountain: 'Simba isn’t thirsty.', tub: 'No bath needed.', negin_door: '', pourya: 'Pourya is busy preparing hookah heads.' };
   const BABA_CALLS = ['Baba: “Where are you?! It’s late!”', 'Baba: “Did you eat? Come home!”', 'Baba: “Is Negin with you? Put her on!”', 'Baba: “Nena jan, it’s 11 o’clock!!”', 'Baba: “Why don’t you answer the first time?”'];
 
   /* ------------------------------------------------------------------ */
@@ -121,11 +125,11 @@
     L(6, 'Bread run', 'Thursday', 'street', 80, ['poop', 'thirst', 'bread', 'calm', 'kids'], [650, 1150, 1800], [5, 7], { obj: { k: 'type', t: 'bread', n: 2, label: 'Put 2 sangak breads in the car' }, story: [['fariba', 'neutral', 'Nena jan, take Simba out and bring sangak for lunch. Put it in the 4×4!'], ['nena', 'happy', 'A walk in the street, Simba! Stay away from the cats…']] }),
     L(7, 'Nasim is home', 'Friday', 'home', 90, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'cuddle'], [900, 1600, 2450], [4.8, 6.8], { obj: { k: 'treat', label: 'Catch a golden bone' }, fur: 8, story: [['nasim', 'angry', 'DON’T talk to me. …Okay, maybe talk to me. Later.'], ['mohsen', 'happy', 'And bring me my little lion! I want him on my belly.']] }),
     L(8, 'Wake up, Negin!', 'Saturday', 'home', 95, ['food', 'water', 'walk', 'tea', 'help', 'talk', 'wake', 'charger'], [1000, 1800, 2750], [4.6, 6.4], { obj: { k: 'done', n: 14, label: 'Complete 14 requests' }, fur: 8, story: [['negin', 'sleepy', '…zzz… five more minutes… zzz…'], ['fariba', 'neutral', 'Nena, wake your sister, she has class! You’re the only one she lets in.']] }),
-    L(9, 'Night at CLAP', 'Saturday', 'clap', 85, ['coals', 'chai', 'doze', 'snack', 'phone'], [750, 1350, 2150], [4.6, 6.4], { night: true, obj: { k: 'type', t: 'phone', n: 3, label: 'Answer Baba 3 times' }, story: [['negin', 'happy', 'CLAP tonight? Hookah and tea, my treat… I mean your treat.'], ['nena', 'happy', 'Only if you stay awake this time!'], ['mohsen', 'neutral', 'Girls, be home by ten! I will call. Many times.']] }),
+    L(9, 'Night at CLAP', 'Saturday', 'clap', 85, ['coals', 'chai', 'doze', 'snack', 'phone', 'insta'], [750, 1350, 2150], [4.6, 6.4], { night: true, obj: { k: 'type', t: 'phone', n: 3, label: 'Answer Baba 3 times' }, story: [['negin', 'happy', 'CLAP tonight? Hookah and tea, my treat… I mean your treat.'], ['nena', 'happy', 'Okay! I park the 4×4 at Hayat Sabz and we take the elevator up.'], ['pourya', 'happy', 'Salam Nena! A new hookah head? …And your Instagram, maybe?'], ['mohsen', 'neutral', 'Girls, be home by ten! I will call. Many times.']] }),
     L(10, 'Nena’s own day', 'Sunday', 'home', 100, ['food', 'water', 'walk', 'tea', 'ready', 'study', 'blanket', 'laundry'], [1000, 1800, 2800], [4.4, 6.2], { obj: { k: 'type', t: 'study', n: 2, label: 'Study 2 times' }, story: [['nena', 'neutral', 'Exams, Simba, Baba, Maman… and I still have to get ready myself!']] }),
     L(11, 'Rainy day', 'Monday', 'home', 100, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'play', 'bath', 'blanket', 'charger'], [1100, 1950, 3000], [4.2, 6], { rain: true, fur: 6, obj: { k: 'tips', n: 20, label: 'Earn 20 coins in tips' }, story: [['nena', 'neutral', 'Rain… muddy paws. Bath time in my bathroom, Simba.'], ['simba', 'sad', '*hides under the sofa*']] }),
     L(12, 'Tehran evening', 'Tuesday', 'street', 95, ['poop', 'thirst', 'bread', 'calm', 'kids', 'juice', 'phone'], [1250, 2250, 3500], [4.2, 6], { night: true, obj: { k: 'nomiss', label: 'Don’t miss a single request' }, story: [['nasim', 'angry', 'I’m coming too. And you’re buying me a juice.'], ['mohsen', 'neutral', 'It’s getting dark! I’ll call you every five minutes.']] }),
-    L(13, 'Late night at CLAP', 'Wednesday', 'clap', 100, ['coals', 'chai', 'doze', 'snack', 'phone'], [950, 1750, 2700], [3.9, 5.6], { night: true, patience: 0.92, obj: { k: 'combo', n: 5, label: 'Reach a ×5 combo' }, story: [['negin', 'sleepy', 'One more hookah… and a nap… on this cushion…'], ['nena', 'surprised', 'Baba already called three times. It’s only 9!']] }),
+    L(13, 'Late night at CLAP', 'Wednesday', 'clap', 100, ['coals', 'chai', 'doze', 'snack', 'phone', 'insta'], [950, 1750, 2700], [3.9, 5.6], { night: true, patience: 0.92, obj: { k: 'combo', n: 5, label: 'Reach a ×5 combo' }, story: [['negin', 'sleepy', 'One more hookah… and a nap… on this cushion…'], ['pourya', 'happy', 'Nena! Today you give me your Instagram, yes?'], ['nena', 'surprised', 'No, Pourya. And Baba already called three times. It’s only 9!']] }),
     L(14, 'Simba’s birthday', 'Thursday', 'home', 110, HOME_ALL, [1650, 3000, 4700], [3.8, 5.3], { fur: 6, patience: 0.9, obj: { k: 'done', n: 20, label: 'Complete 20 requests' }, story: [['mohsen', 'happy', 'Happy birthday, my lion!'], ['nasim', 'neutral', 'I made the decorations. Don’t say anything.']] }),
   ];
   function levelCfg(n) {
@@ -155,6 +159,7 @@
     const tabs = cfg.place === 'home' ? HOME_ORDER.filter((r) => rooms.has(r)) : [cfg.place];
     const layers = tabs.slice();
     if (cfg.types.includes('walk')) layers.push('street');
+    if (cfg.place === 'clap') layers.push('parking');
     return { stations: [...st], who, tabs, layers };
   }
 
@@ -232,6 +237,14 @@
       const d = document.createElement('div');
       d.className = 'room-layer'; d.dataset.room = id;
       d.innerHTML = RA.ART[id](cfg);
+      (RA.PROPS[id] ? RA.PROPS[id](cfg) : []).forEach((pr) => {
+        const e = document.createElement('div');
+        e.className = 'prop'; e.innerHTML = pr.svg;
+        e.style.left = pr.x + 'px'; e.style.top = pr.y + 'px'; e.style.width = pr.w + 'px'; e.style.height = pr.h + 'px'; e.style.zIndex = String(pr.z);
+        d.appendChild(e);
+      });
+      const ev = ELEV[id];
+      if (ev) { const e = document.createElement('div'); e.className = 'elev'; e.innerHTML = '<i></i><i></i>'; Object.assign(e.style, { left: ev[0] + 'px', top: ev[1] + 'px', width: ev[2] + 'px', height: ev[3] + 'px' }); d.appendChild(e); }
       st.appendChild(d);
       G.layers[id] = d;
     });
@@ -255,7 +268,8 @@
       G.simba.el.dataset.target = 'simba';
       place(G.simba, H.simba[1], H.simba[2]);
     }
-    ['baba', 'fariba', 'negin'].forEach((w) => { if (W.who.has(w) && H[w]) spawnNpc(w); });
+    ['baba', 'fariba', 'negin', 'pourya'].forEach((w) => { if ((W.who.has(w) || (w === 'pourya' && cfg.place === 'clap')) && H[w]) spawnNpc(w); });
+    if (cfg.place === 'clap') GUESTS.forEach(([id, x, y]) => { const g = makeActor(id, A.person(id, { mood: 'happy' }), 72, 126, 'npc guest', 'clap'); place(g, x, y); });
     // overlays that follow Nena
     G.bar = document.createElement('div'); G.bar.className = 'workbar'; G.bar.innerHTML = '<i></i>'; G.bar.hidden = true;
     G.handEl = document.createElement('div'); G.handEl.className = 'hand';
@@ -280,8 +294,48 @@
     cfg.types.forEach((t) => { save.seen[t] = 1; });
     if (W.tabs.length > 1) save.seen._rooms = 1;
     persist();
+    if (cfg.place === 'clap' && G.layers.parking) runIntro();
     last = performance.now();
     raf = requestAnimationFrame(loop);
+  }
+  const CAR = '<svg viewBox="0 0 200 100" class="sprite"><rect x="10" y="34" width="180" height="50" rx="14" fill="#f4f4f2" stroke="#d6d6d4"/><path d="M40 34 l16 -30 h90 l24 30z" fill="#eceae6"/><path d="M60 32 l10 -22 h32 v22z M108 32 v-22 h34 l14 22z" fill="#8fb6cc"/><circle cx="46" cy="86" r="16" fill="#2a2a2e"/><circle cx="46" cy="86" r="7" fill="#c9ccd0"/><circle cx="156" cy="86" r="16" fill="#2a2a2e"/><circle cx="156" cy="86" r="7" fill="#c9ccd0"/><rect x="10" y="50" width="12" height="8" rx="2" fill="#ffd98a"/></svg>';
+  // Day at CLAP: Nena parks the white 4×4 under Hayat Sabz mall and takes the elevator up
+  function runIntro() {
+    const P = 'parking', nn = G.nena, ng = G.npcs.negin;
+    G.intro = { home: { n: [nn.x, nn.y], g: ng ? [ng.x, ng.y] : null } };
+    G.intro.car = makeActor('car', CAR, 200, 100, 'car', P);
+    place(G.intro.car, 780, 700);
+    moveRoom(nn, P); place(nn, 300, 690); nn.el.classList.add('gone');
+    if (ng) { moveRoom(ng, P); place(ng, 350, 690); ng.el.classList.add('gone'); }
+    attachNenaOverlays();
+    setView(P);
+    toast('🚙 Hayat Sabz Mall · parking P2 (tap to skip)', 'hint', 2400);
+    const eP = G.layers.parking.querySelector('.elev'), eC = G.layers.clap.querySelector('.elev');
+    const T = (ms, fn) => G.intro.timers.push(setTimeout(() => { if (G && G.intro) fn(); }, ms));
+    G.intro.timers = [];
+    moveTo(G.intro.car, 300, 700, 1.4);
+    T(1500, () => { [nn, ng].forEach((a) => { if (a) a.el.classList.remove('gone'); if (a) a.el.classList.add('walking'); }); eP.classList.add('open'); moveTo(nn, 478, 412, 1.4); if (ng) moveTo(ng, 512, 414, 1.5); snd('click'); });
+    T(3100, () => { [nn, ng].forEach((a) => a && a.el.classList.add('gone')); eP.classList.remove('open'); });
+    T(3800, () => {
+      moveRoom(nn, 'clap'); place(nn, 318, 432); if (ng) { moveRoom(ng, 'clap'); place(ng, 350, 434); }
+      attachNenaOverlays(); setView('clap'); eC.classList.add('open'); snd('success');
+      toast('🛗 4th floor: CLAP!', 'hint', 1400);
+    });
+    T(4300, () => { [nn, ng].forEach((a) => a && a.el.classList.remove('gone')); moveTo(nn, G.intro.home.n[0], G.intro.home.n[1], 1.0); if (ng) moveTo(ng, G.intro.home.g[0], G.intro.home.g[1], 1.1); });
+    T(5600, endIntro);
+  }
+  function endIntro() {
+    const I = G.intro; if (!I) return;
+    I.timers.forEach(clearTimeout);
+    G.intro = null;
+    const nn = G.nena, ng = G.npcs.negin;
+    for (let i = tweens.length - 1; i >= 0; i--) if (tweens[i].a === nn || tweens[i].a === ng || tweens[i].a === I.car) tweens.splice(i, 1);
+    I.car.el.remove();
+    moveRoom(nn, 'clap'); place(nn, I.home.n[0], I.home.n[1]); nn.el.classList.remove('gone', 'walking');
+    if (ng) { moveRoom(ng, 'clap'); place(ng, I.home.g[0], I.home.g[1]); ng.el.classList.remove('gone', 'walking'); }
+    attachNenaOverlays(); setView('clap');
+    const eC = G.layers.clap.querySelector('.elev'); setTimeout(() => eC && eC.classList.remove('open'), 600);
+    last = performance.now();
   }
   function attachNenaOverlays() {
     const l = layer(G.nena.room);
@@ -390,6 +444,7 @@
     markQueue();
   }
   function fail(r) {
+    if (r.type === 'insta') { removeReq(r); toast('Pourya: “Okay… I’ll ask next time!” 😏', '', 1500); return; }
     removeReq(r);
     G.hearts--; G.failed++; G.combo = 0;
     snd('fail'); buzz(60); shake();
@@ -456,7 +511,7 @@
     let el = G.layers.kitchen.querySelector('.dishes');
     if (!el) { el = document.createElement('div'); el.className = 'dishes'; G.layers.kitchen.appendChild(el); }
     el.innerHTML = Array.from({ length: G.dishes }, () => '<i></i>').join('');
-    el.style.left = '30px'; el.style.top = (250 - G.dishes * 6) + 'px';
+    el.style.left = '150px'; el.style.top = (262 - G.dishes * 6) + 'px';
   }
 
   /* ------------------------------------------------------------------ */
@@ -489,6 +544,7 @@
   }
   function onTap(e) {
     if (!G || G.paused || G.over) return;
+    if (G.intro) { endIntro(); return; }
     const bone = e.target.closest('[data-bone]');
     if (bone) { catchBone(); return; }
     const t = e.target.closest('[data-target]');
@@ -598,7 +654,7 @@
         return { dur: 0.6, snd: 'happy', done: () => { if (!G.reqs.includes(pickR)) return; give('pup'); G.simbaAway = true; G.simba.el.classList.add('gone'); floatText(G.simba.x, G.simba.y - 100, 'Up you go!', 'hint', G.simba.room); } };
       }
       const dur = (S.dur || 0.5) * (id === 'samovar' && up('samovar') ? 0.6 : 1) * sp;
-      return { dur, snd: id === 'samovar' ? 'water' : S.enter ? 'swoosh' : null, start: S.enter ? enterFx() : null, done: () => { if (S.enter) G.nena.el.classList.remove('gone'); give(item); } };
+      return { dur, snd: id === 'samovar' ? 'water' : S.enter ? 'swoosh' : null, start: S.enter ? enterFx() : null, done: () => { if (S.enter) G.nena.el.classList.remove('gone'); give(item); if (S.say) say(pick(S.say)); } };
     }
     if (S && S.gives) {
       const item = S.gives;
@@ -620,7 +676,7 @@
     }
     // 3) things with no request
     if (id === 'simba') { if (!G.simba || G.simbaAway) return null; return { dur: 0.6, snd: 'happy', done: () => { G.score += 10; floatText(G.simba.x, G.simba.y - 100, '♥', 'heart', G.simba.room); simbaHop(); } }; }
-    if (id === 'sink') { if (!G.dishes) return { dur: 0.2, miss: 'No dirty dishes.' }; return { dur: 1.6 * sp, snd: 'water', done: () => { G.dishes--; renderDishes(); G.score += 60; floatText(70, 230, '+60', 'good', 'kitchen'); } }; }
+    if (id === 'sink') { if (!G.dishes) return { dur: 0.2, miss: 'No dirty dishes.' }; return { dur: 1.6 * sp, snd: 'water', done: () => { G.dishes--; renderDishes(); G.score += 60; floatText(193, 230, '+60', 'good', 'kitchen'); } }; }
     if (id === 'laptop') return { dur: 3 * sp, done: () => { G.coins += 6; G.score += 40; floatText(345, 220, '+40 · +6 🪙', 'coin', 'bedroom'); snd('coin'); } };
     if (id === 'pkg') { if (!G.pkg) return null; return { dur: 0.8 * sp, done: () => { if (!G.pkg) return; G.pkg.el.remove(); G.pkg = null; G.score += 100; G.coins += 12; floatText(FRONT[0] - 40, FRONT[1] - 80, '+100 · +12 🪙', 'coin', 'salon'); toast('📦 A package for Baba!', '', 1300); snd('coin'); } }; }
     const f = G.furs.find((x) => x.id === id);
@@ -657,6 +713,7 @@
     chai: { snd: 'water', after: () => say('Negin: “Ahh, chai. Wake me up when it’s cold.”') },
     doze: { snd: 'click', after: () => say('Negin: “I wasn’t sleeping! I was… resting my eyes.”') },
     snack: { after: () => say('Mochi time! 🍡') },
+    insta: { snd: 'talk', after: () => say(pick(['Nena: “Pourya… no.” 😅', 'Nena: “It’s private, Pourya.”', 'Nena: “Ask me again next week.” (He will.)', 'Negin: “She doesn’t have Instagram!” (She does.)', 'Nena: “Just bring the hookah, Pourya!”'])) },
   };
   function doWalk(r) {
     G.simbaAway = true; G.busy = { t: 0, dur: 99, walking: true };
@@ -747,6 +804,15 @@
   /* ------------------------------------------------------------------ */
   /* Main loop                                                           */
   /* ------------------------------------------------------------------ */
+  function runTweens(dt) {
+    for (let i = tweens.length - 1; i >= 0; i--) {
+      const tw = tweens[i];
+      tw.t += dt / tw.dur;
+      const k = Math.min(1, tw.t), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      place(tw.a, tw.x0 + (tw.x - tw.x0) * e, tw.y0 + (tw.y - tw.y0) * e);
+      if (k >= 1) { tweens.splice(i, 1); if (tw.cb) tw.cb(); }
+    }
+  }
   function walkTo(p, dt) {
     const speed = 300 * (1 + 0.2 * up('shoes')) * (G.boostT > 0 ? 1.7 : 1) * (G.boosts.coffee ? 1.25 : 1);
     const dx = p[0] - G.nena.x, dy = p[1] - G.nena.y, d = Math.hypot(dx, dy);
@@ -769,6 +835,7 @@
     raf = requestAnimationFrame(loop);
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     if (!G || G.paused || G.over) return;
+    if (G.intro) { runTweens(dt); return; }
     G.time -= dt;
     G.comboT -= dt;
     if (G.comboT <= 0 && G.combo) G.combo = 0;
@@ -798,14 +865,7 @@
       if (r.left <= 0) fail(r); else posReq(r);
       if (G.over) return;
     }
-    // tweens
-    for (let i = tweens.length - 1; i >= 0; i--) {
-      const tw = tweens[i];
-      tw.t += dt / tw.dur;
-      const k = Math.min(1, tw.t), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-      place(tw.a, tw.x0 + (tw.x - tw.x0) * e, tw.y0 + (tw.y - tw.y0) * e);
-      if (k >= 1) { tweens.splice(i, 1); if (tw.cb) tw.cb(); }
-    }
+    runTweens(dt);
     // Nena: go to the next queued target (through doorways if it is in another room), then work
     if (!G.busy && G.queue.length) {
       const q = G.queue[0];
@@ -1007,7 +1067,7 @@
     if (cur) cur.scrollIntoView({ block: 'center' });
   }
   const PLACE_LABEL = { home: '🏠 Home', street: '🌳 Tehran street', clap: '🏮 CLAP' };
-  const NAMES = { nena: 'Nena', simba: 'Simba', mohsen: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin' };
+  const NAMES = { pourya: 'Pourya', nena: 'Nena', simba: 'Simba', mohsen: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin' };
   let storyLines = [], storyLevel = 1;
   function playStory(n) {
     storyLevel = n;

@@ -35,9 +35,34 @@
       <radialGradient id="rglow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".55"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient>
       <radialGradient id="rneon"><stop offset="0" stop-color="#ff5fa2" stop-opacity=".55"/><stop offset="1" stop-color="#ff5fa2" stop-opacity="0"/></radialGradient>
       <linearGradient id="rwall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6efe6"/><stop offset="1" stop-color="#ebe1d4"/></linearGradient>
+      <linearGradient id="rshine" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <linearGradient id="rsteel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b8bec4"/><stop offset=".5" stop-color="#e3e6e9"/><stop offset="1" stop-color="#aab0b6"/></linearGradient>
       <linearGradient id="rtv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f8f4a"/><stop offset="1" stop-color="#2d6e38"/></linearGradient></defs>`;
   }
-  const win = (x, y, w, h, ox) => `<rect x="${x - 6}" y="${y - 6}" width="${w + 12}" height="${h + 12}" fill="#1e1d22"/><svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${ox} 0 ${(w * 300) / h} 300" preserveAspectRatio="none">${VIEW}</svg><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#rglass)"/><rect x="${x + w / 2 - 2}" y="${y}" width="4" height="${h}" fill="#1e1d22"/>`;
+  const win = (x, y, w, h, ox, panes) => {
+    const n = panes || 2;
+    let m = '';
+    for (let i = 1; i < n; i++) m += `<rect x="${(x + (w * i) / n - 2).toFixed(1)}" y="${y}" width="4" height="${h}" fill="#1e1d22"/>`;
+    const W = (w * 300) / h;
+    const vb = W > 400 ? `<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">` : `<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${Math.min(ox, 400 - W).toFixed(1)} 0 ${W.toFixed(1)} 300" preserveAspectRatio="none">`;
+    return `<rect x="${x - 6}" y="${y - 6}" width="${w + 12}" height="${h + 12}" fill="#1e1d22"/>${vb}${VIEW}</svg><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#rglass)"/>${m}`;
+  };
+  // floor-to-ceiling bay window (the flat has glass everywhere)
+  const bay = (x, y, w, h, ox, panes) => win(x, y, w, h, ox, panes) + `<rect x="${x - 8}" y="${y + h}" width="${w + 16}" height="6" fill="#d8dadc"/>`;
+  // polished white & grey marble floor
+  function marble(y0, x0, x1) {
+    x0 = x0 || 0; x1 = x1 || 600;
+    let o = `<rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${800 - y0}" fill="#f2f1ee"/>`;
+    for (let r = 0, y = y0; y < 800; r++, y += 84) for (let x = x0 - (r % 2) * 60; x < x1; x += 120) {
+      const t = hash(x * 0.37 + y * 1.3);
+      o += `<rect x="${Math.max(x, x0)}" y="${y}" width="${Math.min(120, x1 - Math.max(x, x0), x + 120 - Math.max(x, x0))}" height="84" fill="${t < 0.33 ? '#f6f5f3' : t < 0.66 ? '#ecebe8' : '#e4e5e6'}" stroke="#d3d2ce" stroke-width="1.2"/>`;
+    }
+    for (let i = 0; i < 16; i++) {
+      const sx = x0 + hash(i * 3.1 + y0) * (x1 - x0), sy = y0 + 10 + hash(i * 5.7 + 1) * (780 - y0);
+      o += `<path d="M${sx.toFixed(0)} ${sy.toFixed(0)} q${(20 + hash(i) * 40).toFixed(0)} ${(-14 + hash(i + 1) * 28).toFixed(0)} ${(60 + hash(i + 2) * 50).toFixed(0)} ${(hash(i + 3) * 30 - 8).toFixed(0)} t${(50 + hash(i + 6) * 40).toFixed(0)} ${(hash(i + 4) * 26 - 13).toFixed(0)}" stroke="${i % 3 ? '#a7abb1' : '#8c9097'}" stroke-width="${(0.7 + hash(i + 5) * 1.3).toFixed(1)}" fill="none" opacity=".5"/>`;
+    }
+    return o + `<rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${800 - y0}" fill="url(#rshine)"/>`;
+  }
   const svg = (inner, c, dark) => `<svg viewBox="0 0 600 800" class="stage-bg" aria-hidden="true">${inner}${c.night && !dark ? '<circle cx="300" cy="140" r="220" fill="url(#rglow)" opacity=".45"/><rect width="600" height="800" fill="#1a1838" opacity=".24"/>' : ''}</svg>`;
   function wood(y0, col, line) {
     let o = `<rect x="0" y="${y0}" width="600" height="${800 - y0}" fill="${col || '#d4ad82'}"/>`;
@@ -56,13 +81,12 @@
 
   ART.salon = (c) => svg(`
     ${wall(392)}
-    ${win(122, 44, 220, 262, 100)}${win(362, 44, 128, 262, 240)}
-    <path d="M108 30 q10 150 0 290 h-16 q8 -146 0 -290z" fill="#e9d8c2"/><path d="M506 30 q-10 150 0 290 h16 q-8 -146 0 -290z" fill="#e9d8c2"/>
+    ${bay(104, 22, 398, 364, 20, 4)}
     ${arch(0, 196, 88, 196, 'KITCHEN · TV')}
     <rect x="512" y="186" width="88" height="206" fill="#e2d6c4"/><rect x="518" y="192" width="82" height="200" fill="#5a3a26"/><rect x="532" y="210" width="54" height="44" rx="4" fill="#9fc4da" opacity=".7"/><rect x="590" y="300" width="4" height="24" rx="2" fill="#c9a24a"/>
     ${label(558, 182, 'FRONT DOOR', '#7a5c4e', 9)}
-    ${wood(392)}
-    <rect x="512" y="392" width="88" height="14" fill="#8c6a4a" opacity=".5"/>
+    ${marble(392)}
+    <rect x="512" y="392" width="88" height="14" fill="#8c6a4a" opacity=".35"/>
     ${rug(320, 625, 380, 120)}
     <rect x="118" y="438" width="250" height="96" rx="28" fill="#efe6da"/><rect x="132" y="408" width="222" height="62" rx="24" fill="#f4ece2"/><rect x="106" y="452" width="36" height="84" rx="16" fill="#e6dccf"/><rect x="344" y="452" width="36" height="84" rx="16" fill="#e6dccf"/>
     <rect x="152" y="424" width="52" height="40" rx="12" fill="#c9785a"/><rect x="282" y="424" width="52" height="40" rx="12" fill="#2f4a3e"/>
@@ -77,35 +101,38 @@
   `, c);
 
   ART.kitchen = (c) => svg(`
-    ${wall(392)}
-    ${[0, 1].map((i) => `<rect x="${10 + i * 112}" y="56" width="106" height="110" rx="3" fill="#2f4a3e"/><rect x="${18 + i * 112}" y="152" width="90" height="3" fill="#c9a24a"/>`).join('')}
-    ${win(250, 44, 200, 196, 120)}
-    <rect x="0" y="176" width="600" height="104" fill="#f1ede7"/>${[...Array(15)].map((_, i) => `<path d="M${i * 40} 176 v104" stroke="#e4ddd2" stroke-width="1"/>`).join('')}<path d="M0 228 H600" stroke="#e4ddd2"/>
-    <rect x="0" y="280" width="600" height="10" fill="#f8f5f0"/>
-    <rect x="0" y="290" width="600" height="102" fill="#2f4a3e"/>${[0, 1, 2, 3, 4, 5].map((i) => `<rect x="${12 + i * 98}" y="302" width="78" height="3" fill="#c9a24a"/>`).join('')}
-    <rect x="22" y="266" width="62" height="14" rx="4" fill="#cfd5d9"/><path d="M52 266 v-18 q0 -7 9 -7 h7" stroke="#c9a24a" stroke-width="3.5" fill="none"/>
-    <rect x="112" y="272" width="72" height="8" fill="#222"/><ellipse cx="148" cy="262" rx="24" ry="11" fill="#e05b7b"/><rect x="124" y="252" width="48" height="13" rx="3" fill="#e05b7b"/><path d="M140 244 q4 -10 0 -18 M152 244 q4 -10 0 -18" stroke="#fff" stroke-width="2" fill="none" opacity=".6"/>
-    <g><ellipse cx="240" cy="280" rx="24" ry="4" fill="rgba(0,0,0,.15)"/><path d="M222 278 q-4 -30 7 -43 h22 q11 13 7 43z" fill="#d9b866"/><path d="M231 235 q9 -9 18 0" fill="#c9a24a"/><path d="M232 226 h16 l-2 10 h-12z" fill="#e05b7b"/><path d="M222 246 q-2 18 4 28" stroke="#fff6cc" stroke-width="3" fill="none" opacity=".7"/></g>
-    <g><path d="M312 280 l4 -42 h30 l4 42z" fill="#c9a27a"/><path d="M316 244 h30" stroke="#9a6232" stroke-width="3"/>${label(331, 266, 'KIBBLE', '#7a4a22', 10)}</g>
-    <g><ellipse cx="410" cy="276" rx="26" ry="6" fill="#e9e1d4"/><circle cx="400" cy="266" r="9" fill="#e05b3b"/><circle cx="414" cy="264" r="8" fill="#f2b33a"/><circle cx="420" cy="270" r="7" fill="#6aa84f"/></g>
-    <rect x="462" y="108" width="74" height="284" rx="6" fill="#d9dde0"/><rect x="466" y="112" width="66" height="96" rx="4" fill="#e7eaec"/><rect x="466" y="212" width="66" height="176" rx="4" fill="#e7eaec"/><rect x="522" y="140" width="4" height="40" rx="2" fill="#9aa2a8"/><rect x="522" y="240" width="4" height="60" rx="2" fill="#9aa2a8"/>
-    ${arch(540, 196, 60, 196, '')}${label(570, 190, 'LIVING ›', '#7a5c4e', 9)}
-    <rect x="0" y="392" width="600" height="408" fill="#efe7da"/>${[...Array(10)].map((_, r) => [...Array(10)].map((_, k) => ((r + k) % 2 ? `<rect x="${k * 60}" y="${392 + r * 42}" width="60" height="42" fill="#e3d8c6"/>` : '')).join('')).join('')}
-    <rect x="200" y="566" width="230" height="16" rx="4" fill="#8a5a3a"/><rect x="214" y="582" width="8" height="70" fill="#7a4e32"/><rect x="408" y="582" width="8" height="70" fill="#7a4e32"/>
-    ${[230, 300, 370].map((x) => `<rect x="${x}" y="530" width="34" height="34" rx="6" fill="#c9785a"/>`).join('')}
-    <ellipse cx="315" cy="560" rx="22" ry="6" fill="#f3efe9"/><path d="M305 556 q10 -26 20 0" fill="#6aa84f"/>
+    <rect width="600" height="392" fill="#fbfbfa"/><rect width="600" height="12" fill="#ffffff"/>
+    ${bay(150, 22, 300, 226, 90, 3)}
+    <rect x="0" y="12" width="142" height="380" fill="#f7f7f6"/>${[0, 1].map((i) => `<path d="M${71 * (i + 1)} 12 V392" stroke="#e1e1df" stroke-width="2"/>`).join('')}<path d="M0 200 H142" stroke="#e1e1df" stroke-width="2"/><rect x="66" y="230" width="3" height="60" rx="1.5" fill="#d4d4d2"/><rect x="74" y="230" width="3" height="60" rx="1.5" fill="#d4d4d2"/>
+    ${label(71, 180, 'FRIDGE', '#c3c3c0', 9)}
+    <rect x="458" y="12" width="82" height="380" fill="#f7f7f6"/><path d="M499 12 V392 M458 200 H540" stroke="#e1e1df" stroke-width="2"/>
+    <rect x="474" y="232" width="50" height="34" rx="4" fill="#2a2a2e"/><rect x="478" y="236" width="42" height="26" rx="3" fill="#3b3f46"/><circle cx="499" cy="249" r="3" fill="#7fe0b4"/>
+    <rect x="142" y="248" width="316" height="34" fill="#f1f1ef"/><path d="M160 256 q40 10 80 -2 t90 6 t110 -4" stroke="#c9cbcf" stroke-width="1.2" fill="none"/>
+    <rect x="142" y="282" width="316" height="10" fill="#ffffff" stroke="#e6e6e4"/><path d="M150 287 q60 4 120 -1 t170 2" stroke="#c9cbcf" stroke-width="1" fill="none"/>
+    <rect x="142" y="292" width="316" height="100" fill="#f9f9f8"/>${[0, 1, 2, 3].map((i) => `<path d="M${142 + 79 * (i + 1)} 292 V392" stroke="#e4e4e2" stroke-width="2"/>`).join('')}<path d="M142 300 H458" stroke="#ececea" stroke-width="2"/>
+    <rect x="166" y="272" width="54" height="12" rx="4" fill="#dfe3e6"/><path d="M193 272 v-22 q0 -8 10 -8 h6" stroke="#9aa2a8" stroke-width="3.5" fill="none"/>
+    <g><ellipse cx="300" cy="282" rx="24" ry="4" fill="rgba(0,0,0,.12)"/><path d="M282 280 q-4 -30 7 -43 h22 q11 13 7 43z" fill="#d9b866"/><path d="M291 237 q9 -9 18 0" fill="#c9a24a"/><path d="M292 228 h16 l-2 10 h-12z" fill="#e05b7b"/><path d="M282 248 q-2 18 4 28" stroke="#fff6cc" stroke-width="3" fill="none" opacity=".7"/></g>
+    <g><path d="M384 282 l4 -40 h28 l4 40z" fill="#c9a27a"/><path d="M388 248 h28" stroke="#9a6232" stroke-width="3"/>${label(402, 268, 'KIBBLE', '#7a4a22', 9)}</g>
+    ${arch(540, 196, 60, 196, '')}${label(570, 190, 'LIVING ›', '#9a9a96', 9)}
+    ${marble(392)}
+    ${[210, 300, 390].map((x) => `<path d="M${x} 392 V448" stroke="#c9ccd0" stroke-width="1.5"/><path d="M${x - 16} 462 q16 -22 32 0z" fill="#f4f4f2" stroke="#d6d6d4"/><ellipse cx="${x}" cy="470" rx="34" ry="12" fill="url(#rglow)" opacity=".7"/>`).join('')}
+    <rect x="150" y="540" width="300" height="18" rx="4" fill="#f4f3f0" stroke="#dcdcda"/><path d="M164 548 q60 6 120 -2 t150 4" stroke="#b9bcc0" stroke-width="1.2" fill="none"/>
+    <rect x="162" y="558" width="276" height="96" fill="#fafaf9"/><path d="M162 580 H438" stroke="#ececea" stroke-width="2"/>${[0, 1].map((i) => `<path d="M${162 + 92 * (i + 1)} 580 V654" stroke="#ececea" stroke-width="2"/>`).join('')}
+    <rect x="196" y="532" width="80" height="8" rx="3" fill="#2a2a2e"/><circle cx="216" cy="536" r="2.5" fill="#ff8a3a"/><circle cx="256" cy="536" r="2.5" fill="#555"/>
+    <g><ellipse cx="370" cy="538" rx="22" ry="5" fill="#f3efe9"/><circle cx="362" cy="530" r="7" fill="#e05b3b"/><circle cx="376" cy="530" r="6" fill="#f2b33a"/></g>
+    ${[200, 300, 400].map((x) => `<ellipse cx="${x}" cy="690" rx="24" ry="8" fill="#2a2a2e"/><rect x="${x - 2}" y="690" width="4" height="40" fill="#9aa2a8"/><ellipse cx="${x}" cy="732" rx="16" ry="4" fill="#9aa2a8"/>`).join('')}
   `, c);
 
   ART.tv = (c) => svg(`
     ${wall(392, '#efe6da')}
-    ${win(44, 50, 240, 250, 60)}
+    ${bay(46, 22, 240, 364, 40, 3)}
     <rect x="320" y="96" width="250" height="150" rx="6" fill="#111"/><rect x="328" y="104" width="234" height="134" fill="url(#rtv)"/>
     <path d="M328 171 H562 M445 104 V238" stroke="#fff" stroke-width="2" opacity=".55"/><circle cx="445" cy="171" r="20" fill="none" stroke="#fff" stroke-width="2" opacity=".55"/><rect x="328" y="146" width="22" height="50" fill="none" stroke="#fff" stroke-width="2" opacity=".55"/><rect x="540" y="146" width="22" height="50" fill="none" stroke="#fff" stroke-width="2" opacity=".55"/>
     <circle cx="470" cy="160" r="4" fill="#fff"/><rect x="336" y="110" width="74" height="14" rx="3" fill="rgba(0,0,0,.45)"/><text x="373" y="121" text-anchor="middle" font-size="9" font-family="Nunito, sans-serif" font-weight="800" fill="#fff">PERSEPOLIS 2–1</text>
     <rect x="330" y="252" width="230" height="10" rx="3" fill="#2a2a2a"/>
     <rect x="300" y="300" width="290" height="70" rx="6" fill="#6b4632"/><rect x="310" y="312" width="80" height="46" rx="4" fill="#5a3a26"/><rect x="400" y="312" width="80" height="46" rx="4" fill="#5a3a26"/><rect x="490" y="312" width="90" height="46" rx="4" fill="#5a3a26"/>
     <rect x="0" y="0" width="38" height="392" fill="#e6dccf"/><rect x="0" y="196" width="34" height="196" fill="#c7b499"/>${label(20, 190, '‹', '#7a5c4e', 16)}
-    ${wood(392, '#caa278')}
+    ${marble(392)}
     ${rug(330, 640, 420, 150)}
     <g><rect x="150" y="430" width="200" height="100" rx="26" fill="#7a4a32"/><rect x="164" y="402" width="172" height="64" rx="22" fill="#8a5a3a"/><rect x="138" y="446" width="34" height="88" rx="16" fill="#6b3f2a"/><rect x="328" y="446" width="34" height="88" rx="16" fill="#6b3f2a"/><rect x="186" y="420" width="46" height="36" rx="10" fill="#d9b866"/></g>
     <rect x="370" y="600" width="170" height="14" rx="4" fill="#6b4632"/><rect x="380" y="614" width="6" height="36" fill="#5a3a26"/><rect x="524" y="614" width="6" height="36" fill="#5a3a26"/>
@@ -118,13 +145,12 @@
     return svg(`
     ${wall(432, '#f1e7d8')}
     <rect y="300" width="600" height="132" fill="#e6d8c4"/><path d="M0 300 H600" stroke="#cdb99c" stroke-width="3"/>
-    ${[100, 300, 500].map((x) => `<ellipse cx="${x}" cy="22" rx="30" ry="8" fill="#fff8e6"/><circle cx="${x}" cy="40" r="60" fill="url(#rglow)" opacity=".6"/>`).join('')}
-    ${[[150, 92], [290, 80], [430, 96]].map(([x, y], i) => `<rect x="${x}" y="${y}" width="46" height="56" rx="3" fill="#6b4632"/><rect x="${x + 5}" y="${y + 5}" width="36" height="46" fill="${['#f3c6d5', '#bfe0f0', '#f6e1b0'][i]}"/><circle cx="${x + 23}" cy="${y + 24}" r="9" fill="${['#c9496f', '#4a5a8a', '#c9a24a'][i]}" opacity=".7"/>`).join('')}
+    ${bay(30, 24, 540, 150, 0, 6)}
     ${door(40, 96, '#f2b7c8', '#c9496f', 'NENA', label(88, 290, '♥', '#c9496f', 22))}
     ${door(178, 96, '#c8a2d6', '#7d4a96', 'NASIM', '<rect x="196" y="262" width="60" height="18" rx="3" fill="#ffde59" transform="rotate(-6 226 271)"/><text x="226" y="275" text-anchor="middle" font-size="9" font-family="Nunito, sans-serif" font-weight="900" fill="#c0392b" transform="rotate(-6 226 271)">KEEP OUT!</text>')}
     ${door(316, 96, '#a9c2d4', '#4a5a8a', 'NEGIN', '<text x="364" y="282" text-anchor="middle" font-size="9" font-family="Nunito, sans-serif" font-weight="900" fill="#4a5a8a">DO NOT WAKE</text><text x="388" y="258" font-size="16">💤</text>')}
     ${door(450, 124, '#b98b5e', '#6b4632', 'BABA & MAMAN', '<path d="M512 232 V432" stroke="#8a6340" stroke-width="3"/>')}
-    ${wood(432, '#c99d70')}
+    ${marble(432)}
     <polygon points="230,432 370,432 420,800 180,800" fill="#8c1f30" opacity=".9"/><polygon points="242,440 358,440 404,800 196,800" fill="none" stroke="#1f2a5a" stroke-width="5"/>
     <g stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M150 742 H450 M150 778 H450"/>${[...Array(13)].map((_, i) => `<path d="M${156 + i * 24} 738 v48"/>`).join('')}</g>
     <rect x="232" y="700" width="136" height="30" rx="6" fill="#2f4a3e"/>${label(300, 715, 'BEDROOMS', '#ffd98a', 11)}<text x="300" y="726" text-anchor="middle" font-size="9" font-family="Nunito, sans-serif" font-weight="800" fill="#fff">🔑 Nena only</text>
@@ -133,12 +159,12 @@
 
   ART.bedroom = (c) => svg(`
     <rect width="410" height="430" fill="#f6e4e4"/><rect width="410" height="12" fill="#fbf3f0"/>
-    ${win(40, 50, 200, 210, 30)}
+    ${bay(24, 22, 262, 300, 20, 3)}
     <path d="M30 40 q100 30 200 0 q60 20 120 0" stroke="#7a5c4e" stroke-width="1.2" fill="none"/>${[...Array(12)].map((_, i) => `<circle cx="${40 + i * 27}" cy="${46 + Math.sin(i) * 6}" r="3.4" fill="${['#ffd98a', '#ef8fb0', '#86d1ff'][i % 3]}"/>`).join('')}
     <rect x="276" y="282" width="120" height="10" rx="2" fill="#8a5a3a"/><rect x="284" y="292" width="6" height="140" fill="#7a4e32"/><rect x="382" y="292" width="6" height="140" fill="#7a4e32"/>
     <path d="M318 282 l6 -34 h44 l6 34z" fill="#3a3550"/><rect x="326" y="252" width="40" height="26" fill="#ef8fb0" opacity=".85"/>
     <rect x="300" y="120" width="90" height="120" rx="4" fill="#e9d2d2"/><rect x="306" y="126" width="78" height="108" fill="#f8eeee"/>${label(345, 186, 'NENA', '#c9496f', 13)}
-    <rect x="0" y="430" width="410" height="370" fill="#d9b48c"/>${[...Array(12)].map((_, i) => `<path d="M0 ${440 + i * 34} H410" stroke="rgba(110,70,35,.12)" stroke-width="1.4"/>`).join('')}
+    ${marble(430, 0, 410)}
     <rect x="30" y="330" width="250" height="110" rx="18" fill="#c9a0a8"/>
     <rect x="22" y="420" width="268" height="170" rx="24" fill="#f5ead9"/><path d="M22 470 q134 -30 268 0 v96 q0 24 -24 24 h-220 q-24 0 -24 -24z" fill="#f2b7c8"/><path d="M40 500 q60 -14 120 8 q60 18 120 -4" stroke="#fff" stroke-width="4" fill="none" opacity=".5"/>
     <rect x="44" y="420" width="88" height="44" rx="18" fill="#fff"/><rect x="150" y="420" width="88" height="44" rx="18" fill="#fff"/>
@@ -149,7 +175,7 @@
     <circle cx="505" cy="190" r="56" fill="#cfe3ea" stroke="#c9a24a" stroke-width="5"/><path d="M480 160 q16 -14 32 -4" stroke="#fff" stroke-width="5" fill="none" opacity=".7"/>
     <rect x="450" y="262" width="110" height="20" rx="4" fill="#fff"/><rect x="458" y="282" width="94" height="74" rx="4" fill="#cfa77a"/><ellipse cx="505" cy="266" rx="30" ry="6" fill="#dfeef2"/><path d="M505 258 v-10 h10" stroke="#9aa2a8" stroke-width="3" fill="none"/>
     <path d="M416 600 h178 v50 q0 46 -46 46 h-86 q-46 0 -46 -46z" fill="#fff" stroke="#d3dde0" stroke-width="3"/><ellipse cx="505" cy="604" rx="84" ry="10" fill="#bfe4f2"/><path d="M432 694 l-6 18 M578 694 l6 18" stroke="#c9a24a" stroke-width="5"/>
-    <path d="M560 380 v120 M548 380 h24" stroke="#9aa2a8" stroke-width="4"/><circle cx="560" cy="510" r="10" fill="#9aa2a8"/>
+    ${win(426, 376, 162, 196, 220, 2)}
     <rect x="440" y="730" width="120" height="40" rx="12" fill="#86d1ff" opacity=".6"/>
     <rect x="0" y="560" width="14" height="200" fill="#8a5a3a"/><rect x="0" y="560" width="10" height="200" fill="#c7b499"/>
   `, c);
@@ -179,26 +205,56 @@
   `, c);
   };
 
+  const elevator = (x, y, w, h, sign) => `<rect x="${x - 10}" y="${y - 34}" width="${w + 20}" height="${h + 34}" fill="url(#rsteel)"/><rect x="${x + w / 2 - 24}" y="${y - 28}" width="48" height="20" rx="4" fill="#1a1a1e"/><text x="${x + w / 2}" y="${y - 13}" text-anchor="middle" font-size="12" font-family="Nunito, sans-serif" font-weight="900" fill="#ff8a3a">▲ 4</text><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff4d6"/><rect x="${x + 6}" y="${y + 6}" width="${w - 12}" height="${h - 6}" fill="#e9dcc0"/><path d="M${x + 10} ${y + 30} H${x + w - 10}" stroke="#c9a24a" stroke-width="3"/>${sign ? label(x + w / 2, y - 40, sign, '#ffd98a', 10) : ''}`;
   ART.clap = (c) => svg(`
     <rect width="600" height="420" fill="#2b1d1a"/>${[...Array(30)].map((_, i) => `<path d="M${i * 20} 0 V420" stroke="#3a2723" stroke-width="6"/>`).join('')}
-    ${win(30, 110, 190, 170, 80)}
-    <rect x="236" y="40" width="200" height="74" rx="14" fill="#1a1011"/><circle cx="336" cy="77" r="120" fill="url(#rneon)"/>
-    <text x="336" y="92" text-anchor="middle" font-size="44" font-family="Baloo 2, sans-serif" font-weight="800" fill="#ffd1e6" stroke="#ff5fa2" stroke-width="2.5">CLAP</text>
-    <text x="336" y="108" text-anchor="middle" font-size="10" font-family="Nunito, sans-serif" font-weight="800" fill="#ff9cc8">クラップ · HOOKAH &amp; TEA</text>
+    ${win(26, 112, 196, 160, 80, 3)}
+    <rect x="236" y="20" width="200" height="74" rx="14" fill="#1a1011"/><circle cx="336" cy="57" r="120" fill="url(#rneon)"/>
+    <text x="336" y="72" text-anchor="middle" font-size="44" font-family="Baloo 2, sans-serif" font-weight="800" fill="#ffd1e6" stroke="#ff5fa2" stroke-width="2.5">CLAP</text>
+    <text x="336" y="88" text-anchor="middle" font-size="10" font-family="Nunito, sans-serif" font-weight="800" fill="#ff9cc8">クラップ · HOOKAH &amp; TEA</text>
+    ${label(336, 112, 'HAYAT SABZ MALL · 4TH FLOOR', '#c9a24a', 10)}
     ${[90, 210, 470, 560].map((x, i) => `<path d="M${x} 0 v${26 + i % 2 * 14}" stroke="#111" stroke-width="2"/><ellipse cx="${x}" cy="${50 + i % 2 * 14}" rx="18" ry="24" fill="#d63a3a"/><path d="M${x - 18} ${50 + i % 2 * 14} h36 M${x - 16} ${40 + i % 2 * 14} h32 M${x - 16} ${60 + i % 2 * 14} h32" stroke="#a52525" stroke-width="2"/><circle cx="${x}" cy="${50 + i % 2 * 14}" r="40" fill="url(#rglow)" opacity=".5"/>`).join('')}
-    <g transform="translate(470 150)"><path d="M0 120 q30 -60 10 -120 M10 60 q40 -20 70 -10 M14 30 q-30 -20 -50 -8" stroke="#5a3a2a" stroke-width="5" fill="none"/>${[[10, 0], [74, -12], [-40, -10], [40, 40], [20, 80], [-20, 40], [96, 30]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="16" fill="#f6b7cf" opacity=".9"/><circle cx="${x}" cy="${y}" r="5" fill="#fff"/>`).join('')}</g>
-    <rect x="0" y="300" width="200" height="22" fill="#6b4632"/><rect x="0" y="322" width="200" height="98" fill="#4a2f22"/>
-    <g><ellipse cx="80" cy="294" rx="26" ry="20" fill="#2a2a2e"/><path d="M58 290 q-14 -6 -10 -18" stroke="#2a2a2e" stroke-width="6" fill="none"/><rect x="74" y="268" width="12" height="8" rx="2" fill="#2a2a2e"/>${[124, 150, 176].map((x) => `<rect x="${x - 7}" y="284" width="14" height="16" rx="3" fill="#e8dcc2"/>`).join('')}</g>
+    ${elevator(282, 206, 104, 214, '')}${label(334, 166, 'ELEVATOR', '#9aa2a8', 9)}
+    <g transform="translate(470 150)">${[[10, 0], [74, -12], [-40, -10], [40, 40], [96, 30]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="16" fill="#f6b7cf" opacity=".9"/><circle cx="${x}" cy="${y}" r="5" fill="#fff"/>`).join('')}</g>
+    <rect x="0" y="300" width="196" height="22" fill="#6b4632"/><rect x="0" y="322" width="196" height="98" fill="#4a2f22"/>
+    <g><ellipse cx="70" cy="294" rx="26" ry="20" fill="#2a2a2e"/><path d="M48 290 q-14 -6 -10 -18" stroke="#2a2a2e" stroke-width="6" fill="none"/><rect x="64" y="268" width="12" height="8" rx="2" fill="#2a2a2e"/>${[118, 144, 170].map((x) => `<rect x="${x - 7}" y="284" width="14" height="16" rx="3" fill="#e8dcc2"/>`).join('')}</g>
+    ${label(98, 345, 'TEA BAR', '#e8dcc2', 11)}
+    <rect x="198" y="304" width="76" height="26" rx="5" fill="#1a1011"/>${label(236, 321, 'POURYA’S', '#ffd98a', 10)}
+    ${[212, 236, 260].map((x) => `<path d="M${x - 7} 352 h14 l-3 12 h-8z" fill="#b4572a"/><rect x="${x - 2}" y="364" width="4" height="8" fill="#7a3a1a"/>`).join('')}<rect x="200" y="372" width="72" height="5" fill="#6b4632"/>
+    <g><rect x="208" y="398" width="58" height="26" rx="4" fill="#2a2a2e"/><rect x="214" y="390" width="46" height="12" rx="3" fill="#e05b3b"/><circle cx="228" cy="394" r="4" fill="#ffcf73"/><circle cx="244" cy="396" r="4" fill="#ff8a3a"/><path d="M226 384 q6 -12 0 -22 M246 384 q6 -12 0 -22" stroke="#bbb" stroke-width="2" fill="none" opacity=".6"/></g>
     <rect x="400" y="300" width="200" height="22" fill="#6b4632"/><rect x="400" y="322" width="200" height="98" fill="#4a2f22"/>
-    <path d="M410 150 h180 v90 h-180z" fill="#1f2a5a"/><circle cx="500" cy="196" r="22" fill="#fff" opacity=".9"/><path d="M455 150 v90 M545 150 v90" stroke="#16204a" stroke-width="3"/>
+    <path d="M410 196 h180 v60 h-180z" fill="#1f2a5a"/><circle cx="500" cy="226" r="16" fill="#fff" opacity=".9"/><path d="M455 196 v60 M545 196 v60" stroke="#16204a" stroke-width="3"/>
     ${[430, 480, 530].map((x) => `<ellipse cx="${x}" cy="296" rx="20" ry="6" fill="#fff"/><rect x="${x - 10}" y="284" width="8" height="8" rx="2" fill="#e05b3b"/><rect x="${x + 2}" y="284" width="8" height="8" rx="2" fill="#f2b33a"/>`).join('')}
-    <g><rect x="210" y="400" width="60" height="26" rx="4" fill="#2a2a2e"/><rect x="216" y="392" width="48" height="12" rx="3" fill="#e05b3b"/><circle cx="230" cy="396" r="4" fill="#ffcf73"/><circle cx="246" cy="398" r="4" fill="#ff8a3a"/><path d="M226 384 q6 -12 0 -22 M246 384 q6 -12 0 -22" stroke="#bbb" stroke-width="2" fill="none" opacity=".6"/></g>
-    <rect x="0" y="420" width="600" height="380" fill="#c9c08e"/>${[...Array(4)].map((_, r) => [...Array(4)].map((_, k) => `<rect x="${k * 150 + 2}" y="${424 + r * 96}" width="146" height="92" fill="none" stroke="#6b5e3a" stroke-width="4"/>`).join('')).join('')}
-    <rect x="200" y="600" width="300" height="20" rx="4" fill="#3a2418"/><rect x="214" y="620" width="10" height="40" fill="#2a1a12"/><rect x="476" y="620" width="10" height="40" fill="#2a1a12"/>
-    ${[[230, 690], [470, 690], [240, 590]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="40" ry="12" fill="#a52525"/>`).join('')}
-    <g><path d="M308 598 q-8 -20 12 -30 q20 10 12 30z" fill="#7ec8e3" opacity=".8"/><rect x="316" y="528" width="8" height="42" fill="#c9a24a"/><path d="M308 528 h24 l-4 -10 h-16z" fill="#2a2a2e"/><circle cx="320" cy="514" r="6" fill="#ff8a3a"/><path d="M324 560 q40 10 60 34" stroke="#2a2a2e" stroke-width="3" fill="none"/><path d="M314 506 q-8 -20 6 -36 q-10 -16 4 -30" stroke="#ddd" stroke-width="5" fill="none" opacity=".35"/></g>
-    <g><ellipse cx="410" cy="598" rx="26" ry="6" fill="#f3efe9"/>${[400, 420].map((x) => `<rect x="${x - 6}" y="580" width="12" height="16" rx="3" fill="#f8e3c2" opacity=".9"/><rect x="${x - 4}" y="586" width="8" height="9" fill="#b4472a"/>`).join('')}</g>
+    ${label(500, 345, 'SUSHI', '#e8dcc2', 11)}
+    ${wood(420, '#8a5c3c', 'rgba(40,20,10,.28)')}
   `, c, true);
 
-  window.RoomArt = { defs, ART };
+  // the underground parking of Hayat Sabz mall
+  ART.parking = (c) => svg(`
+    <rect width="600" height="400" fill="#8d9298"/><rect width="600" height="40" fill="#6f747a"/>${[60, 220, 380, 540].map((x) => `<rect x="${x - 40}" y="16" width="80" height="8" rx="3" fill="#f6f7e8"/><circle cx="${x}" cy="30" r="70" fill="url(#rglow)" opacity=".35"/>`).join('')}
+    <path d="M0 52 H600" stroke="#6b7076" stroke-width="10"/><path d="M0 70 H600" stroke="#c0392b" stroke-width="5" opacity=".8"/>
+    ${[110, 300].map((x) => `<rect x="${x - 22}" y="40" width="44" height="360" fill="#a3a8ae"/><rect x="${x - 22}" y="250" width="44" height="18" fill="#f2c230"/><rect x="${x - 22}" y="290" width="44" height="18" fill="#f2c230"/>`).join('')}
+    <rect x="140" y="100" width="130" height="60" rx="6" fill="#2f6b3e"/>${label(205, 124, 'HAYAT SABZ', '#fff', 15)}${label(205, 146, 'MALL · PARKING P2', '#d8f0dc', 10)}
+    ${elevator(436, 214, 112, 186, 'CLAP · 4F ↑')}
+    <rect x="0" y="400" width="600" height="400" fill="#5d6168"/>
+    ${[0, 1, 2, 3].map((i) => `<path d="M${i * 150} 560 V800" stroke="#e9e6d6" stroke-width="5"/>`).join('')}<path d="M0 560 H600" stroke="#e9e6d6" stroke-width="5" opacity=".6"/>
+    ${label(75, 780, 'P2-14', '#e9e6d6', 16)}${label(375, 780, 'P2-16', '#e9e6d6', 16)}${label(525, 780, 'P2-17', '#e9e6d6', 16)}
+    <path d="M300 520 l40 -40 l40 40 h-24 v40 h-32 v-40z" fill="#e9e6d6" opacity=".7" transform="translate(150 -40)"/>
+    <g><rect x="20" y="640" width="110" height="50" rx="14" fill="#c0392b"/><path d="M40 640 q14 -28 36 -28 h14 q20 0 30 28z" fill="#a93226"/><circle cx="44" cy="692" r="14" fill="#2a2a2e"/><circle cx="108" cy="692" r="14" fill="#2a2a2e"/></g>
+    <g><rect x="470" y="640" width="120" height="50" rx="14" fill="#2c3e50"/><path d="M490 640 q14 -28 40 -28 h14 q22 0 34 28z" fill="#22313f"/><circle cx="496" cy="692" r="14" fill="#2a2a2e"/><circle cx="566" cy="692" r="14" fill="#2a2a2e"/></g>
+  `, c, true);
+
+  // foreground props (drawn above characters standing behind them)
+  const table = (w, top, legs, extra) => `<svg viewBox="0 0 ${w} ${top + legs + 4}" width="${w}" height="${top + legs + 4}">${extra || ''}<rect x="0" y="${top}" width="${w}" height="16" rx="4" fill="#b07a48"/><path d="M8 ${top + 6} H${w - 8}" stroke="#8a5a32" stroke-width="1.5" opacity=".6"/><rect x="0" y="${top + 14}" width="${w}" height="6" fill="#8a5a32"/><rect x="12" y="${top + 20}" width="9" height="${legs - 16}" fill="#7a4e2c"/><rect x="${w - 21}" y="${top + 20}" width="9" height="${legs - 16}" fill="#7a4e2c"/></svg>`;
+  const glasses = (x, y) => `<rect x="${x - 6}" y="${y}" width="12" height="16" rx="3" fill="#f8e3c2" opacity=".9"/><rect x="${x - 4}" y="${y + 6}" width="8" height="9" fill="#b4472a"/>`;
+  const hookah = (x, y) => `<path d="M${x - 14} ${y + 98} q-8 -22 14 -34 q22 12 14 34z" fill="#7ec8e3" opacity=".85"/><rect x="${x - 4}" y="${y + 24}" width="8" height="42" fill="#c9a24a"/><path d="M${x - 12} ${y + 24} h24 l-4 -10 h-16z" fill="#b4572a"/><circle cx="${x}" cy="${y + 10}" r="6" fill="#ff8a3a"/><path d="M${x + 4} ${y + 60} q40 10 60 34" stroke="#2a2a2e" stroke-width="3" fill="none"/><path d="M${x - 6} ${y} q-8 -20 6 -36 q-10 -16 4 -30" stroke="#ddd" stroke-width="5" fill="none" opacity=".35"/>`;
+  const PROPS = {
+    clap: () => [
+      { x: 160, y: 490, w: 330, h: 170, z: 662, svg: table(330, 110, 56, hookah(160, 12) + glasses(220, 96) + glasses(244, 96) + '<ellipse cx="270" cy="108" rx="22" ry="5" fill="#f3efe9"/>') },
+      { x: 0, y: 440, w: 182, h: 92, z: 526, svg: table(182, 34, 54, glasses(60, 20) + glasses(120, 20)) },
+      { x: 438, y: 668, w: 162, h: 92, z: 756, svg: table(162, 34, 54, glasses(50, 20) + '<ellipse cx="110" cy="32" rx="20" ry="5" fill="#f3efe9"/>') },
+    ],
+  };
+
+  window.RoomArt = { defs, ART, PROPS };
 })();

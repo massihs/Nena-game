@@ -197,6 +197,11 @@ window.Art = (function () {
     mia:     { skin: '#8d5a3b', hair: '#1f1612', hair2: '#2c201a', style: 'puff', shirt: '#f2c230', collar: '#d99a00', earrings: '#ffd36b' },
     lee:     { skin: '#e9bf94', hair: '#1c1b22', hair2: '#2b2a33', style: 'short', shirt: '#ffffff', collar: '#cfd8e0', stetho: true, glasses: true },
     sam:     { skin: '#f0c7a0', hair: '#3a2a22', hair2: '#4a362c', style: 'side', shirt: '#4f6d9a', collar: '#3a5480', beard: true },
+    pourya:  { skin: '#e6b68e', hair: '#16110e', hair2: '#2a201a', style: 'side', shirt: '#26232b', collar: '#c9a24a', pants: '#2b2b30', beard: true, apron: true },
+    guest1:  { skin: '#f2c9a6', hair: '#2b1d16', hair2: '#3e2a20', style: 'bob', shirt: '#7aa6c2', collar: '#4f7f9c', pants: '#3a3550', earrings: '#ffd36b' },
+    guest2:  { skin: '#dcae86', hair: '#1c1b22', hair2: '#2b2a33', style: 'short', shirt: '#6aa84f', collar: '#4d8044', pants: '#3a3a44', beard: true },
+    guest3:  { skin: '#f4cdb0', hair: '#5a2a16', hair2: '#6e3820', style: 'ponytail', shirt: '#e98aab', collar: '#c9496f', pants: '#2f2b46' },
+    guest4:  { skin: '#c99872', hair: '#241a14', hair2: '#33261e', style: 'side', shirt: '#e7b84a', collar: '#c9952a', pants: '#3a3550' },
   };
 
   function hairParts(c) {
