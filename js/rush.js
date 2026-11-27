@@ -251,6 +251,7 @@
     G.evT = cfg.events || (cfg.mod && (cfg.mod.events || cfg.mod.blackout)) || (n >= 5 && n < 900 ? 30 + rnd() * 15 : n === 902 ? 25 : null);
     if (cfg.mod && cfg.mod.hearts) { G.hearts = cfg.mod.hearts; G.maxHearts = cfg.mod.hearts; }
     if (cfg.mod && cfg.mod.zoom) G.zoomT = 6;
+    Object.keys(hudCache).forEach((k) => delete hudCache[k]);
     G.frStart = {}; FRIENDS.forEach((f) => { G.frStart[f.id] = friendLv(f.id); });
     if (G.boosts.heart) { G.hearts++; G.maxHearts++; }
     pendingBoosts = {};
@@ -288,6 +289,7 @@
     const H = HOMES[cfg.place];
     G.nena = makeActor('nena', A.nena({ dressed: true, outfit: save.outfit }), 84, 147, 'nena', H.nena[0]);
     place(G.nena, H.nena[1], H.nena[2]);
+    G.nena.el.dataset.target = 'nena';
     if (H.simba) {
       G.simba = makeActor('simba', A.simba({ collar: save.collar }), 112, 89, 'simba happy', H.simba[0]);
       G.simba.el.dataset.target = 'simba';
@@ -475,11 +477,12 @@
     if (room && r.el.parentNode !== G.layers[room]) layer(room).appendChild(r.el);
     const [x, y] = anchorOf(r.who);
     r.el.style.transform = `translate(${x - 24}px, ${y - 48}px)`;
-    r.el.style.zIndex = '2000';
     const f = r.left / r.max;
-    r.el.querySelector('.ring').style.strokeDashoffset = String((1 - f) * 106.8);
-    r.el.classList.toggle('urgent', f < 0.3 && G.freezeT <= 0);
-    r.el.classList.toggle('frozen', G.freezeT > 0);
+    if (!r.ring) r.ring = r.el.querySelector('.ring');
+    r.ring.style.strokeDashoffset = ((1 - f) * 106.8).toFixed(1);
+    const u = f < 0.3 && G.freezeT <= 0, fr = G.freezeT > 0;
+    if (r.u !== u) { r.u = u; r.el.classList.toggle('urgent', u); }
+    if (r.fr !== fr) { r.fr = fr; r.el.classList.toggle('frozen', fr); }
   }
   function removeReq(r) {
     r.el.remove(); G.reqs = G.reqs.filter((x) => x !== r);
@@ -531,7 +534,7 @@
     if (perfect) floatText(x, y - 34, 'Perfect!', 'perfect', room);
     sparkle(x, y + 20, room);
     if ((G.combo === 5 || G.combo === 8) && G.boostT <= 0) { G.boostT = 6; G.nena.el.classList.add('boost'); toast('⚡ Chai rush! Nena is super fast!', 'combo', 1600); }
-    if (tip) floatText(x + 30, y + 24, `+${tip} 🪙`, 'coin', room);
+    if (tip) { floatText(x + 30, y + 24, `+${tip} 🪙`, 'coin', room); flyCoins(tip, x, y, room); }
     if (G.combo >= 3) toast(`Combo ×${G.combo}!`, 'combo', 900);
     removeReq(r);
     snd(G.combo >= 3 ? 'fanfare' : 'success'); buzz(12);
@@ -596,15 +599,60 @@
     if (bone) { catchBone(); return; }
     if (e.target.closest('[data-photo]')) { takePhoto(); return; }
     const t = e.target.closest('[data-target]');
-    if (!t) return;
+    ripple(e, !!t);
+    if (!t) { swipeStart = { x: e.clientX, y: e.clientY, t: performance.now() }; return; }
+    swipeStart = null;
+    t.classList.remove('tapped'); void t.offsetWidth; t.classList.add('tapped');
+    if (t.dataset.target === 'nena' && !findReq('nena')) {
+      if (G.queue.length) { G.queue = []; markQueue(); toast('Plan cleared ✋', '', 900); snd('pop'); }
+      return;
+    }
     queueSteps(tapTarget(t.dataset.target));
+  }
+  let swipeStart = null;
+  function onSwipeEnd(e) {
+    const s0 = swipeStart; swipeStart = null;
+    if (!s0 || !G || G.over || G.paused) return;
+    const dx = e.clientX - s0.x, dy = e.clientY - s0.y;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5 || performance.now() - s0.t > 600) return;
+    const tabs = G.W.tabs; const i = tabs.indexOf(G.view); if (i < 0 || tabs.length < 2) return;
+    const j = Math.max(0, Math.min(tabs.length - 1, i + (dx < 0 ? 1 : -1)));
+    if (j !== i) { snd('tab'); G.peekAt = performance.now(); setView(tabs[j]); const l = G.layers[tabs[j]]; l.classList.remove('slide-l', 'slide-r'); void l.offsetWidth; l.classList.add(dx < 0 ? 'slide-l' : 'slide-r'); }
+  }
+  function ripple(e, hit) {
+    const wrap = $('stage-wrap'), r = wrap.getBoundingClientRect();
+    const d = document.createElement('i'); d.className = 'ripple' + (hit ? ' hit' : '');
+    d.style.left = (e.clientX - r.left) + 'px'; d.style.top = (e.clientY - r.top) + 'px';
+    wrap.appendChild(d); setTimeout(() => d.remove(), 450);
+  }
+  // juicy delivery: the item flies from Nena's hands to where it goes
+  function flyItem(icon, to, room) {
+    if (!G || room !== G.view) return;
+    const el = document.createElement('div'); el.className = 'fly'; el.textContent = icon;
+    layer(room).appendChild(el);
+    const x0 = G.nena.x + 22, y0 = G.nena.y - 84, [x1, y1] = to;
+    el.animate([{ transform: `translate(${x0}px, ${y0}px) scale(1)` }, { transform: `translate(${(x0 + x1) / 2}px, ${Math.min(y0, y1) - 70}px) scale(1.4)` }, { transform: `translate(${x1}px, ${y1}px) scale(.6)`, opacity: 0.2 }], { duration: 380, easing: 'ease-in-out' });
+    setTimeout(() => el.remove(), 380);
+  }
+  // coins fly up to the coin counter
+  function flyCoins(n, x, y, room) {
+    if (!G || room !== G.view || !n) return;
+    const st = stage().getBoundingClientRect(), app = document.querySelector('.app').getBoundingClientRect(), dst = $('g-coins').getBoundingClientRect();
+    const k = st.width / 600;
+    for (let i = 0; i < Math.min(5, n); i++) {
+      const c = document.createElement('div'); c.className = 'coinfly'; c.textContent = '🪙';
+      document.querySelector('.app').appendChild(c);
+      const sx = st.left - app.left + x * k, sy = st.top - app.top + y * k, ex = dst.left - app.left, ey = dst.top - app.top;
+      c.animate([{ transform: `translate(${sx}px, ${sy}px) scale(.8)` }, { transform: `translate(${sx + (i - 2) * 18}px, ${sy - 40}px) scale(1.2)`, offset: 0.3 }, { transform: `translate(${ex}px, ${ey}px) scale(.7)` }], { duration: 650 + i * 70, easing: 'cubic-bezier(.5,0,.7,1)' });
+      setTimeout(() => { c.remove(); const g = $('g-coins').parentNode; g.classList.remove('bump'); void g.offsetWidth; g.classList.add('bump'); }, 650 + i * 70);
+    }
   }
   function onTabs(e) {
     if (!G || G.paused || G.over) return;
     const b = e.target.closest('[data-req]');
     if (b) { const r = G.reqs[+b.dataset.req]; if (r) queueSteps(chainFor(r)); e.stopPropagation(); return; }
     const t = e.target.closest('[data-room]');
-    if (t) { snd('tab'); setView(t.dataset.room); }
+    if (t) { snd('tab'); G.peekAt = performance.now(); setView(t.dataset.room); }
   }
   function spawnBone() {
     const room = G.nena.room;
@@ -719,7 +767,7 @@
       const fx = FX[doR.type] || {};
       return {
         dur: R.dur * (R.dur > 0.7 ? sp : 1), snd: fx.snd, start: fx.start ? () => fx.start(doR) : null,
-        done: () => { if (fx.end) fx.end(doR); if (!G.reqs.includes(doR)) return; if (R.item) take(R.item); complete(doR); if (fx.after) fx.after(doR); },
+        done: () => { if (fx.end) fx.end(doR); if (!G.reqs.includes(doR)) return; if (R.item && R.item !== 'pup') flyItem(ITEMS[R.item], anchorOf(doR.who), whoRoom(doR.who)); if (R.item) take(R.item); complete(doR); if (fx.after) fx.after(doR); },
       };
     }
     // 3) things with no request
@@ -1055,8 +1103,8 @@
       if (k >= 1) { tweens.splice(i, 1); if (tw.cb) tw.cb(); }
     }
   }
-  function walkTo(p, dt) {
-    const speed = 300 * (1 + 0.2 * up('shoes')) * (G.boostT > 0 ? 1.7 : 1) * (G.boosts.coffee ? 1.25 : 1);
+  function walkTo(p, dt, fast) {
+    const speed = 390 * (fast || 1) * (1 + 0.2 * up('shoes')) * (G.boostT > 0 ? 1.6 : 1) * (G.boosts.coffee ? 1.2 : 1);
     const dx = p[0] - G.nena.x, dy = p[1] - G.nena.y, d = Math.hypot(dx, dy);
     if (d < 6) { G.nena.el.classList.remove('walking'); return true; }
     G.nena.el.classList.add('walking');
@@ -1071,7 +1119,7 @@
     place(G.nena, d[0], d[1]);
     G.nena.el.classList.remove('gone');
     attachNenaOverlays();
-    setView(room);
+    if (!G.peekAt || performance.now() - G.peekAt > 2500 || room === G.view) setView(room);
   }
   function loop(now) {
     raf = requestAnimationFrame(loop);
@@ -1124,9 +1172,9 @@
       const room = targetRoom(q.id), p = targetPoint(q.id, false);
       if (!p || !room || !G.layers[room]) { G.queue.shift(); markQueue(); }
       else if (room !== G.nena.room) {
-        if (walkTo(ROOMS[G.nena.room].door, dt)) {
+        if (walkTo(ROOMS[G.nena.room].door, dt, 1.6)) {
           G.nena.el.classList.add('gone');
-          G.busy = { t: 0, dur: 0.3, travel: true, done: () => enterRoom(room) };
+          G.busy = { t: 0, dur: 0.14, travel: true, done: () => enterRoom(room) };
         }
       } else if (walkTo(p, dt)) {
         G.queue.shift(); markQueue();
@@ -1149,7 +1197,7 @@
     ambientTick(dt);
     talkTick(dt);
     highlights();
-    renderTabs();
+    G.tabT = (G.tabT || 0) - dt; if (G.tabT <= 0) { G.tabT = 0.14; renderTabs(); }
     if (G.time <= 0) { G.time = 0; endLevel(false); }
     hud();
   }
@@ -1221,25 +1269,24 @@
       setTimeout(() => el.remove(), 650);
     }
   }
+  const hudCache = {};
+  const put = (id, k, v, html) => { if (hudCache[id + k] === v) return; hudCache[id + k] = v; const e = $(id); if (k === 'text') e.textContent = v; else if (k === 'html') e.innerHTML = v; else if (k[0] === '.') e.classList.toggle(k.slice(1), v); else e.style[k] = v; };
   function hud() {
     const c = G.cfg;
     const t = Math.ceil(G.cfg.endless ? G.elapsed : G.time);
-    $('g-time').textContent = `${G.cfg.endless ? '∞ ' : ''}${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-    $('g-time').classList.toggle('low', !G.cfg.endless && G.time < 10);
-    const ring = $('g-tring'), frac = G.cfg.endless ? 1 : Math.max(0, G.time / (G.cfg.dur + (G.boosts.time ? 15 : 0)));
-    ring.style.strokeDashoffset = String(119.4 * (1 - frac));
-    ring.classList.toggle('low', !G.cfg.endless && G.time < 15);
-    $('g-score').textContent = G.score;
-    $('g-fill').style.width = Math.min(100, (G.score / c.targets[2]) * 100) + '%';
-    $('g-star1').classList.toggle('on', G.score >= c.targets[0]);
-    $('g-star2').classList.toggle('on', G.score >= c.targets[1]);
-    $('g-star3').classList.toggle('on', G.score >= c.targets[2]);
-    const hk = G.hearts + '/' + G.maxHearts;
-    if ($('g-hearts').dataset.k !== hk) { $('g-hearts').dataset.k = hk; $('g-hearts').innerHTML = Array.from({ length: G.maxHearts }, (_, i) => `<i class="${i < G.hearts ? 'on' : ''}">♥</i>`).join(''); }
-    $('g-combo').innerHTML = G.combo > 1 ? `Combo ×${G.combo} <i style="width:${Math.max(0, G.comboT / 6) * 100}%"></i>` : (G.boostT > 0 ? '⚡ Chai rush!' : G.freezeT > 0 ? '❄️ Treat time' : '');
+    put('g-time', 'text', `${G.cfg.endless ? '∞ ' : ''}${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`);
+    put('g-time', '.low', !G.cfg.endless && G.time < 10);
+    const frac = G.cfg.endless ? 1 : Math.max(0, G.time / (G.cfg.dur + (G.boosts.time ? 15 : 0)));
+    put('g-tring', 'strokeDashoffset', (119.4 * (1 - frac)).toFixed(1));
+    put('g-tring', '.low', !G.cfg.endless && G.time < 15);
+    put('g-score', 'text', String(G.score));
+    put('g-fill', 'width', Math.min(100, (G.score / c.targets[2]) * 100).toFixed(1) + '%');
+    put('g-star1', '.on', G.score >= c.targets[0]); put('g-star2', '.on', G.score >= c.targets[1]); put('g-star3', '.on', G.score >= c.targets[2]);
+    put('g-hearts', 'html', Array.from({ length: G.maxHearts }, (_, i) => `<i class="${i < G.hearts ? 'on' : ''}">♥</i>`).join(''));
+    put('g-combo', 'html', G.combo > 1 ? `Combo ×${G.combo} <i style="width:${Math.round(Math.max(0, G.comboT / 6) * 20) * 5}%"></i>` : (G.boostT > 0 ? '⚡ Chai rush!' : G.freezeT > 0 ? '❄️ Treat time' : ''));
     const starsNow = G.score >= c.targets[2] ? 3 : G.score >= c.targets[1] ? 2 : G.score >= c.targets[0] ? 1 : 0;
     if (starsNow > G.starsShown) { G.starsShown = starsNow; snd('coin'); const st = $('g-star' + starsNow); st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop'); }
-    $('g-coins').textContent = save.coins + G.coins;
+    put('g-coins', 'text', String(save.coins + G.coins));
   }
 
   /* ------------------------------------------------------------------ */
@@ -1679,6 +1726,7 @@
   /* ------------------------------------------------------------------ */
   function wake() { if (window.Sound) { window.Sound.init(); window.Sound.setEnabled(save.sound !== false); window.Sound.setMusic(save.music !== false); } }
   $('stage').addEventListener('pointerdown', onTap);
+  window.addEventListener('pointerup', onSwipeEnd);
   $('g-rooms').addEventListener('pointerdown', onTabs);
   $('btn-play').addEventListener('click', () => { wake(); snd('tab'); renderMap(); });
   $('m-levels').addEventListener('click', (e) => { const b = e.target.closest('[data-level]'); if (b) { snd('click'); playStory(+b.dataset.level); } });

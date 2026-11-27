@@ -582,3 +582,30 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 .hud-mid .scorebar { flex: none; height: 12px; margin-right: 6px; }
 .me { margin-left: 18px; }
 .deco { opacity: .45; }
+
+/* ---- fluidity: cheaper rendering + instant feedback ---- */
+.actor:not(.boost):not(.witch) > svg, .actor > svg { filter: none; }
+.actor.witch > svg { filter: none; }
+.actor.witch::before { background: radial-gradient(closest-side, rgba(150,90,220,.45), rgba(150,90,220,0)); height: 22px; bottom: -8px; }
+.req { filter: none; }
+.req::before { content: ""; position: absolute; inset: 3px; border-radius: 50%; box-shadow: 0 5px 10px rgba(40,20,30,.35); }
+.flicker, .glow { mix-blend-mode: normal; }
+.flicker { background: radial-gradient(circle at 60% 50%, rgba(255,255,255,.12), rgba(120,220,140,0)); }
+.toast { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.actor, .req, .hit, .say { -webkit-tap-highlight-color: transparent; }
+.stage { contain: layout style; }
+.room-layer.on { animation: none; }
+.room-layer.slide-l { animation: slideL .22s ease-out; } .room-layer.slide-r { animation: slideR .22s ease-out; }
+@keyframes slideL { from { transform: translateX(40px); opacity: .5; } } @keyframes slideR { from { transform: translateX(-40px); opacity: .5; } }
+.ripple { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; border: 3px solid rgba(255,255,255,.85); pointer-events: none; z-index: 6; animation: rip .42s ease-out forwards; }
+.ripple.hit { border-color: #ffd36b; box-shadow: 0 0 10px rgba(255,211,107,.8); }
+@keyframes rip { to { transform: scale(4); opacity: 0; } }
+.tapped { animation: tapPop .25s ease-out; }
+.actor.tapped > svg { animation: tapPop .25s ease-out; }
+@keyframes tapPop { 40% { scale: 1.12; } }
+.req.tapped { animation: tapPop .25s ease-out; }
+.fly { position: absolute; left: -16px; top: -16px; font-size: 30px; z-index: 2090; pointer-events: none; }
+.coinfly { position: absolute; left: 0; top: 0; font-size: 22px; z-index: 30; pointer-events: none; }
+.pill.coin.bump { animation: bump .25s ease-out; }
+@keyframes bump { 50% { transform: scale(1.18); } }
+.qmark { transition: transform .15s; }
