@@ -281,6 +281,8 @@
     G.frStart = {}; FRIENDS.forEach((f) => { G.frStart[f.id] = friendLv(f.id); });
     if (G.boosts.heart) { G.hearts++; G.maxHearts++; }
     G.zen = n < 900 && save.wellness.zen === today();
+    G.fit = n < 900 && save.wellness.gym === today();
+    if (G.fit) setTimeout(() => { if (G && G.n === n) toast('🏋️ Gym energy: Nena is 15% faster today!', 'hint', 2200); }, 3400);
     if (n < 900 && save.wellness.tree === today()) { G.hearts++; G.maxHearts++; }
     if (G.zen || (n < 900 && save.wellness.tree === today())) setTimeout(() => { if (G && G.n === n) toast((G.zen ? '🧘 Zen: everyone is 10% more patient today. ' : '') + (save.wellness.tree === today() ? '🌳 Good energy: +1 heart!' : ''), 'hint', 2600); }, 600);
     pendingBoosts = {};
@@ -1482,7 +1484,7 @@
     }
   }
   function walkTo(p, dt, fast) {
-    const speed = 390 * (fast || 1) * (1 + 0.2 * up('shoes')) * (G.boostT > 0 ? 1.6 : 1) * (G.boosts.coffee ? 1.2 : 1);
+    const speed = 390 * (G.fit ? 1.15 : 1) * (fast || 1) * (1 + 0.2 * up('shoes')) * (G.boostT > 0 ? 1.6 : 1) * (G.boosts.coffee ? 1.2 : 1);
     const dx = p[0] - G.nena.x, dy = p[1] - G.nena.y, d = Math.hypot(dx, dy);
     if (d < 6) { G.nena.el.classList.remove('walking'); return true; }
     G.nena.el.classList.add('walking');
@@ -1851,6 +1853,7 @@
     { id: 'journey', icon: '🗺️', name: 'Full journey', desc: 'Complete a 30-minute daily journey', test: (t) => (t.journey || 0) >= 1, r: 80 },
     { id: 'lv10', icon: '⭐', name: 'Level 10', desc: 'Reach player level 10', test: () => save.plv >= 10, r: 100 },
     { id: 'set1', icon: '🎴', name: 'Collector', desc: 'Complete a sticker set', test: (t) => (t.set || 0) >= 1, r: 80 },
+    { id: 'gym5', icon: '🏋️', name: 'Gym sisters', desc: 'Train 5 times with Negin', test: (t) => (t.gym || 0) >= 5, r: 80 },
     { id: 'cuddle10', icon: '🦁', name: 'Baba’s lion', desc: 'Put Simba on Baba’s belly 10 times', test: (t) => (t.req_cuddle || 0) >= 10, r: 60 },
   ];
   const MISSIONS = [
@@ -1940,7 +1943,7 @@
       ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
       ['missions', '📋', 'Quests', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
       ['nails', '💅', 'Nail day', nailsReady() ? '!' : ''], ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
-      ['wheel', '🎡', 'Wheel', spinsLeft() || ''], ['stickers', '🎴', 'Stickers', `${Object.keys(save.stickers).length}/${STICKERS.length}`], ['zen', '🧘', 'Zen', save.wellness.zen !== today() ? '!' : ''], ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
+      ['wheel', '🎡', 'Wheel', spinsLeft() || ''], ['stickers', '🎴', 'Stickers', `${Object.keys(save.stickers).length}/${STICKERS.length}`], ['gym', '🏋️', 'Gym', gymDay() && save.wellness.gym !== today() ? '!' : ''], ['zen', '🧘', 'Zen', save.wellness.zen !== today() ? '!' : ''], ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
     ];
     renderJourney();
     $('m-hub').innerHTML = items.map(([id, ico, name, b]) => `<button type="button" class="hub-btn" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^\d+\/\d+$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
@@ -1952,6 +1955,7 @@
   function openSheet(kind) {
     if (kind === 'zen') { openZen(); return; }
     if (kind === 'wheel') { openWheel(); return; }
+    if (kind === 'gym') { openGym(); return; }
     if (kind === 'nails') { startNailDay(); return; }
     sheetKind = kind;
     const T = { stickers: '🎴 Sticker album', games: '🎮 Mini-games', settings: '⚙️ Settings', daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Quests', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
@@ -2238,7 +2242,7 @@
   const JOURNEY = [{ m: 5, c: 20, ico: '🎁' }, { m: 10, c: 40, ico: '🎁' }, { m: 20, c: 70, ico: '💎' }, { m: 30, c: 150, ico: '👑', outfit: 'zen' }];
   let lastInput = Date.now(), jReadyShown = -1;
   document.addEventListener('pointerdown', () => { lastInput = Date.now(); }, true);
-  const ACTIVE = ['screen-game', 'screen-tricks', 'screen-tahdig', 'screen-sort', 'screen-nails', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel'];
+  const ACTIVE = ['screen-game', 'screen-tricks', 'screen-tahdig', 'screen-sort', 'screen-nails', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-gym'];
   function journeyToday() { if (save.journey.date !== today()) save.journey = { date: today(), sec: 0, got: [] }; return save.journey; }
   setInterval(() => {
     if (document.hidden || Date.now() - lastInput > 60000) return;
@@ -2458,7 +2462,7 @@
   const DQ_POOL = [
     { k: 'pet', n: 3, ico: '🐶', label: 'Pet Simba 3 times' }, { k: 'day', n: 1, ico: '🌅', label: 'Finish a day' }, { k: 'game', n: 1, ico: '🎮', label: 'Play a mini-game' },
     { k: 'req', n: 15, ico: '⚡', label: 'Complete 15 requests' }, { k: 'perfect', n: 1, ico: '⭐', label: 'Get 3 stars on a day' }, { k: 'mini', n: 2, ico: '🔥', label: 'Win 2 mini challenges' },
-    { k: 'zen', n: 1, ico: '🧘', label: 'Meditate once' }, { k: 'req_food', n: 3, ico: '🍖', label: 'Feed Simba 3 times' }, { k: 'req_tea', n: 2, ico: '☕', label: 'Serve Baba 2 teas' }, { k: 'photo', n: 1, ico: '📸', label: 'Take a Simba photo' },
+    { k: 'zen', n: 1, ico: '🧘', label: 'Meditate once' }, { k: 'gym', n: 1, ico: '🏋️', label: 'Go to the gym with Negin' }, { k: 'req_food', n: 3, ico: '🍖', label: 'Feed Simba 3 times' }, { k: 'req_tea', n: 2, ico: '☕', label: 'Serve Baba 2 teas' }, { k: 'photo', n: 1, ico: '📸', label: 'Take a Simba photo' },
   ];
   function dailyQuests() {
     if (save.dq.date !== today()) save.dq = { date: today(), base: Object.assign({}, save.tot), claimed: false };
@@ -2540,6 +2544,114 @@
   setInterval(() => { save.lastSeen = Date.now(); }, 30000);
   const bCost = (b) => ((save.freeB[b.id] || 0) > 0 ? 0 : b.cost);
 
+  /* ---- Gym with Negin, every other day ---- */
+  const gymDay = () => dayNum() % 2 === 0;
+  const GYM_BG = `<svg viewBox="0 0 600 500" preserveAspectRatio="xMidYMax slice" class="gym-bg"><rect width="600" height="500" fill="#2f3440"/>
+    <rect x="0" y="40" width="600" height="190" fill="#9fc4da" opacity=".35"/>${[0, 1, 2, 3, 4].map((i) => `<rect x="${10 + i * 120}" y="46" width="108" height="176" fill="#cfe3ea" opacity=".45"/><path d="M${22 + i * 120} 60 l40 150" stroke="#fff" stroke-width="5" opacity=".35"/>`).join('')}
+    <rect x="0" y="0" width="600" height="34" fill="#22262f"/>${[90, 300, 510].map((x) => `<rect x="${x - 50}" y="10" width="100" height="10" rx="4" fill="#fff6dc"/>`).join('')}
+    <text x="300" y="268" text-anchor="middle" font-size="26" font-family="Baloo 2, sans-serif" font-weight="800" fill="#ff5fa2">FIT TEHRAN</text>
+    <rect x="0" y="330" width="600" height="170" fill="#3a3f4c"/>${[...Array(12)].map((_, i) => `<path d="M${i * 50} 330 v170" stroke="#333844" stroke-width="2"/>`).join('')}
+    <g fill="#1c1f26">${[40, 520].map((x) => `<rect x="${x}" y="250" width="40" height="80" rx="4"/><rect x="${x - 10}" y="240" width="60" height="12" rx="4"/>`).join('')}</g>
+    ${[110, 150, 450, 490].map((x, i) => `<g><rect x="${x - 3}" y="300" width="6" height="30" fill="#7a7f8c"/><rect x="${x - 12}" y="292" width="24" height="10" rx="3" fill="${['#ef6fa3', '#86aaff', '#ffd36b', '#7fe0b4'][i]}"/></g>`).join('')}
+    <rect x="236" y="290" width="128" height="40" rx="8" fill="#ef8fb0" opacity=".5"/></svg>`;
+  let GY = null, gyRaf = 0;
+  const GYM_STEPS = [
+    { k: 'squat', name: 'Squats', ico: '🍑', help: 'Tap when the marker is in the pink zone (8 reps)' },
+    { k: 'run', name: 'Treadmill', ico: '🏃‍♀️', help: 'Tap fast to keep your speed above the line (8 s)' },
+    { k: 'plank', name: 'Plank', ico: '🧘‍♀️', help: 'Hold the button for 7 seconds. Don’t let go!' },
+  ];
+  const NEGIN_GYM = { start: ['Ugh, the gym… okay, for you, Nena.', 'Five minutes and then a nap, deal?'], good: ['Wow, you’re on fire!', 'Show-off! 😅', 'Okay okay, I’m impressed.'], bad: ['Haha, you look like me!', 'Even I can do better… maybe.'], end: ['I’m dead. Smoothie time? 🥤', 'Same time in two days? …If I’m awake.'] };
+  function gySay(who, t) { const e = $('gy-say'); e.textContent = (who === 'negin' ? 'Negin: ' : 'Nena: ') + t; e.classList.remove('pop'); void e.offsetWidth; e.classList.add('pop'); }
+  function openGym() {
+    GY = { step: -1, scores: [], run: false };
+    $('gy-bg').innerHTML = GYM_BG;
+    $('gy-nena').innerHTML = A.nena({ dressed: true, outfit: 'sweat', nails: nailOf('nena') });
+    $('gy-negin').innerHTML = A.person('negin', { mood: 'sleepy', nails: nailOf('negin') });
+    $('gy-meter').hidden = true; $('gy-steps').innerHTML = GYM_STEPS.map((x) => `<span>${x.ico} ${x.name}</span>`).join('');
+    const ok = gymDay();
+    $('gy-info').textContent = ok ? (save.wellness.gym === today() ? 'Already trained today ✓ (practice)' : 'Gym day! Reward: Nena 15% faster in today’s days') : 'Rest day today — next session tomorrow (practice only)';
+    $('gy-btn').textContent = 'Start the workout 💪'; $('gy-btn').disabled = false; $('gy-btn').dataset.mode = 'start';
+    gySay('negin', pick(NEGIN_GYM.start));
+    show('screen-gym'); music('street');
+  }
+  function gyNext() {
+    GY.step++;
+    if (GY.step === 0) $('gy-negin').innerHTML = A.person('negin', { nails: nailOf('negin') });
+    const st = GYM_STEPS[GY.step];
+    [...$('gy-steps').children].forEach((e, i) => e.classList.toggle('on', i === GY.step));
+    if (!st) { gymEnd(); return; }
+    $('gy-meter').hidden = false; $('gy-help').textContent = st.help; $('gy-mark').hidden = st.k !== 'squat'; $('gy-zone').hidden = st.k !== 'squat'; $('gy-line').hidden = st.k !== 'run';
+    $('gy-fill').style.width = '0%';
+    ['gy-nena', 'gy-negin'].forEach((id) => { $(id).className = 'actor gy-actor ' + (id === 'gy-negin' ? 'gy-negin' : 'gy-nena'); });
+    GY.st = { k: st.k, t: 0, reps: 0, hits: 0, x: 0, dir: 1, speed: 0, good: 0, hold: false, held: 0 };
+    $('gy-btn').dataset.mode = st.k; $('gy-btn').textContent = st.k === 'squat' ? 'SQUAT! 🍑' : st.k === 'run' ? 'RUN! 👟' : 'HOLD 🧘‍♀️';
+    GY.run = true;
+    let last = performance.now();
+    cancelAnimationFrame(gyRaf);
+    const tick = (now) => {
+      if (!GY || !GY.run || $('screen-gym').hidden) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now; gyTick(dt);
+      gyRaf = requestAnimationFrame(tick);
+    };
+    gyRaf = requestAnimationFrame(tick);
+  }
+  function gyTick(dt) {
+    const S = GY.st; S.t += dt;
+    if (S.k === 'squat') {
+      S.x += S.dir * dt * (70 + S.reps * 6); if (S.x >= 100) { S.x = 100; S.dir = -1; } if (S.x <= 0) { S.x = 0; S.dir = 1; }
+      $('gy-mark').style.left = S.x.toFixed(1) + '%'; $('gy-fill').style.width = (S.hits / 8 * 100) + '%';
+    } else if (S.k === 'run') {
+      S.speed = Math.max(0, S.speed - dt * 0.55); if (S.speed >= 0.6) S.good += dt;
+      $('gy-fill').style.width = (S.speed * 100).toFixed(0) + '%';
+      $('gy-nena').classList.toggle('walking', S.speed > 0.2); $('gy-negin').classList.add('walking');
+      $('gy-help').textContent = `Treadmill · ${Math.max(0, 8 - S.t).toFixed(1)} s`;
+      if (S.t >= 8) gyStepDone(Math.min(1, S.good / 6.5));
+    } else if (S.k === 'plank') {
+      if (S.hold) S.held += dt;
+      $('gy-fill').style.width = Math.min(100, S.held / 7 * 100).toFixed(0) + '%';
+      $('gy-nena').classList.toggle('plank', S.hold);
+      if (S.held >= 7) gyStepDone(1);
+    }
+  }
+  function gyPress(down) {
+    if (!GY || !GY.run) return;
+    const S = GY.st;
+    if (S.k === 'squat' && down) {
+      S.reps++; const hit = S.x > 38 && S.x < 62;
+      if (hit) S.hits++;
+      const n = $('gy-nena'); n.classList.remove('squat'); void n.offsetWidth; n.classList.add('squat');
+      const g = $('gy-negin'); g.classList.remove('squat'); void g.offsetWidth; g.classList.add('squat');
+      snd(hit ? 'pop' : 'fail');
+      if (S.reps === 4) gySay('negin', pick(S.hits >= 3 ? NEGIN_GYM.good : NEGIN_GYM.bad));
+      if (S.reps >= 8) gyStepDone(S.hits / 8);
+    } else if (S.k === 'run' && down) { S.speed = Math.min(1, S.speed + 0.12); snd('tick'); }
+    else if (S.k === 'plank') {
+      if (down) S.hold = true;
+      else if (S.hold && S.held > 0.3) { S.hold = false; gyStepDone(Math.min(1, S.held / 7)); }
+    }
+  }
+  function gyStepDone(score) {
+    GY.run = false; cancelAnimationFrame(gyRaf); GY.scores.push(score);
+    ['gy-nena', 'gy-negin'].forEach((id) => $(id).classList.remove('walking', 'plank', 'squat'));
+    snd(score >= 0.7 ? 'success' : 'pop');
+    gySay(score >= 0.7 ? 'negin' : 'nena', score >= 0.7 ? pick(NEGIN_GYM.good) : pick(['Phew… harder than it looks!', 'My legs are jelly…']));
+    $('gy-btn').dataset.mode = 'next'; $('gy-btn').textContent = GY.step < GYM_STEPS.length - 1 ? `Next: ${GYM_STEPS[GY.step + 1].name} ›` : 'Finish 🏁';
+  }
+  function gymEnd() {
+    $('gy-meter').hidden = true;
+    const avg = GY.scores.reduce((a, b) => a + b, 0) / GY.scores.length, stars = avg >= 0.85 ? 3 : avg >= 0.6 ? 2 : avg >= 0.3 ? 1 : 0;
+    const first = gymDay() && save.wellness.gym !== today() && stars > 0;
+    const coins = first ? 15 + stars * 10 : 0;
+    if (first) { save.wellness.gym = today(); save.coins += coins; track('gym'); }
+    track('game'); gainXP(15); save.friend.negin = (save.friend.negin || 0) + stars; persist(); checkAch();
+    snd(stars >= 2 ? 'win' : 'lose');
+    $('gy-negin').innerHTML = A.person('negin', { mood: 'happy', nails: nailOf('negin') });
+    gySay('negin', pick(NEGIN_GYM.end));
+    $('gy-info').textContent = `${'★'.repeat(stars)}${'☆'.repeat(3 - stars)} · ${first ? `Gym energy: Nena 15% faster today · +${coins} 🪙` : 'Great practice!'}`;
+    $('gy-btn').dataset.mode = 'done'; $('gy-btn').textContent = 'Back to the map';
+    if (stars === 3) confettiOn($('screen-gym'));
+  }
+
   /* ---- custom days: challenge and endless ---- */
   let CUSTOM = null;
   function challengeCfg(c) {
@@ -2586,7 +2698,7 @@
   /* Screens: title, map, story, shop                                    */
   /* ------------------------------------------------------------------ */
   function show(id) {
-    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-welcome'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
+    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-welcome', 'screen-gym'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
   }
   function renderMap() {
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
@@ -2743,6 +2855,10 @@
   $('tk-back').addEventListener('click', () => { TK = null; snd('click'); openSheet('games'); });
   $('td-go').addEventListener('click', () => tdFlip());
   $('td-back').addEventListener('click', () => { if (TD) TD.run = false; cancelAnimationFrame(tdRaf); TD = null; snd('click'); openSheet('games'); });
+  $('gy-btn').addEventListener('pointerdown', (e) => { const m = e.currentTarget.dataset.mode; if (['squat', 'run', 'plank'].includes(m)) { e.preventDefault(); gyPress(true); } });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => $('gy-btn').addEventListener(ev, () => { if ($('gy-btn').dataset.mode === 'plank') gyPress(false); }));
+  $('gy-btn').addEventListener('click', (e) => { const m = e.currentTarget.dataset.mode; if (m === 'start' || m === 'next') { snd('click'); gyNext(); } else if (m === 'done') { GY = null; renderMap(); } });
+  $('gy-back').addEventListener('click', () => { if (GY) GY.run = false; cancelAnimationFrame(gyRaf); GY = null; renderMap(); });
   $('wh-spin').addEventListener('click', spinWheel);
   $('wh-back').addEventListener('click', () => { if (!spinning) renderMap(); });
   $('wb-ok').addEventListener('click', () => { $('screen-welcome').hidden = true; snd('happy'); renderMap(); });
