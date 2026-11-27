@@ -10,6 +10,16 @@
   const RA = window.RoomArt;
   const snd = (n, a) => { if (save.sound !== false && window.Sound) window.Sound.play(n, a); };
   const music = (name, night) => { if (!window.Sound) return; window.Sound.setTrack(name); window.Sound.setNight(!!night); window.Sound.setIntensity(0); };
+  const HAPTIC = { tap: 6, deliver: 12, perfect: [10, 30, 16], combo: (n) => [8, 24, 8 + n * 3], star: [16, 40, 16, 40, 40], fail: [60, 40, 60], tick: 5, phew: [10, 50, 10] };
+  const haptic = (k, n) => { const p = HAPTIC[k]; buzz(typeof p === 'function' ? p(n || 1) : p); };
+  const COMBO_WORDS = ['', '', 'Nice!', 'Great!', 'Super!', 'Amazing!', 'Fantastic!', 'Incredible!', 'Unstoppable!'];
+  function announce(big, small, tier) {
+    const w = document.getElementById('stage-wrap'); if (!w) return;
+    w.querySelectorAll('.announce').forEach((e) => e.remove());
+    const e = document.createElement('div'); e.className = 'announce t' + (tier || 2);
+    e.innerHTML = `<b>${big}</b>${small ? `<small>${small}</small>` : ''}`;
+    w.appendChild(e); setTimeout(() => e.remove(), 1150);
+  }
   const buzz = (p) => { try { if (save.vibe !== false && navigator.vibrate) navigator.vibrate(p); } catch (e) { /* */ } };
   const rnd = Math.random;
   const pick = (a) => a[Math.floor(rnd() * a.length)];
@@ -563,8 +573,10 @@
     if (!r.said && URGENT[r.who]) { r.said = true; talkAs(r.who, pick(URGENT[r.who])); if (r.who === 'simba') joy(-4); }
     if (r.who === 'simba' && G.simba && !G.simbaAway) { G.simba.el.classList.add('barking'); setTimeout(() => G.simba && G.simba.el.classList.remove('barking'), 1000); }
   }
+  function jolt(a, cls) { if (!a || !a.el) return; a.el.classList.remove('yay', 'oops', 'stomp'); void a.el.offsetWidth; a.el.classList.add(cls); clearTimeout(a.joltT); a.joltT = setTimeout(() => a.el && a.el.classList.remove(cls), 700); }
   function reactDone(r, perfect) {
     const a = actorOf(r.who), room = whoRoom(r.who);
+    if (a && r.who !== 'simba' && r.who !== 'nena') jolt(a, 'yay');
     if (a) emo(a, perfect ? '💖' : '❤️', 1500);
     const [x, y] = anchorOf(r.who);
     burst(x, y + 34, room, perfect ? 'stars' : 'hearts', perfect ? 7 : 4);
@@ -574,6 +586,7 @@
   }
   function reactFail(r) {
     const a = actorOf(r.who);
+    if (a && r.who !== 'simba' && r.who !== 'nena') jolt(a, 'stomp');
     if (a) emo(a, r.who === 'simba' ? '😢' : '💢', 2600);
     if (G.npcs[r.who]) setMood(r.who, r.who === 'fariba' ? 'sad' : 'angry', 3200);
     if (r.who === 'simba') {
@@ -750,7 +763,9 @@
     removeReq(r);
     G.hearts--; G.failed++; G.combo = 0;
     if (G.mc && G.mc.m.k === 'nomiss') miniEnd(false);
-    snd('fail'); buzz(60); shake();
+    snd('fail'); haptic('fail'); shake(); G.heartLost = performance.now();
+    { const w = $('stage-wrap'); w.classList.remove('hurt'); void w.offsetWidth; w.classList.add('hurt'); }
+    jolt(G.nena, 'oops');
     renderObj();
     const [x, y] = anchorOf(r.who);
     floatText(x, y, '💔', 'bad', whoRoom(r.who));
@@ -786,13 +801,18 @@
     const [x, y] = anchorOf(r.who);
     const room = whoRoom(r.who);
     floatText(x, y, `+${pts}${G.combo > 1 ? ` ×${mul.toFixed(2).replace(/\.?0+$/, '')}` : ''}`, 'good', room);
+    const close = !perfect && r.left / r.max < 0.2;
     if (perfect) floatText(x, y - 34, 'Perfect!', 'perfect', room);
+    else if (close) { floatText(x, y - 34, 'Phew! Just in time!', 'perfect', room); haptic('phew'); }
     sparkle(x, y + 20, room);
-    if ((G.combo === 5 || G.combo === 8) && G.boostT <= 0) { G.boostT = 6; G.nena.el.classList.add('boost'); toast('⚡ Chai rush! Nena is super fast!', 'combo', 1600); }
+    const rush = (G.combo === 5 || G.combo === 8) && G.boostT <= 0;
+    if (rush) { G.boostT = 6; G.nena.el.classList.add('boost'); }
     if (tip) { floatText(x + 30, y + 24, `+${tip} 🪙`, 'coin', room); flyCoins(tip, x, y, room); }
-    if (G.combo >= 3) toast(`Combo ×${G.combo}!`, 'combo', 900);
+    if (G.combo >= 2) announce(COMBO_WORDS[G.combo], rush ? '⚡ Chai rush! Nena is super fast' : `Combo ×${G.combo}`, G.combo);
     removeReq(r);
-    snd(G.combo >= 3 ? 'fanfare' : 'success'); buzz(12);
+    snd(G.combo >= 2 ? 'combo' : 'success', G.combo); if (rush) setTimeout(() => snd('fanfare'), 160);
+    haptic(perfect ? 'perfect' : G.combo >= 2 ? 'combo' : 'deliver', G.combo);
+    if (G.combo >= 3 || perfect) jolt(G.nena, 'yay');
     reactDone(r, perfect);
     if (G.combo === 5 || G.combo === 8) burst(G.nena.x, G.nena.y - 90, G.nena.room, 'confetti', 14);
     checkObj();
@@ -1675,13 +1695,19 @@
     const frac = G.cfg.endless ? 1 : Math.max(0, G.time / (G.cfg.dur + (G.boosts.time ? 15 : 0)));
     put('g-tring', 'strokeDashoffset', (119.4 * (1 - frac)).toFixed(1));
     put('g-tring', '.low', !G.cfg.endless && G.time < 15);
-    put('g-score', 'text', String(G.score));
+    if (G.shownScore == null) G.shownScore = G.score;
+    if (G.shownScore < G.score) { G.shownScore = Math.min(G.score, G.shownScore + Math.max(1, Math.ceil((G.score - G.shownScore) * 0.16))); }
+    else G.shownScore = G.score;
+    if (G.lastScore !== G.score) { if (G.lastScore != null && G.score > G.lastScore) { const sc = $('g-score'); sc.classList.remove('bump'); void sc.offsetWidth; sc.classList.add('bump'); } G.lastScore = G.score; }
+    put('g-score', 'text', String(G.shownScore));
+    put('stage-wrap', '.fever', G.combo >= 5);
+    if (!G.cfg.endless) { const tl = Math.ceil(G.time); if (tl <= 5 && tl > 0 && tl !== G.lastTick) { G.lastTick = tl; snd('tick'); haptic('tick'); const tm = $('g-time'); tm.classList.remove('bump'); void tm.offsetWidth; tm.classList.add('bump'); } }
     put('g-fill', 'width', Math.min(100, (G.score / c.targets[2]) * 100).toFixed(1) + '%');
     put('g-star1', '.on', G.score >= c.targets[0]); put('g-star2', '.on', G.score >= c.targets[1]); put('g-star3', '.on', G.score >= c.targets[2]);
-    put('g-hearts', 'html', Array.from({ length: G.maxHearts }, (_, i) => `<i class="${i < G.hearts ? 'on' : ''}">♥</i>`).join(''));
+    { const lost = performance.now() - (G.heartLost || 0) < 750; put('g-hearts', 'html', Array.from({ length: G.maxHearts }, (_, i) => `<i class="${i < G.hearts ? 'on' : lost && i === G.hearts ? 'lost' : ''}">♥</i>`).join('')); }
     put('g-combo', 'html', G.combo > 1 ? `🔥×${G.combo} <i style="width:${Math.round(Math.max(0, G.comboT / 6) * 20) * 5}%"></i>` : (G.boostT > 0 ? '⚡ Rush!' : G.freezeT > 0 ? '❄️ Freeze' : ''));
     const starsNow = G.score >= c.targets[2] ? 3 : G.score >= c.targets[1] ? 2 : G.score >= c.targets[0] ? 1 : 0;
-    if (starsNow > G.starsShown) { G.starsShown = starsNow; snd('coin'); const st = $('g-star' + starsNow); st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop'); }
+    if (starsNow > G.starsShown) { G.starsShown = starsNow; snd('star', starsNow - 1); haptic('star'); announce('★'.repeat(starsNow), ['1st star!', '2nd star!', '3 stars! Perfect day!'][starsNow - 1], 'star'); const st = $('g-star' + starsNow); st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop'); }
     put('g-coins', 'text', String(save.coins + G.coins));
     put('g-joy', '.off', !G.simba);
     if (G.simba) { const j = Math.round(G.joy); put('g-joyb', 'width', j + '%'); put('g-joyf', 'text', j >= 75 ? '😄' : j >= 45 ? '🙂' : j >= 25 ? '😕' : '😢'); put('g-joy', '.low', j < 35); }

@@ -44,6 +44,38 @@ window.Art = (function () {
         <path d="M33 68 C27 80 37 90 29 102 C23 112 33 122 27 134"/><path d="M87 68 C93 80 83 90 91 102 C97 112 87 122 93 134"/>
       </g>`;
 
+  /* Shared paint: gradients used as light/shadow overlays on any colour (skin, cloth, hair, fur).
+     Mounted once in the page and injected into SVGs turned into images. */
+  const DEFS = `<linearGradient id="ag-cloth" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".30"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#3a1020" stop-opacity=".30"/></linearGradient>
+    <radialGradient id="ag-skin" cx=".36" cy=".3" r=".78"><stop offset="0" stop-color="#fff" stop-opacity=".32"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#b85a44" stop-opacity=".26"/></radialGradient>
+    <radialGradient id="ag-blush"><stop offset="0" stop-color="#ff6f93" stop-opacity=".7"/><stop offset="1" stop-color="#ff6f93" stop-opacity="0"/></radialGradient>
+    <linearGradient id="ag-back" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1a0500" stop-opacity=".32"/></linearGradient>
+    <linearGradient id="ag-sheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".3" stop-color="#fff" stop-opacity=".05"/><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1a0500" stop-opacity=".28"/></linearGradient>
+    <linearGradient id="ag-iris" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c0b06"/><stop offset=".5" stop-color="#5e2e18"/><stop offset="1" stop-color="#cf8a4e"/></linearGradient>
+    <linearGradient id="ag-iris2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#120a08"/><stop offset=".55" stop-color="#3c2418"/><stop offset="1" stop-color="#8e6040"/></linearGradient>
+    <linearGradient id="ag-lip" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c94a64"/><stop offset="1" stop-color="#f28f9e"/></linearGradient>
+    <radialGradient id="ag-fur" cx=".4" cy=".28" r=".85"><stop offset="0" stop-color="#ffe4b0" stop-opacity=".6"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#6e3206" stop-opacity=".34"/></radialGradient>
+    <radialGradient id="ag-gloss" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <style>.ag-ov *{fill:url(#ag-cloth)!important;stroke:none!important}.ag-hs *{fill:url(#ag-sheen)!important;stroke:none!important}.ag-hs [fill="none"],.ag-hs [fill="none"] *{fill:none!important}.ag-fu *{fill:url(#ag-fur)!important;stroke:none!important}.ag-hb *{fill:url(#ag-back)!important;stroke:none!important}.ag-hb [fill="none"],.ag-hb [fill="none"] *{fill:none!important}</style>`;
+  function mountDefs() {
+    if (typeof document === 'undefined' || !document.body || document.getElementById('ag-defs')) return;
+    document.body.insertAdjacentHTML('afterbegin', `<svg id="ag-defs" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><defs>${DEFS}</defs></svg>`);
+  }
+  if (typeof document !== 'undefined') { if (document.body) mountDefs(); else document.addEventListener('DOMContentLoaded', mountDefs); }
+  // big glossy anime eye: iris gradient, pupil, two highlights, lid line, lashes on the outer corner
+  function animeEye(cx, cy, o) {
+    const k = o.k || 1, ry = 7.6 * k * (o.ryk || 1), rx = 6.2 * k, s = o.flip ? -1 : 1, X = (d) => (cx + s * d * k).toFixed(1), Y = (d) => (cy + d * k).toFixed(1);
+    return `<ellipse cx="${cx}" cy="${cy}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="url(#${o.iris || 'ag-iris'})"/>
+      <ellipse cx="${cx}" cy="${Y(1)}" rx="${(2.9 * k).toFixed(1)}" ry="${(3.6 * k * (o.ryk || 1)).toFixed(1)}" fill="#140805"/>
+      <path d="M${(cx - rx).toFixed(1)} ${(cy - ry * 0.45).toFixed(1)} Q${cx} ${(cy - ry * 1.15).toFixed(1)} ${(cx + rx).toFixed(1)} ${(cy - ry * 0.45).toFixed(1)}Z" fill="#140805" opacity=".38"/>
+      <circle cx="${(cx + 2.6 * k).toFixed(1)}" cy="${(cy - ry * 0.45).toFixed(1)}" r="${(2.5 * k).toFixed(1)}" fill="#fff"/>
+      <circle cx="${(cx - 2.2 * k).toFixed(1)}" cy="${(cy + ry * 0.47).toFixed(1)}" r="${(1.1 * k).toFixed(1)}" fill="#fff" opacity=".85"/>
+      <path d="M${X(-7.6)} ${Y(-4.4)} Q${cx} ${(cy - ry * 1.5).toFixed(1)} ${X(7.4)} ${Y(-4.8)}" stroke="#24100a" stroke-width="${(2.8 * k).toFixed(1)}" fill="none" stroke-linecap="round"/>
+      ${o.fem ? `<path d="M${X(-7.4)} ${Y(-4.2)} l${(-3.8 * s * k).toFixed(1)} ${(-1 * k).toFixed(1)} M${X(-6.6)} ${Y(-6)} l${(-3.2 * s * k).toFixed(1)} ${(-2.6 * k).toFixed(1)} M${X(-4.8)} ${Y(-7.4)} l${(-2 * s * k).toFixed(1)} ${(-3.2 * k).toFixed(1)}" stroke="#24100a" stroke-width="${(1.6 * k).toFixed(1)}" stroke-linecap="round"/>` : ''}
+      <path d="M${(cx - 4.6 * k).toFixed(1)} ${(cy + ry * 0.9).toFixed(1)} q${(4.6 * k).toFixed(1)} ${(2 * k).toFixed(1)} ${(9.2 * k).toFixed(1)} 0" stroke="#a0604a" stroke-width="${k.toFixed(1)}" fill="none" opacity=".55"/>`;
+  }
+  const FEM = new Set(['nena', 'fariba', 'nasim', 'negin', 'leila', 'mia', 'guest1', 'guest3', 'aunt', 'witch1', 'witch2', 'shadi']);
+
   /* eyes: 'both' (CSS decides), 'open', 'closed' */
   const HL = 'rgba(255,255,255,.22)', SH = 'rgba(60,20,10,.14)';
   // three tiny painted nails on a hand (from nail day)
@@ -55,14 +87,7 @@ window.Art = (function () {
     const ns = o.standalone ? ' xmlns="http://www.w3.org/2000/svg" width="240" height="420"' : '';
     const dress = o.dressed && o.outfit === 'robe';
     const H1 = '#7a3a1c', H2 = '#92502a', H3 = '#5a2912', HLc = '#b86c3e', SK = '#f8cfae', SK2 = '#efb892';
-    const eyesOpen = `<g class="eyes-open">
-        <ellipse cx="46" cy="75" rx="5.4" ry="6.6" fill="#3a1d12"/><ellipse cx="74" cy="75" rx="5.4" ry="6.6" fill="#3a1d12"/>
-        <ellipse cx="46" cy="76.5" rx="3.6" ry="4.4" fill="#6e3a22"/><ellipse cx="74" cy="76.5" rx="3.6" ry="4.4" fill="#6e3a22"/>
-        <circle cx="47.8" cy="72.6" r="2" fill="#fff"/><circle cx="75.8" cy="72.6" r="2" fill="#fff"/>
-        <circle cx="44.2" cy="78.4" r="0.9" fill="#fff" opacity=".8"/><circle cx="72.2" cy="78.4" r="0.9" fill="#fff" opacity=".8"/>
-        <path d="M39.5 70.5 q6.5 -5 13 0" stroke="#2a130b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-        <path d="M67.5 70.5 q6.5 -5 13 0" stroke="#2a130b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-        <path d="M39.6 71 l-3.2 -1.6 M40.6 69.4 l-2.4 -2.6 M80.4 71 l3.2 -1.6 M79.4 69.4 l2.4 -2.6" stroke="#2a130b" stroke-width="1.6" stroke-linecap="round"/></g>`;
+    const eyesOpen = `<g class="eyes-open">${animeEye(46, 75.5, { fem: true })}${animeEye(74, 75.5, { fem: true, flip: true })}</g>`;
     const eyesClosed = `<g class="eyes-closed">
         <path d="M39 75 q7 6 14 0" stroke="#2a130b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
         <path d="M67 75 q7 6 14 0" stroke="#2a130b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
@@ -75,6 +100,7 @@ window.Art = (function () {
       body = `<rect x="38" y="164" width="18" height="36" rx="8" fill="#ec8eaf"/><rect x="64" y="164" width="18" height="36" rx="8" fill="#ec8eaf"/>
         <rect x="38" y="190" width="18" height="6" rx="3" fill="#d9779b"/><rect x="64" y="190" width="18" height="6" rx="3" fill="#d9779b"/>
         <path d="M34 128 q0 -16 26 -16 q26 0 26 16 v34 q0 12 -26 12 q-26 0 -26 -12z" fill="#f4a3c0"/>
+        <path d="M34 128 q0 -16 26 -16 q26 0 26 16 v34 q0 12 -26 12 q-26 0 -26 -12z" fill="url(#ag-cloth)"/>
         <path d="M72 114 q14 4 14 16 v32 q0 10 -12 12 q8 -20 -2 -60z" fill="${SH}"/>
         <path d="M48 114 l12 15 l12 -15" fill="#fff4f8" stroke="#c9557d" stroke-width="2.2" stroke-linejoin="round"/>
         <path d="M60 129 v40" stroke="#c9557d" stroke-width="1.6" stroke-dasharray="0.1 9" stroke-linecap="round" stroke-width="3.4"/>
@@ -82,39 +108,46 @@ window.Art = (function () {
     } else if (dress) {
       body = `<rect x="42" y="172" width="13" height="28" rx="6" fill="${SK}"/><rect x="65" y="172" width="13" height="28" rx="6" fill="${SK}"/>
         <path d="M38 124 q22 -14 44 0 l12 52 q-34 10 -68 0z" fill="${c.top}"/>
+        <path d="M38 124 q22 -14 44 0 l12 52 q-34 10 -68 0z" fill="url(#ag-cloth)"/>
+        <path d="M48 140 l-6 34 M60 138 v38 M72 140 l6 34" stroke="rgba(60,20,30,.12)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
         <path d="M70 116 q12 6 14 12 l10 48 q-8 3 -16 4 q6 -30 -8 -64z" fill="${SH}"/>
         <path d="M28 168 q32 10 64 0" stroke="${c.stripe}" stroke-width="5" fill="none"/>
         <path d="M48 116 q12 10 24 0" stroke="#fff" stroke-width="3" fill="none" opacity=".7"/>`;
     } else {
-      legs = `<g class="leg-l"><rect x="38" y="158" width="18" height="42" rx="7" fill="${c.bottom}"/><path d="M47 164 v30" stroke="rgba(255,255,255,.18)" stroke-width="1.6"/><ellipse cx="47" cy="202" rx="11.5" ry="5.5" fill="#5a3426"/><ellipse cx="44" cy="200" rx="4" ry="1.6" fill="${HL}"/></g>
-        <g class="leg-r"><rect x="64" y="158" width="18" height="42" rx="7" fill="${c.bottom}"/><path d="M73 164 v30" stroke="rgba(255,255,255,.18)" stroke-width="1.6"/><ellipse cx="73" cy="202" rx="11.5" ry="5.5" fill="#5a3426"/><ellipse cx="70" cy="200" rx="4" ry="1.6" fill="${HL}"/></g>`;
+      legs = `<g class="leg-l"><rect x="38" y="158" width="18" height="42" rx="7" fill="${c.bottom}"/><rect x="38" y="158" width="18" height="42" rx="7" fill="url(#ag-cloth)"/><path d="M47 164 v30" stroke="rgba(255,255,255,.18)" stroke-width="1.6"/><ellipse cx="47" cy="202" rx="11.5" ry="5.5" fill="#5a3426"/><ellipse cx="44" cy="200" rx="4" ry="1.6" fill="${HL}"/></g>
+        <g class="leg-r"><rect x="64" y="158" width="18" height="42" rx="7" fill="${c.bottom}"/><rect x="64" y="158" width="18" height="42" rx="7" fill="url(#ag-cloth)"/><path d="M73 164 v30" stroke="rgba(255,255,255,.18)" stroke-width="1.6"/><ellipse cx="73" cy="202" rx="11.5" ry="5.5" fill="#5a3426"/><ellipse cx="70" cy="200" rx="4" ry="1.6" fill="${HL}"/></g>`;
       body = `<rect x="36" y="156" width="48" height="14" rx="6" fill="${c.bottom}"/>
         <path d="M34 128 q0 -16 26 -16 q26 0 26 16 v26 q0 8 -26 8 q-26 0 -26 -8z" fill="${c.top}"/>
+        <path d="M34 128 q0 -16 26 -16 q26 0 26 16 v26 q0 8 -26 8 q-26 0 -26 -8z" fill="url(#ag-cloth)"/>
+        <path d="M46 150 q4 6 2 12 M72 148 q-3 7 -1 13" stroke="rgba(60,20,30,.14)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
         <path d="M72 114 q14 4 14 16 v24 q0 6 -12 8 q8 -20 -2 -48z" fill="${SH}"/>
         <path d="M38 132 h44" stroke="${c.stripe}" stroke-width="5"/><path d="M36 145 h48" stroke="${c.stripe}" stroke-width="5"/>
         <path d="M50 113 q10 8 20 0" stroke="rgba(0,0,0,.12)" stroke-width="3" fill="none"/>
         ${o.outfit === 'cire' ? `<path d="M34 122 q26 -14 52 0" stroke="${c.stripe}" stroke-width="4" fill="none"/><circle cx="60" cy="136" r="2.4" fill="${c.stripe}"/><circle cx="60" cy="150" r="2.4" fill="${c.stripe}"/>` : ''}`;
     }
     return `<svg viewBox="0 0 120 210" class="sprite"${ns}>
-      <g class="hair-b">${NENA_HAIR_BACK}</g>
+      <g class="hair-b">${NENA_HAIR_BACK}<g class="ag-hb">${NENA_HAIR_BACK}</g></g>
       ${legs}
       ${body}
       ${legs ? '' : shoes}
-      <g class="arm-l"><path d="M36 120 q-14 6 -14 22 v14 q0 6 7 6 q7 0 7 -6 v-12 q0 -10 6 -14z" fill="${arm}"/><circle cx="29" cy="162" r="7" fill="${SK}"/>${nailDots(29, o.nails)}</g>
-      <g class="arm-r"><path d="M84 120 q14 6 14 22 v14 q0 6 -7 6 q-7 0 -7 -6 v-12 q0 -10 -6 -14z" fill="${arm}"/><path d="M84 122 q12 6 13 20 v14 q-2 4 -5 5 q2 -24 -8 -39z" fill="${SH}"/><circle cx="91" cy="162" r="7" fill="${SK}"/>${nailDots(91, o.nails)}</g>
+      <g class="arm-l"><path d="M36 120 q-14 6 -14 22 v14 q0 6 7 6 q7 0 7 -6 v-12 q0 -10 6 -14z" fill="${arm}"/><path d="M36 120 q-14 6 -14 22 v14 q0 6 7 6 q7 0 7 -6 v-12 q0 -10 6 -14z" fill="url(#ag-cloth)"/><circle cx="29" cy="162" r="7" fill="${SK}"/><circle cx="29" cy="162" r="7" fill="url(#ag-skin)"/>${nailDots(29, o.nails)}</g>
+      <g class="arm-r"><path d="M84 120 q14 6 14 22 v14 q0 6 -7 6 q-7 0 -7 -6 v-12 q0 -10 -6 -14z" fill="${arm}"/><path d="M84 120 q14 6 14 22 v14 q0 6 -7 6 q-7 0 -7 -6 v-12 q0 -10 -6 -14z" fill="url(#ag-cloth)"/><path d="M84 122 q12 6 13 20 v14 q-2 4 -5 5 q2 -24 -8 -39z" fill="${SH}"/><circle cx="91" cy="162" r="7" fill="${SK}"/><circle cx="91" cy="162" r="7" fill="url(#ag-skin)"/>${nailDots(91, o.nails)}</g>
       <g class="head">
       <rect x="53" y="96" width="14" height="19" rx="6" fill="${SK2}"/>
       <ellipse cx="60" cy="108" rx="10" ry="4" fill="rgba(120,50,30,.18)"/>
       <ellipse cx="60" cy="72" rx="30.5" ry="32.5" fill="${SK}"/>
+      <ellipse cx="60" cy="72" rx="30.5" ry="32.5" fill="url(#ag-skin)"/>
       <path d="M33 80 q4 18 27 24 q-20 -2 -27 -24z" fill="rgba(230,150,120,.25)"/>
-      ${NENA_HAIR_FRONT}
+      ${NENA_HAIR_FRONT}<g class="ag-hs">${NENA_HAIR_FRONT}</g>
+      <path d="M40 34 C52 26 72 27 86 38" stroke="#ffe2c4" stroke-opacity=".55" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-dasharray="7 5"/>
       <path d="M39 63 q7 -5.2 14 -1.2" stroke="#5a2c17" stroke-width="3.2" fill="none" stroke-linecap="round"/>
       <path d="M67 62 q7 -4 14 1.2" stroke="#5a2c17" stroke-width="3.2" fill="none" stroke-linecap="round"/>
       ${eyes}
-      <ellipse cx="37.5" cy="87" rx="7.5" ry="4.8" fill="#f38fae" opacity=".55"/><ellipse cx="82.5" cy="87" rx="7.5" ry="4.8" fill="#f38fae" opacity=".55"/>
+      <ellipse cx="37.5" cy="87.5" rx="9.5" ry="6.2" fill="url(#ag-blush)"/><ellipse cx="82.5" cy="87.5" rx="9.5" ry="6.2" fill="url(#ag-blush)"/>
+      <path d="M34 86 l2 -2.4 M37.4 86.4 l2 -2.4 M80.6 86.4 l2 -2.4 M84 86 l2 -2.4" stroke="#fff" stroke-width=".9" stroke-linecap="round" opacity=".55"/>
       <g fill="#c98466"><circle cx="35" cy="83" r=".95"/><circle cx="39" cy="85.5" r=".95"/><circle cx="36.5" cy="88" r=".8"/><circle cx="85" cy="83" r=".95"/><circle cx="81" cy="85.5" r=".95"/><circle cx="83.5" cy="88" r=".8"/></g>
-      <path d="M58.6 83 q1.6 1.6 3 0" stroke="#d99a7c" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-      <path class="mouth" d="M53.5 90 q6.5 6.5 13 0" stroke="#b4485a" stroke-width="2.4" fill="#e9707f" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M58.6 83 q1.6 1.6 3 0" stroke="#d99a7c" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="59.4" cy="81.4" rx="1.1" ry=".7" fill="#fff" opacity=".7"/>
+      <path class="mouth" d="M53.5 90 q6.5 6.5 13 0" stroke="#b4485a" stroke-width="2.4" fill="url(#ag-lip)" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="61.8" cy="92" rx="1.8" ry=".8" fill="#fff" opacity=".5"/>
       </g>
     </svg>`;
   }
@@ -142,6 +175,18 @@ window.Art = (function () {
     return d + 'Z';
   }
   const MANE = tufts(52, 68, 49, 40, 18, 0.1);
+  const RUFF = tufts(52, 94, 27, 20, 11, 0.2);
+  // fluffy outline for an ellipse (body fur)
+  function tuftsE(cx, cy, rx, ry, n, out) {
+    let d = '';
+    for (let i = 0; i <= n * 2; i++) {
+      const a = (i / (n * 2)) * Math.PI * 2, f = i % 2 ? 1 : 1 + out;
+      d += (i ? 'L' : 'M') + (cx + Math.cos(a) * rx * f).toFixed(1) + ' ' + (cy + Math.sin(a) * ry * f).toFixed(1) + ' ';
+    }
+    return d + 'Z';
+  }
+  const BODYFUR = tuftsE(104, 87, 51, 35, 22, 0.09);
+  const MANESTROKES = Array.from({ length: 26 }, (_, i) => { const a = (i / 26) * Math.PI * 2 + 0.25; return `M${(52 + Math.cos(a) * 36).toFixed(1)} ${(68 + Math.sin(a) * 36).toFixed(1)} L${(52 + Math.cos(a) * 45).toFixed(1)} ${(68 + Math.sin(a) * 45).toFixed(1)}`; }).join(' ');
   const MANE2 = tufts(52, 68, 42, 35, 16, 0.3);
   function simba(opts) {
     const o = Object.assign({ collar: null, muddy: false, eyes: 'both', tongue: 'css', standalone: false, palette: 'chow' }, opts || {});
@@ -149,7 +194,8 @@ window.Art = (function () {
     const ns = o.standalone ? ' xmlns="http://www.w3.org/2000/svg" width="340" height="270"' : '';
     const open = `<g class="dog-eyes-open">
         <ellipse cx="41" cy="60.5" rx="4.6" ry="4" fill="#2a2130"/><ellipse cx="63" cy="60.5" rx="4.6" ry="4" fill="#2a2130"/>
-        <circle cx="42.6" cy="59" r="1.5" fill="#fff"/><circle cx="64.6" cy="59" r="1.5" fill="#fff"/>
+        <circle cx="42.6" cy="59" r="1.6" fill="#fff"/><circle cx="64.6" cy="59" r="1.6" fill="#fff"/>
+        <circle cx="39.8" cy="62" r=".8" fill="#fff" opacity=".8"/><circle cx="61.8" cy="62" r=".8" fill="#fff" opacity=".8"/>
 </g>`;
     const closed = `<g class="dog-eyes-closed">
         <path d="M35 60 q6 4.5 12 0" stroke="#2a2130" stroke-width="2.8" fill="none" stroke-linecap="round"/>
@@ -160,12 +206,14 @@ window.Art = (function () {
     const furStroke = 'rgba(140,60,10,.28)';
     return `<svg viewBox="0 0 170 135" class="sprite"${ns}>
       <g class="tail">
-        <circle cx="130" cy="54" r="21" fill="${P.tail}"/>
+        <circle cx="130" cy="54" r="21" fill="${P.tail}"/><circle cx="130" cy="54" r="21" fill="url(#ag-fur)"/>
         <circle cx="139" cy="44" r="14" fill="${P.tail2}"/><circle cx="123" cy="40" r="11" fill="${P.tail2}"/><circle cx="146" cy="56" r="9" fill="${P.tail}"/>
         <path d="M120 36 q8 -6 18 -2 M134 34 q10 0 14 10 M112 50 q2 -10 10 -14" stroke="${furStroke}" stroke-width="2" fill="none" stroke-linecap="round"/>
       </g>
+      <path d="${BODYFUR}" fill="${P.body}"/>
       <ellipse cx="104" cy="89" rx="51" ry="35" fill="${P.body}"/>
       <ellipse cx="104" cy="80" rx="41" ry="22" fill="${P.back}"/>
+      <ellipse cx="104" cy="89" rx="53" ry="37" fill="url(#ag-fur)"/>
       <path d="M60 100 q44 26 94 -4 q-6 22 -46 26 q-38 0 -48 -22z" fill="rgba(120,50,10,.16)"/>
       <path d="M82 72 q6 -4 12 0 M104 68 q6 -4 12 0 M124 74 q5 -3 10 2 M92 90 q6 -3 12 1 M116 92 q6 -3 11 2" stroke="${furStroke}" stroke-width="2" fill="none" stroke-linecap="round"/>
       <g class="dog-leg-f"><rect x="66" y="96" width="21" height="32" rx="9.5" fill="${P.legs}"/><path d="M80 100 v24" stroke="rgba(120,50,10,.15)" stroke-width="3"/><ellipse cx="76.5" cy="128" rx="12.5" ry="6.5" fill="${P.paws}"/><path d="M72 126 v4 M77 126 v4 M82 126 v4" stroke="rgba(120,50,10,.3)" stroke-width="1.4" stroke-linecap="round"/></g>
@@ -173,19 +221,25 @@ window.Art = (function () {
       ${mud}
       <g class="dog-head">
       <path d="${MANE}" fill="${P.mane}"/>
+      <path d="${MANE}" fill="url(#ag-fur)"/>
       <path d="${MANE2}" fill="${P.tail}" opacity=".55"/>
+      <path d="${MANESTROKES}" stroke="${furStroke}" stroke-width="1.6" stroke-linecap="round"/>
       <g fill="${P.mane}"><circle cx="40" cy="100" r="15"/><circle cx="62" cy="102" r="15"/></g>
       <path d="M30 98 q6 8 14 8 M58 108 q8 2 14 -4" stroke="${furStroke}" stroke-width="2" fill="none" stroke-linecap="round"/>
       ${collarSvg(o.collar)}
       <circle cx="30" cy="38" r="10.5" fill="${P.ear}"/><circle cx="30" cy="38.5" r="6" fill="${P.earIn}"/>
       <circle cx="74" cy="38" r="10.5" fill="${P.ear}"/><circle cx="74" cy="38.5" r="6" fill="${P.earIn}"/>
+      <path d="${RUFF}" fill="${P.muzzle}" opacity=".85"/>
       <circle cx="52" cy="67" r="31" fill="${P.face}"/>
+      <circle cx="52" cy="67" r="31" fill="url(#ag-fur)"/>
       <ellipse cx="52" cy="54" rx="22" ry="12" fill="rgba(255,255,255,.12)"/>
+      <ellipse cx="41" cy="60.5" rx="8" ry="6.5" fill="${P.ear}" opacity=".35"/><ellipse cx="63" cy="60.5" rx="8" ry="6.5" fill="${P.ear}" opacity=".35"/>
+      <path d="M32 53 q8 -6 17 -1 M55 52 q9 -5 17 1" stroke="${P.ear}" stroke-width="3.2" fill="none" stroke-linecap="round" opacity=".7"/>
       <ellipse cx="31" cy="78" rx="10" ry="12" fill="${P.muzzle}" opacity=".55"/><ellipse cx="73" cy="78" rx="10" ry="12" fill="${P.muzzle}" opacity=".55"/>
       <path d="M48 50 q4 -3 8 0 M50 46 q2 -1.6 4 0" stroke="${furStroke}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
       <ellipse cx="52" cy="81" rx="17.5" ry="12.5" fill="${P.muzzle}"/>
       <path d="M45.5 73 q6.5 -5.5 13 0 q0 5 -6.5 6.5 q-6.5 -1.5 -6.5 -6.5z" fill="#2a2130"/>
-      <ellipse cx="50" cy="72.4" rx="2.4" ry="1.3" fill="#7a7184"/>
+      <ellipse cx="50" cy="72.4" rx="3" ry="1.7" fill="url(#ag-gloss)"/>
       <path d="M52 79.5 v3.5" stroke="#2a2130" stroke-width="1.8" stroke-linecap="round"/>
       <g fill="rgba(120,60,20,.35)"><circle cx="42" cy="82" r=".9"/><circle cx="44" cy="85" r=".9"/><circle cx="62" cy="82" r=".9"/><circle cx="60" cy="85" r=".9"/></g>
       ${eyes}
@@ -271,13 +325,13 @@ window.Art = (function () {
     return { back, front };
   }
 
-  function face(c, mood) {
-    const m = mood || 'happy';
+  function face(c, mood, who) {
+    const m = mood || 'happy', fem = FEM.has(who);
     const eyes = m === 'happy'
       ? `<path d="M60 76 q6 -6 12 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M88 76 q6 -6 12 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/>`
       : m === 'sleepy' ? `<path d="M59 78 q7 4 14 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M87 78 q7 4 14 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/>`
-      : `<g class="p-eyes"><ellipse cx="66" cy="76" rx="4.6" ry="${m === 'surprised' ? 6.5 : m === 'angry' ? 4.4 : 5.6}" fill="#2b1a14"/><ellipse cx="94" cy="76" rx="4.6" ry="${m === 'surprised' ? 6.5 : m === 'angry' ? 4.4 : 5.6}" fill="#2b1a14"/><circle cx="67.6" cy="74.2" r="1.8" fill="#fff"/><circle cx="95.6" cy="74.2" r="1.8" fill="#fff"/><circle cx="64.6" cy="78.2" r=".8" fill="#fff" opacity=".7"/><circle cx="92.6" cy="78.2" r=".8" fill="#fff" opacity=".7"/></g><g class="p-blink"><path d="M60 77 q6 4 12 0 M88 77 q6 4 12 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/></g>`;
-    const lashes = c.freckles && m !== 'happy' && m !== 'sleepy' ? '<path d="M59 70 q7 -6 14 0 M87 70 q7 -6 14 0" stroke="#2b1a14" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M59 71 l-4 -2 M101 71 l4 -2" stroke="#2b1a14" stroke-width="1.8" stroke-linecap="round"/>' : '';
+      : `<g class="p-eyes">${animeEye(66, 76, { k: fem ? 0.84 : 0.74, ryk: m === 'surprised' ? 1.2 : m === 'angry' ? 0.78 : 1, iris: c.freckles ? 'ag-iris' : 'ag-iris2', fem })}${animeEye(94, 76, { k: fem ? 0.84 : 0.74, ryk: m === 'surprised' ? 1.2 : m === 'angry' ? 0.78 : 1, iris: c.freckles ? 'ag-iris' : 'ag-iris2', fem, flip: true })}</g><g class="p-blink"><path d="M60 77 q6 4 12 0 M88 77 q6 4 12 0" stroke="#2b1a14" stroke-width="3" fill="none" stroke-linecap="round"/></g>`;
+    const lashes = fem && (m === 'happy' || m === 'sleepy') ? '<path d="M59.4 76.4 l-3.6 -1.6 M100.6 76.4 l3.6 -1.6 M60 74.6 l-2.6 -2.6 M100 74.6 l2.6 -2.6" stroke="#2b1a14" stroke-width="1.6" stroke-linecap="round"/>' : '';
     const bc = c.style === 'gray' ? '#8f8a96' : c.style === 'wavy' ? '#5a2c17' : c.hair;
     const brows = m === 'sad' ? `<path d="M58 64 l14 -4 M102 64 l-14 -4" stroke="${bc}" stroke-width="3" stroke-linecap="round"/>`
       : m === 'angry' ? `<path d="M57 62 l15 6 M103 62 l-15 6" stroke="${bc}" stroke-width="4" stroke-linecap="round"/>`
@@ -290,7 +344,7 @@ window.Art = (function () {
       : m === 'neutral' ? `<path d="M73 97 h14" stroke="#9c4250" stroke-width="3" stroke-linecap="round"/>`
       : `<path d="M70 94 q10 10 20 0" stroke="#9c4250" stroke-width="3" fill="#fff" stroke-linecap="round"/>`;
     return `${brows}${eyes}${lashes}<g class="p-nose"><path d="M78 86 q2 2 4 0" stroke="rgba(150,80,60,.5)" stroke-width="1.6" fill="none" stroke-linecap="round"/></g>
-      <ellipse cx="56" cy="90" rx="8" ry="5" fill="#f08aa0" opacity="${m === 'angry' ? 0.75 : 0.45}"/><ellipse cx="104" cy="90" rx="8" ry="5" fill="#f08aa0" opacity="${m === 'angry' ? 0.75 : 0.45}"/>
+      <ellipse cx="56" cy="90" rx="10" ry="6.4" fill="url(#ag-blush)" opacity="${m === 'angry' ? 1 : 0.8}"/><ellipse cx="104" cy="90" rx="10" ry="6.4" fill="url(#ag-blush)" opacity="${m === 'angry' ? 1 : 0.8}"/>
       ${c.freckles ? '<g fill="#c98b6a"><circle cx="54" cy="86" r="1.2"/><circle cx="59" cy="89" r="1.2"/><circle cx="101" cy="86" r="1.2"/><circle cx="106" cy="89" r="1.2"/></g>' : ''}
       ${c.glasses ? '<g fill="none" stroke="#5a4a6a" stroke-width="3"><circle cx="66" cy="76" r="11"/><circle cx="94" cy="76" r="11"/><path d="M77 76 h6"/></g>' : ''}
       ${c.mustache ? `<path d="M64 92 q8 -8 16 -2 q8 -6 16 2 q-8 6 -16 2 q-8 4 -16 -2z" fill="${c.hair}"/>` : ''}
@@ -305,9 +359,12 @@ window.Art = (function () {
     const h = hairParts(c);
     const head = `<rect x="70" y="100" width="20" height="22" rx="8" fill="${c.skin}" style="filter:brightness(.93)"/>
       <ellipse cx="80" cy="76" rx="36" ry="40" fill="${c.skin}"/>
+      <ellipse cx="80" cy="76" rx="36" ry="40" fill="url(#ag-skin)"/>
       ${c.beard ? `<path d="M46 84 q4 34 34 36 q30 -2 34 -36 q-8 16 -34 18 q-26 -2 -34 -18z" fill="${c.hair}"/>` : ''}
-      ${h.front}${face(c, mood)}`;
-    return { back: h.back, head };
+      ${h.front}<g class="ag-hs">${h.front}</g>
+      ${c.style !== 'bald' && c.style !== 'wavy' ? '<path d="M58 40 q22 -12 46 -1" stroke="#fff" stroke-opacity=".3" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-dasharray="9 6"/>' : ''}
+      ${face(c, mood, who)}`;
+    return { back: h.back + `<g class="ag-hb">${h.back}</g>`, head };
   }
 
   function bust(who, mood) {
@@ -317,7 +374,7 @@ window.Art = (function () {
     const shoulders = c.belly ? 'M8 170 q0 -54 72 -56 q72 2 72 56z' : (c.scale || 1) < 0.95 ? 'M28 170 q2 -44 52 -48 q50 4 52 48z' : 'M18 170 q2 -50 62 -54 q60 4 62 54z';
     return `<svg viewBox="0 0 160 170" class="portrait-svg" xmlns="http://www.w3.org/2000/svg">
       ${hp.back}
-      <path d="${shoulders}" fill="${c.shirt}"/>
+      <path d="${shoulders}" fill="${c.shirt}"/><path d="${shoulders}" fill="url(#ag-cloth)"/>
       ${c.hoodie ? '<path d="M50 126 q30 22 60 0" stroke="#ef5f7f" stroke-width="4" fill="none"/><path d="M70 132 v20 M90 132 v20" stroke="#fff" stroke-width="3" stroke-linecap="round"/>' : ''}
       ${c.apron ? '<path d="M56 130 h48 v40 h-48z" fill="#fff8ee"/><path d="M56 130 q24 -16 48 0" stroke="#fff8ee" stroke-width="4" fill="none"/>' : ''}
       ${c.stetho ? '<path d="M60 124 q-6 30 20 34 q26 -4 20 -34" stroke="#3a3550" stroke-width="4" fill="none"/><circle cx="80" cy="158" r="6" fill="#9aa3b5"/>' : ''}
@@ -340,8 +397,8 @@ window.Art = (function () {
          ${c.shirtDetails ? `<path d="M50 112 l10 11 l10 -11 l-4 -3 l-6 7 l-6 -7z" fill="#ffffff" stroke="${c.collar}" stroke-width="1"/><path d="M60 123 v34" stroke="${c.collar}" stroke-width="1"/><rect x="66" y="126" width="11" height="9" rx="1.5" fill="none" stroke="${c.collar}" stroke-width="1.4"/><rect x="31" y="158" width="58" height="7" rx="3" fill="#3a2a22"/><rect x="56" y="158" width="8" height="7" rx="1" fill="#c9a24a"/>` : ''}`
       : `<path d="M36 128 q0 -16 24 -16 q24 0 24 16 v30 q0 10 -24 10 q-24 0 -24 -10z" fill="${c.shirt}"/><path d="M70 114 q14 4 14 14 v28 q0 8 -10 10 q8 -20 -4 -52z" fill="${SH2}"/>`;
     const shoe = who === 'mohsen' || who === 'fariba' ? '#7a6a5e' : '#3a3550';
-    const legs = `<g class="p-leg-l"><rect x="${c.belly ? 38 : 40}" y="160" width="17" height="40" rx="7" fill="${c.pants}"/><path d="M${c.belly ? 50 : 51} 166 v30" stroke="rgba(0,0,0,.12)" stroke-width="2"/><ellipse cx="47" cy="202" rx="11" ry="5" fill="${shoe}"/><ellipse cx="44" cy="200" rx="4" ry="1.4" fill="rgba(255,255,255,.25)"/></g>
-      <g class="p-leg-r"><rect x="${c.belly ? 65 : 63}" y="160" width="17" height="40" rx="7" fill="${c.pants}"/><path d="M${c.belly ? 77 : 75} 166 v30" stroke="rgba(0,0,0,.12)" stroke-width="2"/><ellipse cx="73" cy="202" rx="11" ry="5" fill="${shoe}"/><ellipse cx="70" cy="200" rx="4" ry="1.4" fill="rgba(255,255,255,.25)"/></g>`;
+    const legs = `<g class="p-leg-l"><rect x="${c.belly ? 38 : 40}" y="160" width="17" height="40" rx="7" fill="${c.pants}"/><rect x="${c.belly ? 38 : 40}" y="160" width="17" height="40" rx="7" fill="url(#ag-cloth)"/><path d="M${c.belly ? 50 : 51} 166 v30" stroke="rgba(0,0,0,.12)" stroke-width="2"/><ellipse cx="47" cy="202" rx="11" ry="5" fill="${shoe}"/><ellipse cx="44" cy="200" rx="4" ry="1.4" fill="rgba(255,255,255,.25)"/></g>
+      <g class="p-leg-r"><rect x="${c.belly ? 65 : 63}" y="160" width="17" height="40" rx="7" fill="${c.pants}"/><rect x="${c.belly ? 65 : 63}" y="160" width="17" height="40" rx="7" fill="url(#ag-cloth)"/><path d="M${c.belly ? 77 : 75} 166 v30" stroke="rgba(0,0,0,.12)" stroke-width="2"/><ellipse cx="73" cy="202" rx="11" ry="5" fill="${shoe}"/><ellipse cx="70" cy="200" rx="4" ry="1.4" fill="rgba(255,255,255,.25)"/></g>`;
     const armL = c.belly ? 'M30 122 q-14 8 -12 26 v10 q1 6 7 6 q7 0 7 -6 v-12 q0 -10 4 -16z' : 'M37 120 q-12 6 -12 22 v14 q0 6 6 6 q7 0 7 -6 v-12 q0 -10 5 -14z';
     const armR = c.belly ? 'M90 122 q14 8 12 26 v10 q-1 6 -7 6 q-7 0 -7 -6 v-12 q0 -10 -4 -16z' : 'M83 120 q12 6 12 22 v14 q0 6 -6 6 q-7 0 -7 -6 v-12 q0 -10 -5 -14z';
     const extras = (c.apron ? '<path d="M46 124 h28 v42 q-14 6 -28 0z" fill="#fff8ee"/><path d="M48 124 q12 -10 24 0" stroke="#fff8ee" stroke-width="2.6" fill="none"/><path d="M50 150 h20" stroke="#ef8fb0" stroke-width="3"/>' : '')
@@ -351,9 +408,9 @@ window.Art = (function () {
     return `<svg viewBox="0 0 120 210" class="sprite">
       <g transform="translate(${60 - 60 * scale} ${210 - 210 * scale}) scale(${scale})">
       <g transform="translate(60 72) scale(.82) translate(-80 -76)">${hp.back}</g>
-      ${legs}${torso}${extras}
+      ${legs}${torso}<g class="ag-ov">${torso.split('\n')[0]}</g>${extras}
       <path d="M40 116 q20 -8 40 0" stroke="rgba(255,255,255,.18)" stroke-width="3" fill="none"/>
-      <g class="p-arm-l"><path d="${armL}" fill="${c.shirt}"/><circle cx="${c.belly ? 25 : 31}" cy="162" r="6.5" fill="${c.skin}"/>${nailDots(c.belly ? 25 : 31, o.nails)}</g>
+      <g class="p-arm-l"><path d="${armL}" fill="${c.shirt}"/><path d="${armL}" fill="url(#ag-cloth)"/><circle cx="${c.belly ? 25 : 31}" cy="162" r="6.5" fill="${c.skin}"/>${nailDots(c.belly ? 25 : 31, o.nails)}</g>
       <g class="p-arm-r"><path d="${armR}" fill="${c.shirt}"/><path d="${armR}" fill="rgba(60,20,10,.12)"/><circle cx="${c.belly ? 95 : 89}" cy="162" r="6.5" fill="${c.skin}"/>${nailDots(c.belly ? 95 : 89, o.nails)}</g>
       <g class="p-head"><g transform="translate(60 72) scale(.82) translate(-80 -76)">${hp.head}</g></g>
       </g>
@@ -391,9 +448,10 @@ window.Art = (function () {
 
   function toImage(svg) {
     const im = new Image();
-    im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    const withDefs = svg.replace(/<svg([^>]*)>/, (m0) => `${m0}<defs>${DEFS}</defs>`);
+    im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(withDefs);
     return im;
   }
 
-  return { nena, simba, portrait, person, hand, toImage, OUTFITS, COLLARS };
+  return { nena, simba, portrait, person, hand, toImage, mountDefs, OUTFITS, COLLARS };
 })();

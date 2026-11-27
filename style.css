@@ -1164,3 +1164,30 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 @keyframes ulRow { from { transform: translateX(-30px); opacity: 0; } }
 .ul-i { font-size: 2rem; } .ul-t { display: grid; } .ul-t small { color: #8a6a5a; font-weight: 700; }
 .journey[hidden] { display: none; }
+
+/* ---- game feel: announcer, fever, hurt, reactions, HUD bumps ---- */
+.announce { position: absolute; left: 50%; top: 34%; z-index: 60; pointer-events: none; display: grid; justify-items: center; gap: 2px; transform: translate(-50%, -50%); animation: annIn 1.15s cubic-bezier(.2,1.4,.4,1) forwards; text-align: center; white-space: nowrap; }
+.announce b { font-family: var(--font-display); font-size: 2.6rem; line-height: 1; color: #fff; letter-spacing: .02em; -webkit-text-stroke: 2px #c2416b; paint-order: stroke fill; text-shadow: 0 4px 0 #96304f, 0 10px 18px rgba(0,0,0,.35); rotate: -5deg; }
+.announce small { font-weight: 900; font-size: .85rem; color: #fff; background: rgba(40,20,40,.55); padding: 3px 10px; border-radius: 99px; }
+.announce.t4 b, .announce.t5 b { -webkit-text-stroke-color: #e0702c; text-shadow: 0 4px 0 #a84a14, 0 10px 18px rgba(0,0,0,.35); font-size: 2.9rem; }
+.announce.t6 b, .announce.t7 b { -webkit-text-stroke-color: #c99a00; text-shadow: 0 4px 0 #8a6a00, 0 0 24px rgba(255,210,80,.8); font-size: 3.1rem; }
+.announce.t8 b { background: linear-gradient(90deg, #ff6b9a, #ffd36b, #7fe0b4, #86aaff, #c58aff); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-stroke: 2px #fff; text-shadow: none; filter: drop-shadow(0 4px 0 rgba(0,0,0,.25)) drop-shadow(0 0 16px rgba(255,255,255,.7)); font-size: 3.2rem; }
+.announce.tstar b { color: #ffd36b; -webkit-text-stroke-color: #a8740a; text-shadow: 0 4px 0 #7a5200, 0 0 26px rgba(255,211,107,.9); font-size: 3rem; rotate: 0deg; }
+@keyframes annIn { 0% { opacity: 0; scale: .3; } 18% { opacity: 1; scale: 1.18; } 30% { scale: .96; } 40% { scale: 1; } 78% { opacity: 1; translate: 0 0; } 100% { opacity: 0; translate: 0 -40px; } }
+.stage-wrap.fever::after { content: ""; position: absolute; inset: 0; z-index: 40; pointer-events: none; box-shadow: inset 0 0 36px 8px rgba(255,150,60,.6), inset 0 0 90px 10px rgba(255,90,140,.25); animation: fever .7s ease-in-out infinite alternate; }
+@keyframes fever { to { box-shadow: inset 0 0 48px 14px rgba(255,190,70,.75), inset 0 0 110px 16px rgba(255,90,140,.35); } }
+.stage-wrap.hurt::before { content: ""; position: absolute; inset: 0; z-index: 41; pointer-events: none; box-shadow: inset 0 0 60px 18px rgba(230,50,70,.55); animation: hurt .5s ease-out forwards; }
+@keyframes hurt { to { opacity: 0; } }
+.actor.yay > svg { animation: yay .62s cubic-bezier(.3,1.5,.5,1); }
+@keyframes yay { 0% { scale: 1 1; } 22% { scale: 1.08 .86; translate: 0 0; } 55% { scale: .95 1.08; translate: 0 -18px; } 80% { scale: 1.03 .97; translate: 0 0; } 100% { scale: 1 1; } }
+.actor.stomp > svg { animation: stomp .6s ease; }
+@keyframes stomp { 15%, 45%, 75% { translate: -3px 0; scale: 1.02 .96; } 30%, 60%, 90% { translate: 3px 0; scale: .98 1.03; } }
+.actor.oops > svg { animation: oops .6s ease; }
+@keyframes oops { 30% { scale: 1.04 .9; } 60% { scale: .98 1.02; } }
+#g-score.bump, #g-time.bump { animation: bump .3s cubic-bezier(.3,1.8,.5,1); display: inline-block; }
+@keyframes bump { 40% { scale: 1.3; } }
+#g-time.bump { color: #ff6b6b; }
+#g-hearts i.lost { animation: heartBreak .75s ease-in forwards; display: inline-block; color: #ff4d6d; }
+@keyframes heartBreak { 0% { scale: 1; } 25% { scale: 1.6; rotate: -12deg; } 100% { scale: .4; translate: 0 18px; opacity: .2; rotate: 20deg; } }
+@media (prefers-reduced-motion: reduce) { .announce, .stage-wrap.fever::after, .actor.yay > svg, .actor.stomp > svg { animation-duration: .01s; } }
+@media (max-width: 360px) { .announce b { font-size: 2.1rem !important; } }

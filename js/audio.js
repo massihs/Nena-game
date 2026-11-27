@@ -131,6 +131,7 @@ window.Sound = (function () {
     star(i) { const t = ctx.currentTime, f = [784, 988, 1175][i || 0]; note(f, t, 0.5, { type: 'triangle', vol: 0.12 }); note(f * 1.5, t + 0.06, 0.4, { type: 'sine', vol: 0.06 }); },
     win() { const t = ctx.currentTime; [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => note(f, t + i * 0.12, i === 6 ? 0.9 : 0.3, { type: 'triangle', vol: 0.11 })); },
     lose() { const t = ctx.currentTime; [523, 494, 466, 440].forEach((f, i) => note(f, t + i * 0.22, 0.4, { type: 'triangle', vol: 0.09, slide: i === 3 ? 0.9 : 1 })); },
+    combo(n) { const t = ctx.currentTime, f = [523, 587, 659, 784, 880, 1047, 1175, 1319][Math.max(0, Math.min(7, (n || 1) - 1))]; note(f, t, 0.24, { type: 'triangle', vol: 0.13 }); note(f * 1.5, t + 0.05, 0.2, { type: 'sine', vol: 0.06 }); note(f * 2, t + 0.1, 0.28, { type: 'sine', vol: 0.045 }); },
     tick() { const t = ctx.currentTime; note(1600, t, 0.04, { type: 'square', vol: 0.05 }); },
     yawn() { const t = ctx.currentTime; note(420, t, 0.9, { type: 'sine', vol: 0.08, slide: 0.55, attack: 0.2 }); },
   };
