@@ -1137,3 +1137,30 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 .now-card { flex-direction: row !important; text-align: left; } .now-card b, .now-card small { color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.2); }
 .today-row .rc-t small { display: block; }
 .life .gy-info { color: #8a5a3c; }
+
+/* ---- FTUE, home and unlocks ---- */
+.screen.scr-in { animation: scrIn .26s cubic-bezier(.2,.8,.2,1); }
+#screen-game.scr-in { animation-name: scrFade; }
+@keyframes scrIn { from { opacity: 0; transform: translateY(12px); } }
+@keyframes scrFade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .screen.scr-in { animation: none; } }
+.home-foot { gap: 10px; align-items: stretch; }
+.home-foot .home-shop { flex: 0 0 76px; display: grid; place-items: center; font-size: 1.6rem; line-height: 1; padding: 8px 4px; }
+.home-shop small { font-size: .7rem; font-weight: 900; }
+.home-foot .home-play { flex: 1; font-size: 1.35rem; animation: playPulse 2.2s ease-in-out infinite; }
+.home-play small { font-size: .85rem; opacity: .9; margin-left: 4px; }
+@keyframes playPulse { 0%, 100% { scale: 1; } 50% { scale: 1.03; } }
+.hub-btn.locked { opacity: .55; filter: grayscale(.6); border-style: dashed; }
+.hub-btn.locked .hub-n { font-size: .62rem; }
+.unlock { position: absolute; inset: 0; z-index: 3000; display: grid; place-items: center; padding: 20px; background: rgba(35,25,45,.62); backdrop-filter: blur(4px); animation: scrFade .25s; }
+.unlock[hidden] { display: none; }
+.ul-card { width: min(100%, 380px); max-height: 86%; display: flex; flex-direction: column; gap: 12px; padding: 22px 18px 18px; border-radius: 28px; background: var(--card, #fffaf2); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,.35); animation: ulPop .45s cubic-bezier(.3,1.5,.5,1); }
+@keyframes ulPop { from { transform: scale(.6); opacity: 0; } }
+.ul-burst { font-size: 2.2rem; animation: ulBurst 1.6s ease-in-out infinite; }
+@keyframes ulBurst { 50% { transform: scale(1.15) rotate(-4deg); } }
+.ul-card h3 { margin: 0; font-family: var(--font-display); color: var(--pink-deep); font-size: 1.4rem; }
+.ul-list { display: grid; gap: 8px; overflow-y: auto; text-align: left; }
+.ul-row { display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 16px; background: #fff; box-shadow: 0 2px 0 rgba(0,0,0,.06); animation: ulRow .4s cubic-bezier(.3,1.5,.5,1) both; }
+@keyframes ulRow { from { transform: translateX(-30px); opacity: 0; } }
+.ul-i { font-size: 2rem; } .ul-t { display: grid; } .ul-t small { color: #8a6a5a; font-weight: 700; }
+.journey[hidden] { display: none; }

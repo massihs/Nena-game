@@ -359,9 +359,9 @@
     hud();
     // tutorial hints for newly introduced mechanics, one after another
     const fresh = cfg.types.filter((t) => !save.seen[t]);
-    if (W.tabs.length > 1 && !save.seen._rooms) { fresh.unshift('_rooms'); }
+    if (W.tabs.length > 1 && !save.seen._rooms) { fresh.push('_rooms'); }
     if (save.hints === false) fresh.length = 0;
-    fresh.forEach((t, i) => setTimeout(() => { if (G && G.n === n && !G.over) toast(t === '_rooms' ? 'Several rooms! Tap the room cards at the bottom (or the side arrows) to look around. Tap a request icon to send Nena.' : REQ[t].hint, 'hint', 4800); }, i * 5200));
+    fresh.forEach((t, i) => setTimeout(() => { if (G && G.n === n && !G.over) toast(t === '_rooms' ? 'Other rooms are waiting! Tap the cards at the bottom 👇' : REQ[t].hint, 'hint', 4200); }, 900 + i * 5200));
     cfg.types.forEach((t) => { save.seen[t] = 1; });
     if (W.tabs.length > 1) save.seen._rooms = 1;
     persist();
@@ -1945,6 +1945,40 @@
   const scenesNew = () => FRIENDS.some((f) => { for (let l = 1; l <= friendLv(f.id); l++) if (!save.scenes[f.id + l]) return true; return false; });
 
   /* ---- hub on the map ---- */
+  const UNLOCKS = [
+    ['today', 1, '📅', 'Nena’s day', 'Her real-life routine on the real clock: breakfast, groceries, laundry…'],
+    ['daily', 1, '🎁', 'Daily reward', 'Come back every day — big gift on day 7.'],
+    ['missions', 1, '📋', 'Quests', 'Three new quests every day, plus weekly missions.'],
+    ['family', 2, '❤️', 'Family', 'Grow your friendship with everyone and unlock little scenes.'],
+    ['sort', 2, '🧪', 'Color Sort', 'Three new glass puzzles every day.'],
+    ['wheel', 2, '🎡', 'Lucky wheel', 'Spin for coins, free boosters and stickers.'],
+    ['stickers', 2, '🎴', 'Sticker album', 'Collect stickers and complete sets.'],
+    ['bed', 2, '🌙', 'Bedtime', 'Simba only falls asleep in Nena’s arms.'],
+    ['challenge', 3, '🎯', 'Daily challenge', 'A special day with a twist, every day.'],
+    ['zen', 3, '🧘', 'Meditation', 'Light the oud and breathe — everyone is calmer.'],
+    ['album', 3, '📸', 'Photo album', 'Snap Simba’s funniest moments.'],
+    ['trophies', 3, '🏆', 'Trophies', 'Big goals with big rewards.'],
+    ['decor', 4, '🛋️', 'Decor', 'Make the house cosy — everyone gets more patient.'],
+    ['wardrobe', 4, '👗', 'Wardrobe', 'New outfits for Nena.'],
+    ['gym', 4, '🏋️', 'Gym', 'Every other day with Negin and Coach Shadi.'],
+    ['nails', 5, '💅', 'Nail day', 'Once a week with Nasim and Negin.'],
+    ['games', 5, '🎮', 'Mini-games', 'Simba’s tricks, tahdig, hair day and more.'],
+    ['endless', 7, '♾️', 'Endless day', 'How long can Nena keep up?'],
+  ];
+  const UL = Object.fromEntries(UNLOCKS.map((u) => [u[0], u]));
+  const daysDone = () => Math.max(save.level - 1, Object.keys(save.stars).length);
+  const unlocked = (id) => !UL[id] || daysDone() >= UL[id][1];
+  if (!save.unlocks) { save.unlocks = {}; UNLOCKS.forEach((u) => { if (daysDone() >= u[1]) save.unlocks[u[0]] = 1; }); }
+  save.newF = save.newF || {};
+  function checkUnlocks() {
+    const fresh = UNLOCKS.filter((u) => daysDone() >= u[1] && !save.unlocks[u[0]]);
+    if (!fresh.length) return false;
+    fresh.forEach((u) => { save.unlocks[u[0]] = 1; save.newF[u[0]] = 1; }); persist();
+    $('ul-list').innerHTML = fresh.map((u, i) => `<div class="ul-row" style="animation-delay:${0.15 + i * 0.12}s"><span class="ul-i">${u[2]}</span><span class="ul-t"><b>${u[3]}</b><small>${u[4]}</small></span></div>`).join('');
+    $('ul-title').textContent = fresh.length > 1 ? `${fresh.length} new things unlocked!` : 'New unlocked!';
+    $('unlock').hidden = false; snd('fanfare'); buzz([20, 40, 20]); confettiOn($('unlock'));
+    return true;
+  }
   function renderHub() {
     const items = [
       ['today', '📅', 'Today', routineNow() || ''], ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
@@ -1952,8 +1986,11 @@
       ['nails', '💅', 'Nail day', nailsReady() ? '!' : ''], ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
       ['wheel', '🎡', 'Wheel', spinsLeft() || ''], ['stickers', '🎴', 'Stickers', `${Object.keys(save.stickers).length}/${STICKERS.length}`], ['bed', '🌙', 'Bedtime', new Date().getHours() >= 18 && save.wellness.bed !== today() ? '!' : ''], ['gym', '🏋️', 'Gym', gymDay() && save.wellness.gym !== today() ? '!' : ''], ['zen', '🧘', 'Zen', save.wellness.zen !== today() ? '!' : ''], ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
     ];
-    renderJourney();
-    $('m-hub').innerHTML = items.map(([id, ico, name, b]) => `<button type="button" class="hub-btn" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^\d+\/\d+$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
+    $('m-journey').hidden = daysDone() < 1; if (daysDone() >= 1) renderJourney();
+    const vis = items.filter(([id]) => unlocked(id)).map(([id, ico, name, b]) => [id, ico, name, b === '' && save.newF[id] ? 'new' : b]);
+    const next = UNLOCKS.find((u) => !unlocked(u[0]));
+    if (next) vis.push(['locked', '🔒', next[3], 'Soon']);
+    $('m-hub').innerHTML = vis.map(([id, ico, name, b]) => `<button type="button" class="hub-btn${id === 'locked' ? ' locked' : ''}" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^(\d+\/\d+|Soon)$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
   }
   let dailyShown = false;
 
@@ -2714,7 +2751,7 @@
     if (gymDay()) L.push({ k: 'gym', ico: '🏋️', name: 'Gym with Negin & Coach Shadi', desc: 'Every other day at FIT TEHRAN.', win: [16, 20], done: () => save.wellness.gym === today(), go: openGym });
     L.push({ k: 'hair', ico: '💇‍♀️', name: 'Shower, then Maman dries her hair', desc: 'Don’t let Maman burn her!', win: [19, 23], done: () => save.wellness.hair === today(), go: openHair });
     L.push({ k: 'bed', ico: '🌙', name: 'Rock Simba to sleep', desc: 'He only sleeps in Nena’s arms.', win: [20, 24], done: () => save.wellness.bed === today(), go: openBed });
-    return L;
+    return L.filter((r) => unlocked({ hair: 'zen' }[r.k] || r.k));
   }
   const routineNow = () => { const h = new Date().getHours(); return routine().filter((r) => !r.done() && h >= r.win[0] && h < r.win[1]).length ? '!' : ''; };
 
@@ -2987,7 +3024,9 @@
   /* Screens: title, map, story, shop                                    */
   /* ------------------------------------------------------------------ */
   function show(id) {
+    const target = $(id), was = target.hidden;
     ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-welcome', 'screen-gym', 'screen-bed', 'screen-life'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
+    if (was && !target.classList.contains('modal')) { target.classList.remove('scr-in'); void target.offsetWidth; target.classList.add('scr-in'); }
   }
   function renderMap() {
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
@@ -3035,8 +3074,12 @@
     renderHub();
     music('menu');
     show('screen-map');
-    if (!welcomeChecked) { welcomeChecked = true; if (welcomeBack()) return; }
-    if (dailyReady() && !dailyShown) { dailyShown = true; setTimeout(() => openSheet('daily'), 350); }
+    $('m-play').innerHTML = save.level > LEVELS.length ? '♾️ Endless day' : `▶ Play <small>Day ${save.level}</small>`;
+    if (checkUnlocks()) { /* the unlock card comes first */ }
+    else if (daysDone() >= 1) {
+      if (!welcomeChecked) { welcomeChecked = true; if (welcomeBack()) return; }
+      if (dailyReady() && !dailyShown) { dailyShown = true; setTimeout(() => openSheet('daily'), 350); }
+    }
     const cur = document.querySelector('.node.current');
     if (cur) cur.scrollIntoView({ block: 'center' });
   }
@@ -3052,7 +3095,12 @@
   }
   function nextLine() {
     const l = storyLines.shift();
-    if (!l) { if (storyAfter) { const f = storyAfter; storyAfter = null; storyTitle = ''; f(); } else renderPrep(storyLevel); return; }
+    if (!l) {
+      if (storyAfter) { const f = storyAfter; storyAfter = null; storyTitle = ''; f(); }
+      else if (storyLevel <= 2 && ((save.losses || {})[storyLevel] || 0) < 2) { save.seen._howto = 1; pendingBoosts = {}; prepPick = {}; show('screen-game'); startLevel(storyLevel); }
+      else renderPrep(storyLevel);
+      return;
+    }
     const [who, mood, text] = l;
     $('s-portrait').innerHTML = A.portrait(who, mood);
     $('s-name').textContent = NAMES[who] || who;
@@ -3098,7 +3146,7 @@
   $('g-rooms').addEventListener('pointerdown', onTabs);
   ['g-prev', 'g-next'].forEach((id) => $(id).addEventListener('pointerdown', (e) => { e.stopPropagation(); if (!G || G.over || G.paused) return; snd('tab'); G.peekAt = performance.now(); setView(e.currentTarget.dataset.room); }));
   $('g-follow').addEventListener('pointerdown', (e) => { e.stopPropagation(); if (!G || G.over) return; snd('tab'); G.peekAt = 0; setView(G.nena.room); });
-  $('btn-play').addEventListener('click', () => { wake(); snd('tab'); renderMap(); });
+  $('btn-play').addEventListener('click', () => { wake(); snd('tab'); if (daysDone() === 0 && save.level <= 1) playStory(1); else renderMap(); });
   $('m-levels').addEventListener('click', (e) => { const b = e.target.closest('[data-level]'); if (b) { snd('click'); playStory(+b.dataset.level); } });
   $('m-shop').addEventListener('click', () => { snd('tab'); renderShop(); });
   $('m-back').addEventListener('click', () => show('screen-title'));
@@ -3113,7 +3161,7 @@
   $('pr-boosts').addEventListener('click', (e) => { const b = e.target.closest('[data-boost]'); if (!b || b.disabled) return; prepPick[b.dataset.boost] = !prepPick[b.dataset.boost]; snd('click'); renderPrep(+$('pr-start').dataset.level); });
   $('pr-start').addEventListener('click', () => {
     const n = +$('pr-start').dataset.level;
-    if (!save.seen._howto) { save.seen._howto = 1; persist(); showHowTo(() => $('pr-start').click()); return; }
+    save.seen._howto = 1;
     const cost = BOOSTERS.reduce((a, b) => a + (prepPick[b.id] ? bCost(b) : 0), 0);
     if (cost > save.coins) return;
     BOOSTERS.forEach((b) => { if (prepPick[b.id] && (save.freeB[b.id] || 0) > 0) save.freeB[b.id]--; });
@@ -3176,7 +3224,15 @@
   $('hd-go').addEventListener('click', hdStart);
   ['pointerdown', 'pointermove', 'pointerup', 'pointerleave'].forEach((ev) => $('hd-stage').addEventListener(ev, hairMove));
   $('hd-back').addEventListener('click', () => { if (HD) HD.run = false; cancelAnimationFrame(hdRaf); HD = null; openSheet('games'); });
-  $('m-hub').addEventListener('click', (e) => { const b = e.target.closest('[data-hub]'); if (b) { snd('tab'); openSheet(b.dataset.hub); } });
+  $('m-hub').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-hub]'); if (!b) return;
+    const id = b.dataset.hub;
+    if (id === 'locked') { const nx = UNLOCKS.find((u) => !unlocked(u[0])); snd('fail'); toast(`🔒 ${nx[3]} unlocks after Day ${nx[1]}. Keep going!`, '', 1800); return; }
+    if (save.newF[id]) { delete save.newF[id]; persist(); }
+    snd('tab'); openSheet(id);
+  });
+  $('ul-ok').addEventListener('click', () => { snd('click'); $('unlock').hidden = true; renderHub(); if (dailyReady() && !dailyShown && daysDone() >= 1) { dailyShown = true; setTimeout(() => openSheet('daily'), 300); } });
+  $('m-play').addEventListener('click', () => { snd('click'); const n = Math.min(save.level, LEVELS.length); if (save.level > LEVELS.length) openSheet('endless'); else playStory(n); });
   $('sh2-body').addEventListener('click', sheetAction);
   let sheetBackToPause = false;
   $('sh2-back').addEventListener('click', () => { snd('click'); if (sheetBackToPause) { sheetBackToPause = false; show('screen-pause'); } else renderMap(); });
