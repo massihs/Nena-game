@@ -197,6 +197,7 @@
     el.style.width = w + 'px'; el.style.height = h + 'px';
     el.innerHTML = html;
     el.dataset.actor = id;
+    el.style.setProperty('--bd', (-rnd() * 4).toFixed(2) + 's');
     layer(room).appendChild(el);
     return { el, w, h, x: 0, y: 0, room };
   }
@@ -213,6 +214,7 @@
     a.el.dataset.target = who;
     place(a, h[1], h[2]);
     G.npcs[who] = a;
+    if (G.life) lifeAdd(who, a, {});
     return a;
   }
 
@@ -244,6 +246,8 @@
         e.style.left = pr.x + 'px'; e.style.top = pr.y + 'px'; e.style.width = pr.w + 'px'; e.style.height = pr.h + 'px'; e.style.zIndex = String(pr.z);
         d.appendChild(e);
       });
+      if (RA.LIGHT[id]) { const e = document.createElement('div'); e.className = 'light'; e.innerHTML = RA.LIGHT[id](cfg); d.appendChild(e); }
+      (RA.FX[id] ? RA.FX[id](cfg) : []).forEach((f) => { const e = document.createElement('div'); e.className = 'fx ' + f.cls; e.innerHTML = f.html || ''; Object.assign(e.style, { left: f.x + 'px', top: f.y + 'px', width: f.w + 'px', height: f.h + 'px' }); d.appendChild(e); });
       const ev = ELEV[id];
       if (ev) { const e = document.createElement('div'); e.className = 'elev'; e.innerHTML = '<i></i><i></i>'; Object.assign(e.style, { left: ev[0] + 'px', top: ev[1] + 'px', width: ev[2] + 'px', height: ev[3] + 'px' }); d.appendChild(e); }
       st.appendChild(d);
@@ -262,15 +266,21 @@
     });
     // characters
     const H = HOMES[cfg.place];
-    G.nena = makeActor('nena', A.nena({ dressed: true, outfit: 'basique', eyes: 'open' }), 84, 147, 'nena', H.nena[0]);
+    G.nena = makeActor('nena', A.nena({ dressed: true, outfit: 'basique' }), 84, 147, 'nena', H.nena[0]);
     place(G.nena, H.nena[1], H.nena[2]);
     if (H.simba) {
-      G.simba = makeActor('simba', A.simba({ eyes: 'open' }), 112, 89, 'simba happy', H.simba[0]);
+      G.simba = makeActor('simba', A.simba({}), 112, 89, 'simba happy', H.simba[0]);
       G.simba.el.dataset.target = 'simba';
       place(G.simba, H.simba[1], H.simba[2]);
     }
     ['baba', 'fariba', 'negin', 'pourya'].forEach((w) => { if ((W.who.has(w) || (w === 'pourya' && cfg.place === 'clap')) && H[w]) spawnNpc(w); });
-    if (cfg.place === 'clap') { GUESTS.forEach(([id, x, y, mood]) => { const g = makeActor(id, A.person(id, { mood }), 72, 126, 'npc guest' + (id.startsWith('witch') ? ' witch' : ''), 'clap'); place(g, x, y); }); G.witchT = 14 + rnd() * 8; }
+    G.guests = [];
+    if (cfg.place === 'clap') { GUESTS.forEach(([id, x, y, mood]) => { const g = makeActor(id, A.person(id, { mood }), 72, 126, 'npc guest' + (id.startsWith('witch') ? ' witch' : ''), 'clap'); place(g, x, y); G.guests.push([id, g]); }); G.witchT = 14 + rnd() * 8; }
+    G.life = []; G.talk = new Set(); G.amb = []; G.ambT = 2;
+    G.guests.forEach(([id, g]) => lifeAdd(id, g, { lines: id.startsWith('witch') ? LINES.witch : LINES.guest, kind: id.startsWith('witch') ? 'witch' : '', still: true }));
+    lifeAdd('nena', G.nena, { lines: LINES.nena, kind: 'think', still: true });
+    if (G.simba) lifeAdd('simba', G.simba, {});
+    Object.keys(G.npcs).forEach((w) => lifeAdd(w, G.npcs[w], {}));
     // overlays that follow Nena
     G.bar = document.createElement('div'); G.bar.className = 'workbar'; G.bar.innerHTML = '<i></i>'; G.bar.hidden = true;
     G.handEl = document.createElement('div'); G.handEl.className = 'hand';
@@ -315,12 +325,19 @@
     moveTo(G.intro.car, 300, 700, 1.4);
     T(1500, () => { both((a) => { a.el.classList.remove('gone'); a.el.classList.add('walking'); }); eP.classList.add('open'); moveTo(nn, 478, 412, 1.4); if (ng) moveTo(ng, 512, 414, 1.5); snd('click'); });
     T(3100, () => { both((a) => a.el.classList.add('gone')); eP.classList.remove('open'); });
-    T(3700, () => { go('mall', 80, 418, 112, 420); eM.classList.add('open'); toast('🛍️ Hayat Sabz Mall · ground floor', 'hint', 1800); snd('success'); });
+    T(3700, () => { go('mall', 80, 418, 112, 420); mallShoppers(); eM.classList.add('open'); toast('🛍️ Hayat Sabz Mall · ground floor', 'hint', 1800); snd('success'); });
     T(4200, () => { both((a) => a.el.classList.remove('gone', 'flip')); moveTo(nn, 500, 470, 2.0); if (ng) moveTo(ng, 540, 474, 2.1); });
     T(6400, () => { both((a) => a.el.classList.add('gone')); eM.classList.remove('open'); });
     T(6900, () => { go('clap', 318, 440, 350, 442); toast('🏮 Welcome to CLAP!', 'hint', 1400); });
     T(7200, () => { both((a) => a.el.classList.remove('gone')); moveTo(nn, G.intro.home.n[0], G.intro.home.n[1], 1.0); if (ng) moveTo(ng, G.intro.home.g[0], G.intro.home.g[1], 1.1); });
     T(8500, endIntro);
+  }
+  function mallShoppers() {
+    [['guest1', 620, 520, -40], ['sam', -40, 600, 640], ['guest3', 640, 680, -40]].forEach(([id, x0, y, x1], i) => {
+      const p = makeActor('shopper', A.person(id, { mood: 'happy' }), 70, 122, 'npc', 'mall');
+      place(p, x0, y); setTimeout(() => walkActor(p, x1, y, () => p.el.remove(), 70), i * 500);
+    });
+    setTimeout(() => { if (G && G.intro) speak(G.npcs.negin || G.nena, pick(['Ooh, a new perfume shop!', 'No shopping, Negin. Hookah!', 'CLAP is this way!']), '', 1800, true); }, 900);
   }
   function endIntro() {
     const I = G.intro; if (!I) return;
@@ -411,6 +428,8 @@
     const t = pick(types.concat(types.filter((x) => REQ[x].who === 'simba')));
     const R = REQ[t];
     if (TRANSIENT[R.who] && !G.npcs[R.who]) { spawnNpc(R.who); snd('swoosh'); }
+    if (R.who === 'simba' && G.simba) G.simba.el.classList.remove('lying', 'sniff');
+    lifeHome(R.who);
     const max = R.pat * patienceMul(R.who);
     const el = document.createElement('div');
     el.className = 'req';
@@ -682,7 +701,14 @@
     return null;
   }
   // per-request flavour: sounds, little scenes and family one-liners
-  const say = (t) => toast(t, '', 1600);
+  const SPEAKER = { Baba: 'baba', Maman: 'fariba', Nasim: 'nasim', Negin: 'negin', Pourya: 'pourya', Nena: 'nena', 'The kids': 'kids', Simba: 'simba' };
+  const say = (t) => {
+    const m = /^([^:“]+):\s*“?(.+?)”?(\s*[^\w\s]*)$/u.exec(t);
+    const id = m && SPEAKER[m[1].trim()];
+    const a = id === 'nena' ? G.nena : id === 'simba' ? G.simba : id ? G.npcs[id] : null;
+    if (a && a.el.isConnected && !a.el.classList.contains('gone')) { speak(a, m[2] + (m[3] || ''), id === 'simba' ? 'dog' : '', 2600, true); if (a.room !== G.view) toast(t, '', 1600); }
+    else toast(t, '', 1600);
+  };
   const FX = {
     food: { after: () => { if (G.simba && !G.simbaAway) simbaGo(STATIONS.bowl.x + 50, STATIONS.bowl.y + 30, 2); } },
     water: { snd: 'water' },
@@ -705,7 +731,7 @@
     bread: { snd: 'swoosh', after: () => say('Hot sangak in the 4×4. Maman will be happy!') },
     juice: { after: () => say('Nasim: “…It’s fine. Thanks. Don’t look at me.”') },
     kids: { snd: 'happy', after: () => { simbaHop(); say('The kids: “He looks like a lion!!” 🦁'); } },
-    phone: { snd: 'talk', after: () => say(pick(BABA_CALLS)) },
+    phone: { snd: 'talk', start: () => { G.nena.el.classList.add('talking'); }, end: () => G.nena.el.classList.remove('talking'), after: () => { toast('📞 ' + pick(BABA_CALLS), '', 1800); speak(G.nena, pick(['Yes Baba, we’re coming!', 'Baba, it’s only 9!', 'We’re fine, Baba!', 'Okay, okay! 😅']), '', 1800, true); } },
     coals: { snd: 'swoosh', after: () => say('Fresh coals. The hookah bubbles again 💨') },
     chai: { snd: 'water', after: () => say('Negin: “Ahh, chai. Wake me up when it’s cold.”') },
     doze: { snd: 'click', after: () => say('Negin: “I wasn’t sleeping! I was… resting my eyes.”') },
@@ -799,6 +825,135 @@
   function moveTo(a, x, y, dur, cb) { for (let i = tweens.length - 1; i >= 0; i--) if (tweens[i].a === a) tweens.splice(i, 1); tweens.push({ a, x0: a.x, y0: a.y, x, y, t: 0, dur, cb }); }
 
   /* ------------------------------------------------------------------ */
+  /* Life: everybody moves, talks and walks around on their own          */
+  /* ------------------------------------------------------------------ */
+  const LINES = {
+    simba: ['Woof!', 'Woof woof!', '*sniff sniff*', 'Grrr…', '*yawns*', '🎾?', '❤️', '*wags*', 'Arf!'],
+    baba: ['Goooal!! ⚽', 'Nasim, where are you?! 📞', 'Negin! Wake up!', 'Is there tea?', 'In my day…', 'Persepolis!!', 'My lion, come here!', 'Who changed the channel?!'],
+    fariba: ['Who ate the tahdig?!', 'Nena jan, taste this!', 'Ghormeh sabzi is almost ready', 'Don’t walk on my clean floor!', 'Ay, my back…', 'Simba, out of my kitchen!', 'Where is my saffron?'],
+    negin: ['zzz…', 'Five more minutes…', 'This hookah is perfect', 'Did Baba call again?', 'Take a photo of me!', 'Mmm, this tea…', 'Don’t look at the witches.'],
+    pourya: ['Fresh hookah heads! 🔥', 'Nena… Instagram? 😏', 'Double apple, mint, lemon!', 'Who wants coals?', 'Best hookah in Tehran!'],
+    nasim: ['Don’t talk to me.', 'Ugh. Whatever.', 'Where is my charger?!', 'Leave me alone!', '…'],
+    kids: ['Can we pet him?!', 'He’s a lion!!', 'Simbaaa!', 'So fluffy!'],
+    guest: ['Haha!', 'Delicious!', 'One more tea please', '…and then she said…', '😂', 'So cozy here', 'Cheers! 🍵'],
+    witch: ['hehehe…', '*whispers*', 'Look at her…', '🔮 …', 'Mwahaha', 'Her aura is… orange.', 'Another tea, darling.'],
+    nena: ['Phew!', 'Simba, no!', 'So much to do…', 'Okay, focus!', '😅', 'I love this family. Mostly.', 'Coffee… I need coffee.'],
+    passer: ['Salam!', 'What a cute dog!', 'Is that a lion?!', '🙂', 'Hot sangak!'],
+  };
+  const PITCH = { baba: 290, fariba: 470, negin: 610, pourya: 340, nena: 650, nasim: 560, kids: 820, witch: 760, guest: 520, simba: 0 };
+  const SPOTS = {
+    baba: [[150, 590], [360, 560], [250, 640], [470, 540]], fariba: [[240, 470], [340, 470], [430, 470], [300, 720], [470, 700]],
+    pourya: [[176, 452], [300, 456], [230, 462], [120, 456]], kids: [[70, 548], [130, 560], [40, 530]],
+  };
+  const SIMBA_ZONE = { salon: [150, 590, 520, 760], street: [280, 520, 440, 560] };
+  function lifeAdd(id, a, o) {
+    if (!a || G.life.some((L) => L.a === a)) return;
+    G.life.push(Object.assign({ id, a, home: [a.room, a.x, a.y], t: 1.5 + rnd() * 4, lines: LINES[id] || LINES.guest, kind: '', spots: SPOTS[id] }, o));
+  }
+  function lifeHome(who) {
+    const L = G.life && G.life.find((x) => x.id === who);
+    if (!L || L.a.room !== L.home[0]) return;
+    if (Math.hypot(L.a.x - L.home[1], L.a.y - L.home[2]) > 4) walkActor(L.a, L.home[1], L.home[2]);
+  }
+  function walkActor(a, x, y, cb, speed) {
+    const d = Math.hypot(x - a.x, y - a.y);
+    if (d < 3) { if (cb) cb(); return; }
+    const facesLeft = a.el.classList.contains('simba');
+    a.el.classList.toggle('flip', facesLeft ? x > a.x : x < a.x);
+    a.el.classList.add('walking');
+    moveTo(a, x, y, d / (speed || 75), () => { a.el.classList.remove('walking'); if (cb) cb(); });
+  }
+  function speak(a, text, kind, ms, force) {
+    if (!a || !a.el.isConnected) return;
+    if (!force && (a.room !== G.view || G.talk.size >= 3)) return;
+    if (a.bubble) { a.bubble.el.remove(); G.talk.delete(a); }
+    const el = document.createElement('div');
+    el.className = 'say ' + (kind || '');
+    el.textContent = text;
+    layer(a.room).appendChild(el);
+    a.bubble = { el, t: (ms || 2200) / 1000, w: el.offsetWidth, h: el.offsetHeight };
+    G.talk.add(a);
+    if (kind !== 'think' && kind !== 'dog') { a.el.classList.add('talking'); setTimeout(() => a.el && a.el.classList.remove('talking'), Math.min(ms || 2200, 1700)); }
+    const id = a.el.dataset.actor, pitch = PITCH[id] != null ? PITCH[id] : id.startsWith('witch') ? PITCH.witch : PITCH.guest;
+    if (a.room === G.view && pitch && kind !== 'think') [0, 90, 180].forEach((t) => setTimeout(() => snd('talk', pitch), t));
+    posBubble(a);
+  }
+  function posBubble(a) {
+    const b = a.bubble; if (!b) return;
+    const left = a.x > 400;
+    let x = left ? a.x - 18 - b.w : a.x + 18, y = a.y - a.h - b.h + 22;
+    x = Math.max(4, Math.min(596 - b.w, x)); y = Math.max(4, y);
+    b.el.classList.toggle('left', left);
+    b.el.style.transform = `translate(${x.toFixed(0)}px, ${y.toFixed(0)}px)`;
+  }
+  function talkTick(dt) {
+    G.talk.forEach((a) => {
+      const b = a.bubble; if (!b) { G.talk.delete(a); return; }
+      b.t -= dt;
+      if (b.t <= 0 || !a.el.isConnected) { b.el.remove(); a.bubble = null; G.talk.delete(a); return; }
+      if (b.t < 0.3) b.el.classList.add('out');
+      posBubble(a);
+    });
+  }
+  function lifeTick(dt) {
+    for (const L of G.life) {
+      const a = L.a;
+      if (!a.el.isConnected || a.el.classList.contains('gone')) continue;
+      L.t -= dt; if (L.t > 0) continue;
+      L.t = 3 + rnd() * 5;
+      if (L.id === 'simba') { simbaLife(L); continue; }
+      if (L.id === 'nena') { if (!G.busy && !G.queue.length && rnd() < 0.3) speak(a, pick(L.lines), 'think', 1900); continue; }
+      if (L.id === 'baba' && G.simba && G.simba.el.classList.contains('cuddle')) { if (rnd() < 0.5) speak(a, pick(['My little lion ❤️', 'Who’s a good boy?', '*pets Simba*']), '', 2200); continue; }
+      const hasReq = G.reqs.some((r) => r.who === L.id) || G.queue.some((q) => q.id === L.id) || (G.busy && G.busy.id === L.id);
+      const home = Math.hypot(a.x - L.home[1], a.y - L.home[2]) < 4;
+      if (hasReq) { if (!home && a.room === L.home[0]) walkActor(a, L.home[1], L.home[2]); continue; }
+      const r = rnd();
+      if (L.still || !L.spots || r < 0.45) speak(a, pick(L.lines), L.kind, 2300);
+      else if (!home && r < 0.75) walkActor(a, L.home[1], L.home[2]);
+      else { const p = pick(L.spots); walkActor(a, p[0], p[1]); }
+    }
+  }
+  function simbaLife(L) {
+    const s = G.simba;
+    if (!s || G.simbaAway || G.simbaTask || s.el.classList.contains('cuddle') || s.el.classList.contains('bath') || findReq('simba') || G.queue.some((q) => q.id === 'simba')) { L.t = 2; return; }
+    const B = SIMBA_ZONE[s.room]; if (!B) return;
+    s.el.classList.remove('lying', 'sniff');
+    const r = rnd();
+    if (r < 0.32) {
+      walkActor(s, B[0] + rnd() * (B[2] - B[0]), B[1] + rnd() * (B[3] - B[1]), () => { if (rnd() < 0.5 && G.simba) { s.el.classList.add('sniff'); setTimeout(() => s.el.classList.remove('sniff'), 1600); } }, 105);
+    } else if (r < 0.47 && G.nena.room === s.room && !G.nena.el.classList.contains('gone')) {
+      walkActor(s, Math.max(B[0], Math.min(B[2], G.nena.x + (rnd() < 0.5 ? -90 : 90))), Math.max(B[1], Math.min(B[3], G.nena.y)), () => speak(s, '❤️', 'dog', 1200), 120);
+    } else if (r < 0.64) {
+      speak(s, pick(LINES.simba), 'dog', 1500); s.el.classList.add('barking'); setTimeout(() => s.el.classList.remove('barking'), 1100);
+      if (s.room === G.view && rnd() < 0.35) snd('bark');
+    } else if (r < 0.78) { s.el.classList.add('lying'); speak(s, 'zzz…', 'dog', 1800); L.t = 6 + rnd() * 4; }
+    else if (r < 0.87) { s.el.classList.add('spin'); setTimeout(() => s.el.classList.remove('spin'), 1450); }
+    else { const h = HOMES[G.cfg.place].simba; if (h && h[0] === s.room) walkActor(s, h[1], h[2], null, 100); }
+  }
+  // the city goes on around them: people walking by, cars passing
+  function ambientTick(dt) {
+    const room = G.layers.street ? 'street' : null;
+    if (!room) return;
+    G.ambT -= dt; if (G.ambT > 0) return;
+    G.ambT = 4 + rnd() * 5;
+    const ltr = rnd() < 0.5;
+    if (rnd() < 0.45) {
+      const col = pick(['#c0392b', '#2c3e50', '#f2c230', '#7f8c8d', '#27ae60', '#e9e9e9', '#8e44ad']);
+      const car = makeActor('traffic', CAR.replace('#f4f4f2', col).replace('#eceae6', col), 170, 85, 'car', room);
+      place(car, ltr ? -100 : 700, 790); car.el.style.opacity = '.95';
+      if (ltr) car.el.classList.add('flip');
+      moveTo(car, ltr ? 700 : -100, 790, 3.2 + rnd(), () => car.el.remove());
+    } else {
+      const id = pick(['guest1', 'guest2', 'guest3', 'guest4', 'sam', 'mia']);
+      const p = makeActor('passer', A.person(id, { mood: pick(['happy', 'neutral']) }), 70, 122, 'npc passer', room);
+      const y = 470 + rnd() * 70;
+      place(p, ltr ? -40 : 640, y);
+      walkActor(p, ltr ? 640 : -40, y, () => p.el.remove(), 55 + rnd() * 25);
+      if (rnd() < 0.5) setTimeout(() => { if (p.el.isConnected) speak(p, pick(LINES.passer), '', 1600); }, 2500 + rnd() * 2000);
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Main loop                                                           */
   /* ------------------------------------------------------------------ */
   function runTweens(dt) {
@@ -832,7 +987,7 @@
     raf = requestAnimationFrame(loop);
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     if (!G || G.paused || G.over) return;
-    if (G.intro) { runTweens(dt); return; }
+    if (G.intro) { runTweens(dt); talkTick(dt); return; }
     G.time -= dt;
     G.comboT -= dt;
     if (G.comboT <= 0 && G.combo) G.combo = 0;
@@ -891,6 +1046,9 @@
     if (!G.queue.length && !G.busy) G.nena.el.classList.remove('walking');
     G.handEl.style.transform = `translate(${G.nena.x + 14}px, ${G.nena.y - 74}px)`;
     G.handEl.style.zIndex = String(Math.round(G.nena.y) + 1);
+    lifeTick(dt);
+    ambientTick(dt);
+    talkTick(dt);
     highlights();
     renderTabs();
     if (G.time <= 0) { G.time = 0; endLevel(false); }

@@ -36,6 +36,10 @@
       <radialGradient id="rneon"><stop offset="0" stop-color="#ff5fa2" stop-opacity=".55"/><stop offset="1" stop-color="#ff5fa2" stop-opacity="0"/></radialGradient>
       <linearGradient id="rwall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6efe6"/><stop offset="1" stop-color="#ebe1d4"/></linearGradient>
       <linearGradient id="rshine" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <linearGradient id="rbeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6dc" stop-opacity=".34"/><stop offset="1" stop-color="#fff6dc" stop-opacity="0"/></linearGradient>
+      <radialGradient id="rvig" cx="50%" cy="46%" r="72%"><stop offset=".55" stop-color="#1c1428" stop-opacity="0"/><stop offset="1" stop-color="#1c1428" stop-opacity=".55"/></radialGradient>
+      <radialGradient id="rwarm"><stop offset="0" stop-color="#ffcf80" stop-opacity=".5"/><stop offset="1" stop-color="#ffcf80" stop-opacity="0"/></radialGradient>
+      <radialGradient id="rcold"><stop offset="0" stop-color="#e8f4ff" stop-opacity=".45"/><stop offset="1" stop-color="#e8f4ff" stop-opacity="0"/></radialGradient>
       <linearGradient id="rsteel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b8bec4"/><stop offset=".5" stop-color="#e3e6e9"/><stop offset="1" stop-color="#aab0b6"/></linearGradient>
       <linearGradient id="rtv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f8f4a"/><stop offset="1" stop-color="#2d6e38"/></linearGradient></defs>`;
   }
@@ -294,5 +298,33 @@
     ],
   };
 
-  window.RoomArt = { defs, ART, PROPS };
+  /* lighting overlays (above characters, below bubbles) */
+  const beam = (x0, x1, yb, dx) => `<polygon points="${x0},${yb} ${x1},${yb} ${x1 + dx},800 ${x0 + dx},800" fill="url(#rbeam)"/>`;
+  const vig = (k) => `<rect width="600" height="800" fill="url(#rvig)" opacity="${k}"/>`;
+  const warm = (x, y, r, k) => `<circle cx="${x}" cy="${y}" r="${r}" fill="url(#rwarm)" opacity="${k || 1}"/>`;
+  const L = (inner) => `<svg viewBox="0 0 600 800" aria-hidden="true">${inner}</svg>`;
+  const home = (bx0, bx1, yb, dx, lamps) => (c) => L(c.night ? lamps.map(([x, y, r]) => warm(x, y, r)).join('') + vig(1) : beam(bx0, bx1, yb, dx) + vig(.5));
+  const LIGHT = {
+    salon: home(110, 500, 392, 80, [[66, 290, 160], [300, 120, 200]]),
+    kitchen: home(150, 450, 392, 60, [[210, 470, 90], [300, 470, 90], [390, 470, 90]]),
+    tv: home(46, 286, 392, 90, [[445, 171, 200]]),
+    hall: home(30, 570, 432, 0, [[300, 40, 260]]),
+    bedroom: home(24, 286, 430, 70, [[200, 60, 160], [505, 200, 120]]),
+    street: (c) => L(c.night ? [70, 330, 590].map((x) => warm(x, 300, 140, .8)).join('') + vig(1) : '<circle cx="560" cy="40" r="260" fill="url(#rwarm)" opacity=".5"/>' + vig(.35)),
+    clap: () => L([[90, 50], [210, 64], [470, 50], [560, 64]].map(([x, y]) => warm(x, y, 120)).join('') + warm(320, 520, 220, .55) + vig(.9)),
+    mall: () => L('<rect width="600" height="420" fill="url(#rbeam)"/>' + vig(.3)),
+    parking: () => L([60, 220, 380, 540].map((x) => `<circle cx="${x}" cy="40" r="140" fill="url(#rcold)"/>`).join('') + vig(1)),
+  };
+  /* small living details: steam, TV flicker, smoke, lantern glow, clouds */
+  const puffs = (n) => '<i></i>'.repeat(n);
+  const FX = {
+    kitchen: () => [{ cls: 'steam', x: 288, y: 186, w: 30, h: 40, html: puffs(3) }, { cls: 'steam', x: 228, y: 488, w: 30, h: 40, html: puffs(3) }],
+    tv: () => [{ cls: 'flicker', x: 328, y: 104, w: 234, h: 134 }],
+    clap: () => [{ cls: 'smoke', x: 312, y: 436, w: 24, h: 40, html: puffs(3) }, { cls: 'smoke', x: 226, y: 350, w: 24, h: 40, html: puffs(3) }]
+      .concat([[90, 50], [210, 64], [470, 50], [560, 64]].map(([x, y]) => ({ cls: 'glow', x: x - 46, y: y - 46, w: 92, h: 92 }))),
+    salon: (c) => (c.night || c.rain ? [] : [{ cls: 'sky', x: 104, y: 22, w: 398, h: 140, html: '<div class="cloud" style="position:absolute;top:22px;width:80px;height:18px;--cw:420px"></div><div class="cloud" style="position:absolute;top:70px;width:56px;height:14px;--cw:420px;animation-delay:-19s"></div>' }]),
+    bedroom: (c) => (c.night || c.rain ? [] : [{ cls: 'sky', x: 24, y: 22, w: 262, h: 120, html: '<div class="cloud" style="position:absolute;top:30px;width:60px;height:14px;--cw:300px"></div>' }]),
+  };
+
+  window.RoomArt = { defs, ART, PROPS, LIGHT, FX };
 })();
