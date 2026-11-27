@@ -16,3 +16,9 @@ Serve the folder (`python3 -m http.server`) and open it, or install it from the 
 
 ## Files
 `index.html`, `style.css`, `js/rush.js` (game), `js/art.js` (characters), `js/audio.js` (music and sounds), `manifest.webmanifest`, `sw.js`, `icons/`, `assets/`.
+
+## Maps
+
+- **Home** (Tehran, 6-floor tower): Living room, Kitchen, TV room, Bedroom hallway (Nena only), Nena's room with her bathroom. Use the room tabs at the bottom; tap an icon on a tab to send Nena there.
+- **Tehran street**: bakery (sangak), juice shop, fountain, the family's white 4×4 and sedan.
+- **CLAP**: the Japanese-style hookah & tea place where Nena and Negin hang out (and Baba keeps calling).

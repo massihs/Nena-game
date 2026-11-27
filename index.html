@@ -29,7 +29,7 @@
     <div class="title-panel">
       <h1>Nena <em>&amp;</em> Simba</h1>
       <p class="tagline">Busy days in Tehran</p>
-      <p class="lede">Simba is hungry, Baba wants tea, Maman needs help, Nasim is angry and Negin won’t wake up. Can Nena keep everyone happy before the day ends?</p>
+      <p class="lede">Simba is hungry, Baba wants tea in the TV room, Maman needs help in the kitchen, Nasim is angry and Negin won’t wake up. And tonight: hookah and tea at CLAP. Can Nena keep everyone happy?</p>
       <button type="button" class="btn btn-primary btn-big" id="btn-play">Play</button>
       <p class="progress" id="t-progress"></p>
     </div>
@@ -80,7 +80,7 @@
       <div class="hud-obj" id="g-obj" hidden></div>
     </header>
     <div class="stage-wrap" id="stage-wrap"><div class="stage" id="stage"></div><div class="toast" id="toast"></div></div>
-    <footer class="handbar"><span class="hand-label">Holding</span><span class="hand-items" id="g-hand"><em>Empty hands</em></span></footer>
+    <footer class="handbar"><span class="hand-items" id="g-hand" aria-label="Holding"><em>✋</em></span><nav class="rooms" id="g-rooms" aria-label="Rooms"></nav></footer>
   </section>
 
   <!-- Result -->
@@ -118,7 +118,7 @@
   <section class="screen modal" id="screen-pause" hidden>
     <div class="card">
       <h2>Paused</h2>
-      <p class="r-sub">Tip: tap a request bubble or a character and Nena plans every step by herself. Glowing spots are the ones that help right now!</p>
+      <p class="r-sub">Tip: the room tabs at the bottom show who needs what in each room. Tap an icon on a tab and Nena goes there by herself. Glowing spots help right now!</p>
       <div class="row col">
         <button type="button" class="btn btn-primary" id="p-resume">Resume</button>
         <button type="button" class="btn" id="p-sound">Sound: on</button>
@@ -140,6 +140,7 @@
 
 <script src="js/art.js"></script>
 <script src="js/audio.js"></script>
+<script src="js/rooms-art.js"></script>
 <script src="js/rush.js"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 /* Service worker: caches the game so it plays offline. */
-const CACHE = 'nena-simba-v11-rush2';
+const CACHE = 'nena-simba-v12-rooms';
 const SHELL = [
   './', './index.html', './style.css', './manifest.webmanifest',
-  './js/art.js', './js/audio.js', './js/rush.js',
+  './js/art.js', './js/audio.js', './js/rooms-art.js', './js/rush.js',
   './assets/nena-simba.jpg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
 ];
 self.addEventListener('install', (e) => {
