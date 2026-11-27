@@ -25,8 +25,9 @@
 
   <!-- Title -->
   <section class="screen title" id="screen-title">
-    <div class="title-art"><img src="assets/nena-simba.jpg" alt="Nena and Simba asleep, snuggled under the duvet"><div class="title-glow"></div></div>
+    <div class="title-art"><img src="assets/nena-simba.jpg" alt="Nena and Simba asleep, snuggled under the duvet"><div class="title-glow"></div><div class="sparkles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
     <div class="title-panel">
+      <div class="t-cast" id="t-cast" aria-hidden="true"></div>
       <h1>Nena <em>&amp;</em> Simba</h1>
       <p class="tagline">Busy days in Tehran</p>
       <p class="lede">Simba is hungry, Baba wants tea in the TV room, Maman needs help in the kitchen, Nasim is angry and Negin won’t wake up. And tonight: hookah and tea at CLAP. Can Nena keep everyone happy?</p>
@@ -39,7 +40,7 @@
   <section class="screen map" id="screen-map" hidden>
     <header class="bar">
       <button type="button" class="icon-btn" id="m-back" aria-label="Back">‹</button>
-      <h2>Nena’s week</h2>
+      <h2>Nena’s week <small id="m-prog"></small></h2>
       <span class="pill">★ <b id="m-stars">0</b></span>
       <span class="pill coin">🪙 <b id="m-coins">0</b></span>
     </header>
@@ -60,20 +61,20 @@
   <!-- Game -->
   <section class="screen game" id="screen-game" hidden>
     <header class="hud">
-      <div class="hud-row">
-        <span class="hud-level" id="g-level">Day 1</span>
-        <span class="hud-time" id="g-time">1:00</span>
-        <button type="button" class="icon-btn" id="g-pause" aria-label="Pause">❚❚</button>
-      </div>
-      <div class="hud-row">
-        <div class="scorebar" aria-label="Score">
-          <div class="scorefill" id="g-fill"></div>
-          <span class="sstar" id="g-star1">★</span><span class="sstar" id="g-star2">★</span><span class="sstar end" id="g-star3">★</span>
+      <div class="hud-row top">
+        <button type="button" class="icon-btn hud-pause" id="g-pause" aria-label="Pause">❚❚</button>
+        <div class="hud-mid">
+          <span class="hud-level" id="g-level">Day 1</span>
+          <div class="scorebar" aria-label="Score">
+            <div class="scorefill" id="g-fill"></div>
+            <span class="sstar" id="g-star1">★</span><span class="sstar" id="g-star2">★</span><span class="sstar end" id="g-star3">★</span>
+          </div>
         </div>
-        <b class="hud-score" id="g-score">0</b>
+        <div class="hud-clock"><svg viewBox="0 0 44 44" aria-hidden="true"><circle class="hc-bg" cx="22" cy="22" r="19"/><circle class="hc-ring" id="g-tring" cx="22" cy="22" r="19"/></svg><span class="hud-time" id="g-time">1:00</span></div>
       </div>
       <div class="hud-row small">
         <span class="hearts" id="g-hearts">♥♥♥♥♥</span>
+        <span class="hud-score-w">⭐ <b class="hud-score" id="g-score">0</b></span>
         <span class="combo" id="g-combo"></span>
         <span class="rush-badge" id="g-rush" hidden>Rush ×1.5</span>
         <span class="pill coin">🪙 <b id="g-coins">0</b></span>
@@ -87,7 +88,8 @@
   <!-- Result -->
   <section class="screen modal" id="screen-result" hidden>
     <div class="confetti" id="confetti" aria-hidden="true"></div>
-    <div class="card">
+    <div class="card result">
+      <div class="r-portrait" id="r-portrait"></div>
       <h2 id="r-title">Great day!</h2>
       <div class="stars" id="r-stars"></div>
       <ul class="r-lines" id="r-lines"></ul>

@@ -1226,12 +1226,16 @@
     const t = Math.ceil(G.cfg.endless ? G.elapsed : G.time);
     $('g-time').textContent = `${G.cfg.endless ? '∞ ' : ''}${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
     $('g-time').classList.toggle('low', !G.cfg.endless && G.time < 10);
+    const ring = $('g-tring'), frac = G.cfg.endless ? 1 : Math.max(0, G.time / (G.cfg.dur + (G.boosts.time ? 15 : 0)));
+    ring.style.strokeDashoffset = String(119.4 * (1 - frac));
+    ring.classList.toggle('low', !G.cfg.endless && G.time < 15);
     $('g-score').textContent = G.score;
     $('g-fill').style.width = Math.min(100, (G.score / c.targets[2]) * 100) + '%';
     $('g-star1').classList.toggle('on', G.score >= c.targets[0]);
     $('g-star2').classList.toggle('on', G.score >= c.targets[1]);
     $('g-star3').classList.toggle('on', G.score >= c.targets[2]);
-    $('g-hearts').textContent = '♥'.repeat(Math.max(0, G.hearts)) + '♡'.repeat(Math.max(0, G.maxHearts - G.hearts));
+    const hk = G.hearts + '/' + G.maxHearts;
+    if ($('g-hearts').dataset.k !== hk) { $('g-hearts').dataset.k = hk; $('g-hearts').innerHTML = Array.from({ length: G.maxHearts }, (_, i) => `<i class="${i < G.hearts ? 'on' : ''}">♥</i>`).join(''); }
     $('g-combo').innerHTML = G.combo > 1 ? `Combo ×${G.combo} <i style="width:${Math.max(0, G.comboT / 6) * 100}%"></i>` : (G.boostT > 0 ? '⚡ Chai rush!' : G.freezeT > 0 ? '❄️ Treat time' : '');
     const starsNow = G.score >= c.targets[2] ? 3 : G.score >= c.targets[1] ? 2 : G.score >= c.targets[0] ? 1 : 0;
     if (starsNow > G.starsShown) { G.starsShown = starsNow; snd('coin'); const st = $('g-star' + starsNow); st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop'); }
@@ -1302,7 +1306,10 @@
     $('r-sub').textContent = lost ? 'The family lost patience. Try again, and watch the rings!' : stars ? `Goal: ${c.targets[0]} · ${c.targets[1]} · ${c.targets[2]}` : `You needed ${c.targets[0]} points for 1 star.`;
     $('r-next').hidden = !stars || !!c.endless || !!c.challenge;
     $('r-title').textContent = c.endless ? 'Endless day over!' : $('r-title').textContent;
+    $('r-portrait').innerHTML = A.portrait(stars >= 2 ? 'nena' : stars ? 'nena' : 'nena', stars >= 2 ? 'happy' : stars ? 'neutral' : 'sad');
     $('screen-result').hidden = false;
+    const tot = document.querySelector('#r-lines li.total b');
+    if (tot) { const goal = final, t0 = performance.now(); const step = (t) => { const k = Math.min(1, (t - t0) / 900); tot.textContent = Math.round(goal * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); }
     snd(stars >= 2 ? 'fanfare' : stars ? 'success' : 'fail');
     if (stars === 3) confetti();
     checkAch();
@@ -1579,23 +1586,49 @@
   function renderMap() {
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
     $('m-coins').textContent = save.coins;
+    $('m-prog').textContent = `Day ${Math.min(save.level, LEVELS.length)}/${LEVELS.length}`;
     $('m-stars').textContent = total;
     const max = Math.max(save.level + 2, LEVELS.length);
-    let html = '';
+    // winding path: chapter banners, then level nodes zig-zagging down the page
+    const ZONES = ['#f6ead6', '#e4f0dc', '#e6def4', '#fbeac2', '#f3e3ea'];
+    const DECO = [['🐾', '🦴', '☕', '🧺'], ['🌳', '🫓', '🚙', '🧃'], ['🏮', '🍵', '🎋', '🔮'], ['💍', '🎂', '🎉', '✨'], ['⭐', '🐾', '🏮', '🌳']];
+    let y = 20, zone = -1, html = '', pts = [], zones = [], deco = '';
+    const xAt = (n) => 50 + Math.sin(n * 1.15) * 27;
     for (let n = 1; n <= max; n++) {
       const cfg = levelCfg(n), locked = n > save.level, st = save.stars[n] || 0;
-      const chap = CHAPTERS.find((x) => x.from === n);
-      if (chap) html += `<h3 class="chap">${chap.title}</h3>`;
-      if (n === LEVELS.length + 1) html += '<h3 class="chap">Bonus days</h3>';
-      html += `<button type="button" class="lvl${cfg.boss ? ' boss' : ''}${locked ? ' locked' : ''}${n === save.level ? ' current' : ''}" data-level="${n}" ${locked ? 'disabled' : ''}>
-        <span class="lvl-n">${locked ? '🔒' : n}</span><span class="lvl-t"><b>${cfg.boss ? '👑 ' : ''}${cfg.title}</b><small>${cfg.boss ? 'BOSS DAY · ' : ''}${cfg.day} · ${PLACE_LABEL[cfg.place]}</small></span>
-        <span class="lvl-s">${save.medals[n] ? '<em>🏅</em>' : ''}${'★'.repeat(st)}<i>${'★'.repeat(3 - st)}</i></span></button>`;
+      const chap = CHAPTERS.find((x) => x.from === n) || (n === LEVELS.length + 1 ? { title: 'Bonus days' } : null);
+      if (chap) {
+        zone++; zones.push(y);
+        html += `<div class="chap-banner z${zone}" style="top:${y}px"><span>${chap.title.replace(' · ', '<br><b>')}</b></span></div>`;
+        y += 96;
+      }
+      const x = xAt(n);
+      pts.push([x, y + 34, !locked]);
+      const right = x < 50;
+      const icon = { home: '🏠', street: '🌳', clap: '🏮' }[cfg.place];
+      html += `<button type="button" class="node${locked ? ' locked' : ''}${n === save.level ? ' current' : ''}${st ? ' done' : ''}${cfg.boss ? ' boss' : ''}" data-level="${n}" ${locked ? 'disabled' : ''} style="left:${x}%;top:${y}px">
+        <span class="node-n">${locked ? '🔒' : cfg.boss ? '👑' : n}</span><span class="node-s">${[0, 1, 2].map((i) => `<i class="${i < st ? 'on' : ''}">★</i>`).join('')}</span>
+        <span class="node-l ${right ? 'r' : 'l'}"><b>${cfg.title}</b><small>${icon} ${cfg.day}${save.medals[n] ? ' · 🏅' : ''}</small></span></button>`;
+      if (n === save.level) html += `<div class="me" style="left:${x}%;top:${y - 46}px">${A.nena({ dressed: true, outfit: save.outfit, eyes: 'open' })}</div>`;
+      if (n % 2 === 0) deco += `<span class="deco" style="left:${right ? 2 + (n % 3) * 2 : 84 + (n % 3) * 3}%;top:${y + 16}px">${DECO[Math.max(0, zone)][n % 4]}</span>`;
+      y += 108;
     }
+    const H = y + 20;
+    zones.push(H);
+    const bands = zones.slice(0, -1).map((top, i) => `<div class="zone" style="top:${top}px;height:${zones[i + 1] - top}px;background:${ZONES[i % ZONES.length]}"></div>`).join('');
+    let d = '', dDone = '';
+    pts.forEach(([x, py, ok], i) => {
+      if (!i) { d = `M${x} ${py}`; dDone = d; return; }
+      const [px, ppy] = pts[i - 1], my = (ppy + py) / 2;
+      const seg = ` C${px} ${my} ${x} ${my} ${x} ${py}`;
+      d += seg; if (ok) dDone += seg;
+    });
+    html = `<div class="path" style="height:${H}px">${bands}${deco}<svg class="path-line" viewBox="0 0 100 ${H}" preserveAspectRatio="none" style="height:${H}px"><path d="${d}" class="pl-all"/><path d="${dDone}" class="pl-done"/></svg>${html}</div>`;
     $('m-levels').innerHTML = html;
     renderHub();
     show('screen-map');
     if (dailyReady() && !dailyShown) { dailyShown = true; setTimeout(() => openSheet('daily'), 350); }
-    const cur = document.querySelector('.lvl.current');
+    const cur = document.querySelector('.node.current');
     if (cur) cur.scrollIntoView({ block: 'center' });
   }
   const PLACE_LABEL = { home: '🏠 Home', street: '🌳 Tehran street', clap: '🏮 CLAP' };
@@ -1686,6 +1719,12 @@
   $('p-sound').addEventListener('click', () => { save.sound = save.sound === false; save.music = save.sound; persist(); wake(); $('p-sound').textContent = save.sound ? 'Sound: on' : 'Sound: off'; });
   document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !G.paused) { G.paused = true; show('screen-pause'); } });
   $('p-sound').textContent = save.sound === false ? 'Sound: off' : 'Sound: on';
+  (function cast() {
+    const box = $('t-cast'); if (!box) return;
+    const fig = (html, w, h, cls, d) => `<div class="actor ${cls}" style="position:relative;display:inline-block;width:${w}px;height:${h}px;transform:none;--bd:${d}s">${html}</div>`;
+    box.innerHTML = fig(A.person('mohsen', { mood: 'happy' }), 46, 80, 'npc', -1) + fig(A.person('fariba', { mood: 'happy' }), 44, 77, 'npc', -2) + fig(A.nena({ dressed: true, outfit: save.outfit }), 52, 91, 'nena', -.5) + fig(A.simba({ collar: save.collar }), 70, 55, 'simba', -3) + fig(A.person('negin', { mood: 'happy' }), 44, 77, 'npc', -1.5) + fig(A.person('nasim', { mood: 'angry' }), 44, 77, 'npc', -2.5);
+    setInterval(() => { const kids = box.children; const k = kids[Math.floor(Math.random() * kids.length)]; if (!k) return; k.classList.add(k.classList.contains('simba') ? 'barking' : 'talking'); setTimeout(() => k.classList.remove('talking', 'barking'), 1200); }, 1800);
+  })();
   $('t-progress').textContent = save.level > 1 ? `Day ${save.level} · ${save.coins} 🪙` : '';
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 })();

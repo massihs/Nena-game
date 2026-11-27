@@ -36,6 +36,8 @@
       <radialGradient id="rneon"><stop offset="0" stop-color="#ff5fa2" stop-opacity=".55"/><stop offset="1" stop-color="#ff5fa2" stop-opacity="0"/></radialGradient>
       <linearGradient id="rwall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6efe6"/><stop offset="1" stop-color="#ebe1d4"/></linearGradient>
       <linearGradient id="rshine" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <linearGradient id="rrefl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dff1ff" stop-opacity=".55"/><stop offset="1" stop-color="#dff1ff" stop-opacity="0"/></linearGradient>
+      <radialGradient id="rao"><stop offset="0" stop-color="#2a1a14" stop-opacity=".32"/><stop offset="1" stop-color="#2a1a14" stop-opacity="0"/></radialGradient>
       <linearGradient id="rbeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6dc" stop-opacity=".34"/><stop offset="1" stop-color="#fff6dc" stop-opacity="0"/></linearGradient>
       <radialGradient id="rvig" cx="50%" cy="46%" r="72%"><stop offset=".55" stop-color="#1c1428" stop-opacity="0"/><stop offset="1" stop-color="#1c1428" stop-opacity=".55"/></radialGradient>
       <radialGradient id="rwarm"><stop offset="0" stop-color="#ffcf80" stop-opacity=".5"/><stop offset="1" stop-color="#ffcf80" stop-opacity="0"/></radialGradient>
@@ -53,6 +55,9 @@
   };
   // floor-to-ceiling bay window (the flat has glass everywhere)
   const bay = (x, y, w, h, ox, panes) => win(x, y, w, h, ox, panes) + `<rect x="${x - 8}" y="${y + h}" width="${w + 16}" height="6" fill="#d8dadc"/>`;
+  // reflection of a bay window on the polished floor, and soft contact shadows under furniture
+  const refl = (x, w, y0, panes) => `<rect x="${x}" y="${y0}" width="${w}" height="130" fill="url(#rrefl)" opacity=".7"/>` + [...Array((panes || 2) - 1)].map((_, i) => `<rect x="${(x + (w * (i + 1)) / (panes || 2) - 2).toFixed(0)}" y="${y0}" width="4" height="90" fill="#1e1d22" opacity=".08"/>`).join('');
+  const ao = (cx, cy, rx, ry) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry || 16}" fill="url(#rao)"/>`;
   // polished white & grey marble floor
   function marble(y0, x0, x1) {
     x0 = x0 || 0; x1 = x1 || 600;
@@ -89,8 +94,9 @@
     ${arch(0, 196, 88, 196, 'KITCHEN · TV')}
     <rect x="512" y="186" width="88" height="206" fill="#e2d6c4"/><rect x="518" y="192" width="82" height="200" fill="#5a3a26"/><rect x="532" y="210" width="54" height="44" rx="4" fill="#9fc4da" opacity=".7"/><rect x="590" y="300" width="4" height="24" rx="2" fill="#c9a24a"/>
     ${label(558, 182, 'FRONT DOOR', '#7a5c4e', 9)}
-    ${marble(392)}
+    ${marble(392)}${refl(104, 398, 394, 4)}
     <rect x="512" y="392" width="88" height="14" fill="#8c6a4a" opacity=".35"/>
+    ${ao(244, 540, 150, 18)}${ao(530, 724, 56, 10)}${ao(452, 560, 34, 8)}
     ${rug(320, 625, 380, 120)}
     <rect x="118" y="438" width="250" height="96" rx="28" fill="#efe6da"/><rect x="132" y="408" width="222" height="62" rx="24" fill="#f4ece2"/><rect x="106" y="452" width="36" height="84" rx="16" fill="#e6dccf"/><rect x="344" y="452" width="36" height="84" rx="16" fill="#e6dccf"/>
     <rect x="152" y="424" width="52" height="40" rx="12" fill="#c9785a"/><rect x="282" y="424" width="52" height="40" rx="12" fill="#2f4a3e"/>
@@ -118,7 +124,7 @@
     <g><ellipse cx="300" cy="282" rx="24" ry="4" fill="rgba(0,0,0,.12)"/><path d="M282 280 q-4 -30 7 -43 h22 q11 13 7 43z" fill="#d9b866"/><path d="M291 237 q9 -9 18 0" fill="#c9a24a"/><path d="M292 228 h16 l-2 10 h-12z" fill="#e05b7b"/><path d="M282 248 q-2 18 4 28" stroke="#fff6cc" stroke-width="3" fill="none" opacity=".7"/></g>
     <g><path d="M384 282 l4 -40 h28 l4 40z" fill="#c9a27a"/><path d="M388 248 h28" stroke="#9a6232" stroke-width="3"/>${label(402, 268, 'KIBBLE', '#7a4a22', 9)}</g>
     ${arch(540, 196, 60, 196, '')}${label(570, 190, 'LIVING ›', '#9a9a96', 9)}
-    ${marble(392)}
+    ${marble(392)}${ao(300, 656, 170, 16)}${ao(300, 736, 140, 12)}
     ${[210, 300, 390].map((x) => `<path d="M${x} 392 V448" stroke="#c9ccd0" stroke-width="1.5"/><path d="M${x - 16} 462 q16 -22 32 0z" fill="#f4f4f2" stroke="#d6d6d4"/><ellipse cx="${x}" cy="470" rx="34" ry="12" fill="url(#rglow)" opacity=".7"/>`).join('')}
     <rect x="150" y="540" width="300" height="18" rx="4" fill="#f4f3f0" stroke="#dcdcda"/><path d="M164 548 q60 6 120 -2 t150 4" stroke="#b9bcc0" stroke-width="1.2" fill="none"/>
     <rect x="162" y="558" width="276" height="96" fill="#fafaf9"/><path d="M162 580 H438" stroke="#ececea" stroke-width="2"/>${[0, 1].map((i) => `<path d="M${162 + 92 * (i + 1)} 580 V654" stroke="#ececea" stroke-width="2"/>`).join('')}
@@ -136,7 +142,7 @@
     <rect x="330" y="252" width="230" height="10" rx="3" fill="#2a2a2a"/>
     <rect x="300" y="300" width="290" height="70" rx="6" fill="#6b4632"/><rect x="310" y="312" width="80" height="46" rx="4" fill="#5a3a26"/><rect x="400" y="312" width="80" height="46" rx="4" fill="#5a3a26"/><rect x="490" y="312" width="90" height="46" rx="4" fill="#5a3a26"/>
     <rect x="0" y="0" width="38" height="392" fill="#e6dccf"/><rect x="0" y="196" width="34" height="196" fill="#c7b499"/>${label(20, 190, '‹', '#7a5c4e', 16)}
-    ${marble(392)}
+    ${marble(392)}${refl(46, 240, 394, 3)}${ao(250, 534, 130, 16)}${ao(445, 372, 150, 10)}
     ${rug(330, 640, 420, 150)}
     <g><rect x="150" y="430" width="200" height="100" rx="26" fill="#7a4a32"/><rect x="164" y="402" width="172" height="64" rx="22" fill="#8a5a3a"/><rect x="138" y="446" width="34" height="88" rx="16" fill="#6b3f2a"/><rect x="328" y="446" width="34" height="88" rx="16" fill="#6b3f2a"/><rect x="186" y="420" width="46" height="36" rx="10" fill="#d9b866"/></g>
     <rect x="370" y="600" width="170" height="14" rx="4" fill="#6b4632"/><rect x="380" y="614" width="6" height="36" fill="#5a3a26"/><rect x="524" y="614" width="6" height="36" fill="#5a3a26"/>
@@ -168,7 +174,7 @@
     <rect x="276" y="282" width="120" height="10" rx="2" fill="#8a5a3a"/><rect x="284" y="292" width="6" height="140" fill="#7a4e32"/><rect x="382" y="292" width="6" height="140" fill="#7a4e32"/>
     <path d="M318 282 l6 -34 h44 l6 34z" fill="#3a3550"/><rect x="326" y="252" width="40" height="26" fill="#ef8fb0" opacity=".85"/>
     <rect x="300" y="120" width="90" height="120" rx="4" fill="#e9d2d2"/><rect x="306" y="126" width="78" height="108" fill="#f8eeee"/>${label(345, 186, 'NENA', '#c9496f', 13)}
-    ${marble(430, 0, 410)}
+    ${marble(430, 0, 410)}${ao(156, 592, 150, 18)}${ao(140, 712, 90, 10)}
     <rect x="30" y="330" width="250" height="110" rx="18" fill="#c9a0a8"/>
     <rect x="22" y="420" width="268" height="170" rx="24" fill="#f5ead9"/><path d="M22 470 q134 -30 268 0 v96 q0 24 -24 24 h-220 q-24 0 -24 -24z" fill="#f2b7c8"/><path d="M40 500 q60 -14 120 8 q60 18 120 -4" stroke="#fff" stroke-width="4" fill="none" opacity=".5"/>
     <rect x="44" y="420" width="88" height="44" rx="18" fill="#fff"/><rect x="150" y="420" width="88" height="44" rx="18" fill="#fff"/>
