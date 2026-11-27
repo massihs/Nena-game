@@ -282,6 +282,8 @@
     if (G.boosts.heart) { G.hearts++; G.maxHearts++; }
     G.zen = n < 900 && save.wellness.zen === today();
     G.fit = n < 900 && save.wellness.gym === today();
+    G.slept = n < 900 && dayNum() - (save.wellness.bedN ?? -9) <= 1;
+    if (G.slept) setTimeout(() => { if (G && G.n === n) toast('🌙 Simba slept in Nena’s arms: he is 15% more patient!', 'hint', 2200); }, 5200);
     if (G.fit) setTimeout(() => { if (G && G.n === n) toast('🏋️ Gym energy: Nena is 15% faster today!', 'hint', 2200); }, 3400);
     if (n < 900 && save.wellness.tree === today()) { G.hearts++; G.maxHearts++; }
     if (G.zen || (n < 900 && save.wellness.tree === today())) setTimeout(() => { if (G && G.n === n) toast((G.zen ? '🧘 Zen: everyone is 10% more patient today. ' : '') + (save.wellness.tree === today() ? '🌳 Good energy: +1 heart!' : ''), 'hint', 2600); }, 600);
@@ -664,6 +666,7 @@
     if (G.cfg.mod && G.cfg.mod.patienceMul) m *= G.cfg.mod.patienceMul;
     if (G.boosts.easy) m *= 1.3;
     if (G.zen) m *= 1.1;
+    if (who === 'simba' && G.slept) m *= 1.15;
     return m;
   }
   function spawn() {
@@ -1853,6 +1856,7 @@
     { id: 'journey', icon: '🗺️', name: 'Full journey', desc: 'Complete a 30-minute daily journey', test: (t) => (t.journey || 0) >= 1, r: 80 },
     { id: 'lv10', icon: '⭐', name: 'Level 10', desc: 'Reach player level 10', test: () => save.plv >= 10, r: 100 },
     { id: 'set1', icon: '🎴', name: 'Collector', desc: 'Complete a sticker set', test: (t) => (t.set || 0) >= 1, r: 80 },
+    { id: 'bed7', icon: '🌙', name: 'Only in her arms', desc: 'Rock Simba to sleep on 7 nights', test: (t) => (t.bed || 0) >= 7, r: 100 },
     { id: 'gym5', icon: '🏋️', name: 'Gym sisters', desc: 'Train 5 times with Negin', test: (t) => (t.gym || 0) >= 5, r: 80 },
     { id: 'cuddle10', icon: '🦁', name: 'Baba’s lion', desc: 'Put Simba on Baba’s belly 10 times', test: (t) => (t.req_cuddle || 0) >= 10, r: 60 },
   ];
@@ -1943,7 +1947,7 @@
       ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
       ['missions', '📋', 'Quests', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
       ['nails', '💅', 'Nail day', nailsReady() ? '!' : ''], ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
-      ['wheel', '🎡', 'Wheel', spinsLeft() || ''], ['stickers', '🎴', 'Stickers', `${Object.keys(save.stickers).length}/${STICKERS.length}`], ['gym', '🏋️', 'Gym', gymDay() && save.wellness.gym !== today() ? '!' : ''], ['zen', '🧘', 'Zen', save.wellness.zen !== today() ? '!' : ''], ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
+      ['wheel', '🎡', 'Wheel', spinsLeft() || ''], ['stickers', '🎴', 'Stickers', `${Object.keys(save.stickers).length}/${STICKERS.length}`], ['bed', '🌙', 'Bedtime', new Date().getHours() >= 18 && save.wellness.bed !== today() ? '!' : ''], ['gym', '🏋️', 'Gym', gymDay() && save.wellness.gym !== today() ? '!' : ''], ['zen', '🧘', 'Zen', save.wellness.zen !== today() ? '!' : ''], ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
     ];
     renderJourney();
     $('m-hub').innerHTML = items.map(([id, ico, name, b]) => `<button type="button" class="hub-btn" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^\d+\/\d+$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
@@ -1956,6 +1960,7 @@
     if (kind === 'zen') { openZen(); return; }
     if (kind === 'wheel') { openWheel(); return; }
     if (kind === 'gym') { openGym(); return; }
+    if (kind === 'bed') { openBed(); return; }
     if (kind === 'nails') { startNailDay(); return; }
     sheetKind = kind;
     const T = { stickers: '🎴 Sticker album', games: '🎮 Mini-games', settings: '⚙️ Settings', daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Quests', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
@@ -2242,7 +2247,7 @@
   const JOURNEY = [{ m: 5, c: 20, ico: '🎁' }, { m: 10, c: 40, ico: '🎁' }, { m: 20, c: 70, ico: '💎' }, { m: 30, c: 150, ico: '👑', outfit: 'zen' }];
   let lastInput = Date.now(), jReadyShown = -1;
   document.addEventListener('pointerdown', () => { lastInput = Date.now(); }, true);
-  const ACTIVE = ['screen-game', 'screen-tricks', 'screen-tahdig', 'screen-sort', 'screen-nails', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-gym'];
+  const ACTIVE = ['screen-game', 'screen-tricks', 'screen-tahdig', 'screen-sort', 'screen-nails', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-gym', 'screen-bed'];
   function journeyToday() { if (save.journey.date !== today()) save.journey = { date: today(), sec: 0, got: [] }; return save.journey; }
   setInterval(() => {
     if (document.hidden || Date.now() - lastInput > 60000) return;
@@ -2462,7 +2467,7 @@
   const DQ_POOL = [
     { k: 'pet', n: 3, ico: '🐶', label: 'Pet Simba 3 times' }, { k: 'day', n: 1, ico: '🌅', label: 'Finish a day' }, { k: 'game', n: 1, ico: '🎮', label: 'Play a mini-game' },
     { k: 'req', n: 15, ico: '⚡', label: 'Complete 15 requests' }, { k: 'perfect', n: 1, ico: '⭐', label: 'Get 3 stars on a day' }, { k: 'mini', n: 2, ico: '🔥', label: 'Win 2 mini challenges' },
-    { k: 'zen', n: 1, ico: '🧘', label: 'Meditate once' }, { k: 'gym', n: 1, ico: '🏋️', label: 'Go to the gym with Negin' }, { k: 'req_food', n: 3, ico: '🍖', label: 'Feed Simba 3 times' }, { k: 'req_tea', n: 2, ico: '☕', label: 'Serve Baba 2 teas' }, { k: 'photo', n: 1, ico: '📸', label: 'Take a Simba photo' },
+    { k: 'zen', n: 1, ico: '🧘', label: 'Meditate once' }, { k: 'gym', n: 1, ico: '🏋️', label: 'Go to the gym with Negin' }, { k: 'bed', n: 1, ico: '🌙', label: 'Rock Simba to sleep' }, { k: 'req_food', n: 3, ico: '🍖', label: 'Feed Simba 3 times' }, { k: 'req_tea', n: 2, ico: '☕', label: 'Serve Baba 2 teas' }, { k: 'photo', n: 1, ico: '📸', label: 'Take a Simba photo' },
   ];
   function dailyQuests() {
     if (save.dq.date !== today()) save.dq = { date: today(), base: Object.assign({}, save.tot), claimed: false };
@@ -2658,6 +2663,103 @@
     if (stars === 3) confettiOn($('screen-gym'));
   }
 
+  /* ---- bedtime: Simba only sleeps in Nena's arms ---- */
+  const BED_BG = `<svg viewBox="0 0 390 520" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="bdw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#232750"/><stop offset="1" stop-color="#352f63"/></linearGradient><radialGradient id="bdl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd98a" stop-opacity=".55"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs>
+    <rect width="390" height="520" fill="url(#bdw)"/>
+    <rect x="200" y="50" width="150" height="150" rx="10" fill="#0f1433" stroke="#6a5f9c" stroke-width="7"/><circle cx="305" cy="92" r="20" fill="#fff4c8"/><circle cx="314" cy="86" r="18" fill="#0f1433"/>
+    <g fill="#fff">${[[222, 70], [250, 110], [338, 140], [270, 64], [232, 132]].map(([x, y]) => `<circle class="bd-star" cx="${x}" cy="${y}" r="1.8"/>`).join('')}</g>
+    <path d="M203 197 v-30 h16 v-14 h12 v24 h14 v-34 h10 v-22 l4 -14 4 14 v22 h10 v40 h18 v-18 h14 v32 h20 v-10 h12 V197Z" fill="#1d2147"/>
+    <g fill="#ffd36b">${[[224, 175], [250, 165], [262, 150], [290, 180], [314, 172], [336, 185]].map(([x, y]) => `<rect x="${x}" y="${y}" width="3" height="3"/>`).join('')}</g>
+    <line x1="275" y1="50" x2="275" y2="200" stroke="#6a5f9c" stroke-width="5"/><line x1="200" y1="125" x2="350" y2="125" stroke="#6a5f9c" stroke-width="5"/>
+    <circle cx="70" cy="190" r="90" fill="url(#bdl)"/><rect x="62" y="200" width="16" height="60" fill="#8a6a4a"/><path d="M44 200 h52 l-10 -36 h-32Z" fill="#ffcf7a"/>
+    <rect x="0" y="330" width="390" height="190" fill="#2b2650"/><rect x="0" y="326" width="390" height="8" fill="#4b4380"/>
+    <rect x="-20" y="250" width="190" height="110" rx="16" fill="#e8dcff"/><rect x="-20" y="280" width="190" height="80" rx="12" fill="#f4a3c0"/><path d="M-20 300 q95 -18 190 0" stroke="#e57fa3" stroke-width="5" fill="none"/><rect x="10" y="256" width="60" height="30" rx="12" fill="#fff"/>
+    <g class="bd-basket"><ellipse cx="320" cy="420" rx="58" ry="14" fill="#000" opacity=".25"/><path d="M262 384 q58 -20 116 0 l-10 34 q-48 12 -96 0Z" fill="#c98f4f"/><path d="M270 392 q50 -14 100 0" stroke="#a46f35" stroke-width="4" fill="none"/><ellipse cx="320" cy="384" rx="52" ry="12" fill="#8fd3c3"/></g>
+  </svg>`;
+  const BED_NOISE = [['📺', 'GOOOAL! Baba is cheering at the TV!'], ['🛵', 'A motorbike roars in the street!'], ['📱', 'Negin’s phone is ringing!'], ['🍳', 'Maman dropped a pan in the kitchen!'], ['🚪', 'Pourya slams the door!']];
+  const BASKET_LINES = ['Simba jumps out and runs back to Nena. 🥺', 'Aouuu… Simba whines at the basket.', 'Nope. Simba sits at Nena’s feet and stares.', 'Simba drags the blanket back to Nena. 😂'];
+  let BD = null, bdRaf = 0;
+  function bdSay(t) { const e = $('bd-say'); e.textContent = t; e.classList.remove('pop'); void e.offsetWidth; e.classList.add('pop'); }
+  function bdPup(eyes) { $('bd-pup').innerHTML = A.simba({ eyes, tongue: false, collar: save.collar ? undefined : null }); }
+  function openBed() {
+    cancelAnimationFrame(bdRaf);
+    BD = { phase: 'choose', tries: 0, sleep: 0, t: 0, hold: false, noise: null, nextNoise: 6 + Math.random() * 4, missed: 0, eyes: '' };
+    $('bd-bg').innerHTML = BED_BG;
+    $('bd-nena').innerHTML = A.nena({ dressed: true, outfit: 'night', eyes: 'open' });
+    bdPup('open'); BD.eyes = 'open';
+    $('bd-pup').className = 'bd-pup roam'; $('bd-pair').classList.remove('rock'); $('bd-zzz').hidden = true;
+    $('bd-meter').hidden = true; $('bd-shh').hidden = true; $('bd-ring').hidden = true;
+    $('bd-basket').hidden = false; $('bd-btn').hidden = false; $('bd-btn').dataset.mode = 'arms'; $('bd-btn').textContent = '🤗 In Nena’s arms';
+    const h = new Date().getHours();
+    $('bd-info').textContent = save.wellness.bed === today() ? 'Simba already slept in your arms today ✓ (cuddle again!)' : (h >= 18 || h < 5 ? 'Bedtime! Reward: Simba 15% more patient tomorrow' : 'Nap time! Reward: Simba 15% more patient');
+    bdSay(pick(['Simba is yawning… but he won’t lie down. Where will he sleep?', 'Time for bed, Simba! He looks at his basket… then at Nena.']));
+    show('screen-bed'); music('zen'); snd('yawn');
+  }
+  function bdBasket() {
+    if (!BD || BD.phase !== 'choose') return;
+    BD.tries++; snd('fail'); track('bedtry');
+    const p = $('bd-pup'); p.className = 'bd-pup in-basket';
+    bdSay('Nena puts Simba in his cosy basket…');
+    setTimeout(() => { if (!BD || BD.phase !== 'choose') return; bdPup('open'); p.className = 'bd-pup roam back'; snd('bark'); bdSay(BASKET_LINES[(BD.tries - 1) % BASKET_LINES.length] + ' He only sleeps in Nena’s arms!'); }, 1100);
+  }
+  function bdArms() {
+    if (!BD || BD.phase !== 'choose') return;
+    BD.phase = 'rock'; snd('pop');
+    $('bd-pup').className = 'bd-pup held'; $('bd-basket').hidden = true;
+    $('bd-meter').hidden = false; $('bd-ring').hidden = false;
+    $('bd-btn').dataset.mode = 'rock'; $('bd-btn').textContent = 'Hold to rock 🤱';
+    bdSay('Hold while the moon grows (breathe in), let go while it shrinks (breathe out).');
+    let last = performance.now();
+    const tick = (now) => {
+      if (!BD || BD.phase !== 'rock' || $('screen-bed').hidden) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now; bdTick(dt);
+      bdRaf = requestAnimationFrame(tick);
+    };
+    bdRaf = requestAnimationFrame(tick);
+  }
+  function bdTick(dt) {
+    const B = BD; B.t += dt;
+    const ph = (B.t % 4) / 4, grow = ph < 0.5, sc = 0.62 + 0.38 * (grow ? ph * 2 : 2 - ph * 2);
+    $('bd-ring').style.transform = `translateX(-50%) scale(${sc.toFixed(3)})`; $('bd-ring').classList.toggle('in', grow);
+    const good = B.hold === grow;
+    B.sleep = Math.max(0, Math.min(1, B.sleep + (good ? 0.095 : -0.05) * dt));
+    $('bd-pair').classList.toggle('rock', B.hold);
+    $('bd-ring').classList.toggle('bad', !good && B.t > 0.6);
+    $('bd-fill').style.width = (B.sleep * 100).toFixed(0) + '%';
+    const eyes = B.sleep > 0.7 ? 'closed' : B.sleep > 0.35 ? 'both' : 'open';
+    if (eyes !== B.eyes) { B.eyes = eyes; bdPup(eyes); }
+    if (!B.noise && B.t >= B.nextNoise && B.sleep < 0.95) {
+      const [ico, txt] = pick(BED_NOISE); B.noise = { left: 1.8 };
+      $('bd-shh').hidden = false; $('bd-shh').innerHTML = `${ico} Shh! 🤫`; bdSay(txt); snd('bell');
+    }
+    if (B.noise) {
+      B.noise.left -= dt;
+      if (B.noise.left <= 0) { B.noise = null; B.missed++; B.sleep = Math.max(0, B.sleep - 0.25); $('bd-shh').hidden = true; snd('bark'); bdSay('Woof?! Simba woke up… rock him again.'); B.nextNoise = B.t + 7 + Math.random() * 5; }
+    }
+    if (B.sleep >= 1) bdEnd(true); else if (B.t >= 50) bdEnd(false);
+  }
+  function bdShh() {
+    if (!BD || !BD.noise) return;
+    BD.noise = null; $('bd-shh').hidden = true; snd('chime'); BD.nextNoise = BD.t + 7 + Math.random() * 5;
+    bdSay(pick(['Shhh… Nena covers Simba’s ears. 🤫', 'Phew. He didn’t wake up.', 'Nena hums softly… Simba stays asleep.']));
+  }
+  function bdEnd(ok) {
+    BD.phase = 'end'; cancelAnimationFrame(bdRaf);
+    $('bd-ring').hidden = true; $('bd-meter').hidden = true; $('bd-shh').hidden = true; $('bd-pair').classList.remove('rock');
+    let stars = ok ? (BD.t < 26 ? 3 : BD.t < 36 ? 2 : 1) : (BD.sleep >= 0.6 ? 1 : 0);
+    if (ok && BD.missed > 1) stars = Math.max(1, stars - 1);
+    const first = save.wellness.bed !== today() && stars > 0, coins = first ? 15 + 10 * stars : 0;
+    if (first) { save.wellness.bed = today(); save.wellness.bedN = dayNum(); save.coins += coins; track('bed'); }
+    if (stars) { save.friend.simba = (save.friend.simba || 0) + stars; gainXP(15); }
+    track('game'); persist(); checkAch();
+    if (stars) { bdPup('closed'); $('bd-zzz').hidden = false; $('bd-pair').classList.add('asleep'); snd('win'); }
+    bdSay(stars ? pick(['Lala lala, gol-e laleh… 🎶 Simba is fast asleep in Nena’s arms.', 'Simba snores softly against Nena. Good night, little lion. 🌙']) : 'Simba is still wide awake… try again, slower!');
+    $('bd-info').textContent = `${'★'.repeat(stars)}${'☆'.repeat(3 - stars)} · ${first ? `Simba slept well: 15% more patient · +${coins} 🪙 · ❤️ +${stars}` : stars ? 'Sweet dreams, Simba!' : 'Try again'}`;
+    $('bd-btn').dataset.mode = stars ? 'done' : 'again'; $('bd-btn').textContent = stars ? 'Good night 🌙' : 'Try again';
+    $('bd-basket').hidden = true;
+    if (stars === 3) confettiOn($('screen-bed'));
+  }
+
   /* ---- custom days: challenge and endless ---- */
   let CUSTOM = null;
   function challengeCfg(c) {
@@ -2704,7 +2806,7 @@
   /* Screens: title, map, story, shop                                    */
   /* ------------------------------------------------------------------ */
   function show(id) {
-    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-welcome', 'screen-gym'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
+    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-welcome', 'screen-gym', 'screen-bed'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
   }
   function renderMap() {
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
@@ -2864,6 +2966,12 @@
   $('gy-btn').addEventListener('pointerdown', (e) => { const m = e.currentTarget.dataset.mode; if (['squat', 'run', 'plank'].includes(m)) { e.preventDefault(); gyPress(true); } });
   ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => $('gy-btn').addEventListener(ev, () => { if ($('gy-btn').dataset.mode === 'plank') gyPress(false); }));
   $('gy-btn').addEventListener('click', (e) => { const m = e.currentTarget.dataset.mode; if (m === 'start' || m === 'next') { snd('click'); gyNext(); } else if (m === 'done') { GY = null; renderMap(); } });
+  $('bd-btn').addEventListener('pointerdown', (e) => { if (e.currentTarget.dataset.mode === 'rock' && BD) { e.preventDefault(); BD.hold = true; } });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => $('bd-btn').addEventListener(ev, () => { if (BD) BD.hold = false; }));
+  $('bd-btn').addEventListener('click', (e) => { const m = e.currentTarget.dataset.mode; if (m === 'arms') bdArms(); else if (m === 'again') openBed(); else if (m === 'done') { $('bd-pair').classList.remove('asleep'); BD = null; renderMap(); } });
+  $('bd-basket').addEventListener('click', bdBasket);
+  $('bd-shh').addEventListener('pointerdown', (e) => { e.preventDefault(); bdShh(); });
+  $('bd-back').addEventListener('click', () => { cancelAnimationFrame(bdRaf); BD = null; $('bd-pair').classList.remove('asleep'); renderMap(); });
   $('gy-back').addEventListener('click', () => { if (GY) GY.run = false; cancelAnimationFrame(gyRaf); GY = null; renderMap(); });
   $('wh-spin').addEventListener('click', spinWheel);
   $('wh-back').addEventListener('click', () => { if (!spinning) renderMap(); });

@@ -1057,3 +1057,40 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 .gy-mark { position: absolute; top: -2px; bottom: -2px; width: 8px; margin-left: -4px; border-radius: 4px; background: #fff; box-shadow: 0 0 8px #fff; }
 .gy-info { margin: 8px 16px 0; text-align: center; font-weight: 800; font-size: .85rem; color: #ffd98a; }
 .gym .confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 11; }
+
+/* ---- bedtime ---- */
+.bed { background: #171a36; color: #fff; }
+.bed .bar h2 { color: #fff; }
+.bd-stage { position: relative; flex: 1; min-height: 280px; margin: 0 max(12px, var(--safe-r)); border-radius: 22px; overflow: hidden; }
+.bd-bg { position: absolute; inset: 0; } .bd-bg svg { width: 100%; height: 100%; display: block; }
+.bd-star { animation: twinkle 2.4s ease-in-out infinite alternate; } .bd-star:nth-child(2n) { animation-delay: -1.2s; }
+@keyframes twinkle { to { opacity: .25; } }
+.bd-say { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); width: max-content; max-width: 88%; margin: 0; text-align: center; color: #3f2a22; z-index: 4; }
+.bd-say.pop { animation: sayIn .25s cubic-bezier(.3,1.6,.5,1); }
+.bd-pair { position: absolute; left: 30%; bottom: 7%; width: 120px; height: 210px; transform-origin: 50% 90%; transition: rotate .6s ease; z-index: 2; }
+.bd-pair.rock { animation: cradle 2s ease-in-out infinite; }
+.bd-pair.asleep { animation: cradle 4s ease-in-out infinite; }
+@keyframes cradle { 25% { rotate: -4deg; } 75% { rotate: 4deg; } }
+.bd-nena, .bd-nena svg { width: 100%; height: 100%; display: block; }
+.bd-pup { position: absolute; width: 104px; height: 83px; z-index: 3; transition: left .7s cubic-bezier(.4,1.4,.5,1), bottom .7s cubic-bezier(.4,1.4,.5,1), width .5s, height .5s, rotate .5s; left: 58%; bottom: 6%; }
+.bd-pup svg { width: 100%; height: 100%; display: block; }
+.bd-pup.roam { animation: roam 3.2s ease-in-out infinite; }
+.bd-pup.back { animation: roam 3.2s ease-in-out infinite, hop .35s ease 2; }
+@keyframes roam { 50% { translate: -40px 0; } }
+@keyframes hop { 50% { translate: 0 -24px; } }
+.bd-pup.in-basket { left: 70%; bottom: 17%; width: 92px; height: 74px; }
+.bd-pup.held { left: calc(30% + 14px); bottom: calc(7% + 52px); width: 92px; height: 74px; rotate: -8deg; }
+.bd-pair.rock ~ .bd-pup.held { animation: cradle 2s ease-in-out infinite; transform-origin: 30% 140%; }
+.bd-pair.asleep ~ .bd-pup.held { animation: cradle 4s ease-in-out infinite; transform-origin: 30% 140%; }
+.bd-ring { position: absolute; left: 50%; top: 64px; width: 84px; height: 84px; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #fff8d8, #ffd98a 60%, rgba(255,217,138,.2)); box-shadow: 0 0 30px rgba(255,217,138,.6); transform: translateX(-50%); z-index: 3; transition: box-shadow .2s, filter .2s; }
+.bd-ring.bad { filter: grayscale(.8) brightness(.7); box-shadow: 0 0 0 4px #e8577f; }
+.bd-ring::after { content: 'breathe out'; position: absolute; inset: 0; display: grid; place-items: center; color: #5a4632; font-weight: 900; font-size: .7rem; }
+.bd-ring.in::after { content: 'breathe in'; }
+.bd-zzz { position: absolute; right: -14px; top: 30px; font-weight: 900; color: #cfc9ef; }
+.bd-zzz i { position: absolute; font-style: normal; animation: zzz 2.4s ease-in infinite; opacity: 0; }
+.bd-zzz i:nth-child(2) { animation-delay: .8s; font-size: 1.2em; } .bd-zzz i:nth-child(3) { animation-delay: 1.6s; font-size: 1.5em; }
+@keyframes zzz { 0% { opacity: 0; translate: 0 0; } 30% { opacity: 1; } 100% { opacity: 0; translate: 20px -50px; } }
+.bd-shh { position: absolute; right: 8%; top: 38%; z-index: 5; padding: 12px 18px; border: 0; border-radius: 99px; background: #fff; color: #3f2a22; font: inherit; font-weight: 900; font-size: 1.05rem; box-shadow: 0 0 0 4px #e8577f, 0 8px 20px rgba(0,0,0,.4); animation: shh .5s ease-in-out infinite alternate; }
+@keyframes shh { to { scale: 1.12; } }
+.bd-fill { background: linear-gradient(90deg, #6a5fc9, #b9a8ff) !important; }
+.bd-foot { display: flex; gap: 8px; } .bd-foot #bd-btn { flex: 1; } .bd-foot #bd-basket[hidden] { display: none; }
