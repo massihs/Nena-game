@@ -353,7 +353,7 @@ window.Art = (function () {
       ${c.mustache ? `<path d="M64 92 q8 -8 16 -2 q8 -6 16 2 q-8 6 -16 2 q-8 4 -16 -2z" fill="${c.hair}"/>` : ''}
       ${c.earrings ? `<circle cx="44" cy="94" r="4" fill="${c.earrings}"/><circle cx="116" cy="94" r="4" fill="${c.earrings}"/>` : ''}
       ${m === 'angry' ? '<path d="M118 40 l6 -6 M122 48 l8 -2 M114 34 l2 -8" stroke="#e04a4a" stroke-width="3" stroke-linecap="round"/>' : ''}
-      ${m === 'sleepy' ? '<text x="116" y="40" font-family="Baloo 2, sans-serif" font-weight="800" font-size="18" fill="#7a7fb8">z</text>' : ''}
+      ${m === 'sleepy' ? '<text x="116" y="40" font-family="Fredoka, sans-serif" font-weight="800" font-size="18" fill="#7a7fb8">z</text>' : ''}
       <g class="p-mouth">${mouth}</g>`;
   }
 

@@ -81,7 +81,7 @@
   }
   const wall = (h, col) => `<rect width="600" height="${h}" fill="${col || 'url(#rwall)'}"/><rect width="600" height="12" fill="#f9f5ef"/><rect y="12" width="600" height="3" fill="#ffe2b0"/><rect y="${h - 6}" width="600" height="6" fill="#efe6d8"/>`;
   const plant = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s || 1})"><path d="M-14 0 h28 l-3 -30 h-22z" fill="#ebe5dc"/><ellipse cx="-10" cy="-50" rx="16" ry="8" fill="#4d8044" transform="rotate(-30 -10 -50)"/><ellipse cx="10" cy="-62" rx="16" ry="8" fill="#5a9150" transform="rotate(25 10 -62)"/><ellipse cx="-4" cy="-76" rx="14" ry="7" fill="#3f6f3a"/><ellipse cx="12" cy="-38" rx="13" ry="6" fill="#4d8044" transform="rotate(35 12 -38)"/></g>`;
-  const label = (x, y, txt, col, size) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size || 11}" font-family="Baloo 2, sans-serif" font-weight="800" fill="${col}">${txt}</text>`;
+  const label = (x, y, txt, col, size) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size || 11}" font-family="Fredoka, sans-serif" font-weight="700" fill="${col}">${txt}</text>`;
   const arch = (x, y, w, h, hint) => `<path d="M${x} ${y + h} V${y + w / 2} a${w / 2} ${w / 2} 0 0 1 ${w} 0 V${y + h}z" fill="#d9c9b2"/><path d="M${x + 6} ${y + h} V${y + w / 2} a${w / 2 - 6} ${w / 2 - 6} 0 0 1 ${w - 12} 0 V${y + h}z" fill="#c7b499"/>${hint ? label(x + w / 2, y + w / 2 + 18, hint, '#7a5c4e', 9) : ''}`;
   const rug = (cx, cy, w, h) => `<g><ellipse cx="${cx}" cy="${cy}" rx="${w / 2}" ry="${h / 2}" fill="#8c1f30"/><ellipse cx="${cx}" cy="${cy}" rx="${w / 2 - 10}" ry="${h / 2 - 8}" fill="none" stroke="#1f2a5a" stroke-width="6"/><ellipse cx="${cx}" cy="${cy}" rx="${w / 5}" ry="${h / 5}" fill="#f0d9a8"/><ellipse cx="${cx}" cy="${cy}" rx="${w / 9}" ry="${h / 9}" fill="#1f2a5a"/></g>`;
 
@@ -233,7 +233,7 @@
     return svg(`
     ${wall}<rect width="600" height="420" fill="#2b1d1a" opacity=".38"/>
     <rect x="236" y="20" width="200" height="74" rx="14" fill="#1a1011"/><circle cx="336" cy="57" r="120" fill="url(#rneon)"/>
-    <text x="336" y="72" text-anchor="middle" font-size="44" font-family="Baloo 2, sans-serif" font-weight="800" fill="#ffd1e6" stroke="#ff5fa2" stroke-width="2.5">CLAP</text>
+    <text x="336" y="72" text-anchor="middle" font-size="44" font-family="Fredoka, sans-serif" font-weight="700" fill="#ffd1e6" stroke="#ff5fa2" stroke-width="2.5">CLAP</text>
     <text x="336" y="88" text-anchor="middle" font-size="10" font-family="Nunito, sans-serif" font-weight="800" fill="#ff9cc8">クラップ · HOOKAH &amp; TEA</text>
     ${[90, 210, 470, 560].map((x, i) => `<path d="M${x} 0 v${26 + i % 2 * 14}" stroke="#111" stroke-width="2"/><ellipse cx="${x}" cy="${50 + i % 2 * 14}" rx="18" ry="24" fill="#d63a3a"/><path d="M${x - 18} ${50 + i % 2 * 14} h36 M${x - 16} ${40 + i % 2 * 14} h32 M${x - 16} ${60 + i % 2 * 14} h32" stroke="#a52525" stroke-width="2"/><circle cx="${x}" cy="${50 + i % 2 * 14}" r="40" fill="url(#rglow)" opacity=".5"/>`).join('')}
     <circle cx="124" cy="190" r="74" fill="#3b2a20"/><circle cx="124" cy="190" r="66" fill="#f3d9a0"/><circle cx="124" cy="190" r="66" fill="url(#rglow)"/>${[96, 118, 142].map((x, i) => `<rect x="${x}" y="${130 + i * 8}" width="7" height="120" fill="#4a5a2a" opacity=".55"/>`).join('')}${leaves(100, 160, 0)}${leaves(150, 180, 1)}
@@ -267,7 +267,7 @@
     ${elevator(40, 228, 112, 192, '', 'G')}
     ${shop(176, 120, '#c9785a', 'BOUTIQUE')}${shop(306, 120, '#b98bc9', 'PERFUME')}
     ${bam}<rect x="452" y="210" width="136" height="210" fill="#2b1d1a"/><path d="M462 210 h116 v50 h-116z" fill="#a52525"/><path d="M500 210 v50 M540 210 v50" stroke="#7a1c1c" stroke-width="3"/>
-    <rect x="456" y="150" width="128" height="44" rx="10" fill="#1a1011"/><circle cx="520" cy="172" r="70" fill="url(#rneon)"/><text x="520" y="184" text-anchor="middle" font-size="30" font-family="Baloo 2, sans-serif" font-weight="800" fill="#ffd1e6" stroke="#ff5fa2" stroke-width="2">CLAP</text>
+    <rect x="456" y="150" width="128" height="44" rx="10" fill="#1a1011"/><circle cx="520" cy="172" r="70" fill="url(#rneon)"/><text x="520" y="184" text-anchor="middle" font-size="30" font-family="Fredoka, sans-serif" font-weight="700" fill="#ffd1e6" stroke="#ff5fa2" stroke-width="2">CLAP</text>
     ${[470, 570].map((x) => `<ellipse cx="${x}" cy="246" rx="12" ry="16" fill="#d63a3a"/><circle cx="${x}" cy="246" r="26" fill="url(#rglow)" opacity=".6"/>`).join('')}
     <rect x="0" y="420" width="600" height="380" fill="#efe8dc"/>${[...Array(6)].map((_, r) => [...Array(6)].map((_, k) => `<rect x="${k * 100}" y="${420 + r * 64}" width="100" height="64" fill="${(r + k) % 2 ? '#f6f1e8' : '#e9e1d3'}"/>`).join('')).join('')}<rect x="0" y="420" width="600" height="380" fill="url(#rshine)"/>
     ${plant(170, 430, 1.3)}${plant(430, 430, 1.3)}
@@ -350,7 +350,7 @@
     for (let i = 0; i <= n; i++) { const t = i / n, x = x0 + (x1 - x0) * t, yy = y + sag * 4 * t * (1 - t); o += `<path d="M${(x - 9).toFixed(0)} ${yy.toFixed(0)} L${(x + 9).toFixed(0)} ${yy.toFixed(0)} L${x.toFixed(0)} ${(yy + 18).toFixed(0)}Z" fill="${cols[i % cols.length]}"/>`; }
     return o;
   };
-  const banner = (cx, y, w, txt, bg, fg) => `<g><path d="M${cx - w / 2 - 14} ${y + 4} l14 12 -14 12 h20 v-24z M${cx + w / 2 + 14} ${y + 4} l-14 12 14 12 h-20 v-24z" fill="${bg}" opacity=".8"/><rect x="${cx - w / 2}" y="${y}" width="${w}" height="34" rx="6" fill="${bg}"/><text x="${cx}" y="${y + 23}" text-anchor="middle" font-size="17" font-family="Baloo 2, sans-serif" font-weight="800" fill="${fg}">${txt}</text></g>`;
+  const banner = (cx, y, w, txt, bg, fg) => `<g><path d="M${cx - w / 2 - 14} ${y + 4} l14 12 -14 12 h20 v-24z M${cx + w / 2 + 14} ${y + 4} l-14 12 14 12 h-20 v-24z" fill="${bg}" opacity=".8"/><rect x="${cx - w / 2}" y="${y}" width="${w}" height="34" rx="6" fill="${bg}"/><text x="${cx}" y="${y + 23}" text-anchor="middle" font-size="17" font-family="Fredoka, sans-serif" font-weight="700" fill="${fg}">${txt}</text></g>`;
   const BDAY = ['#ef6fa3', '#ffd36b', '#7fb2ff', '#7fe0b4', '#c48bff'], WED = ['#ffffff', '#f3e2b8', '#ffd1e6', '#e0c27a'];
   const cake = (x, y) => `<g><ellipse cx="${x}" cy="${y + 64}" rx="34" ry="8" fill="rgba(0,0,0,.15)"/><rect x="${x - 3}" y="${y + 30}" width="6" height="34" fill="#8a5a3a"/><ellipse cx="${x}" cy="${y + 30}" rx="34" ry="9" fill="#b07a48"/><rect x="${x - 24}" y="${y + 2}" width="48" height="24" rx="5" fill="#f6c3d3"/><path d="M${x - 24} ${y + 8} q6 6 12 0 q6 6 12 0 q6 6 12 0 q6 6 12 0" stroke="#fff" stroke-width="3" fill="none"/><rect x="${x - 15}" y="${y - 14}" width="30" height="18" rx="4" fill="#fff3f7"/>${[-8, 0, 8].map((d) => `<rect x="${x + d - 1.5}" y="${y - 26}" width="3" height="12" fill="${['#7fb2ff', '#ffd36b', '#ef6fa3'][(d + 8) / 8]}"/>`).join('')}</g>`;
   const garland = (x0, x1, y) => { let o = ''; for (let x = x0; x <= x1; x += 22) o += `<circle cx="${x}" cy="${y + Math.sin(x * 0.05) * 6}" r="7" fill="${x % 44 ? '#ffd1e6' : '#ffffff'}" stroke="#e0c27a" stroke-width="1.2"/>`; return o; };
