@@ -28,7 +28,7 @@
     sink:    { x: 40,  y: 300, r: 38, stand: [70, 420],  label: 'Sink' },
     samovar: { x: 168, y: 292, r: 36, stand: [168, 420], label: 'Samovar' },
     kibble:  { x: 238, y: 300, r: 34, stand: [238, 420], label: 'Kibble' },
-    negin:   { x: 340, y: 270, r: 46, stand: [340, 410], label: 'Negin’s door' },
+    negin:   { x: 380, y: 270, r: 42, stand: [342, 400], label: 'Negin’s room (hallway)' },
     toy:     { x: 452, y: 520, r: 34, stand: [430, 575], label: 'Toy basket' },
     laptop:  { x: 540, y: 470, r: 36, stand: [520, 560], label: 'Laptop' },
     bowl:    { x: 92,  y: 702, r: 34, stand: [130, 690], label: 'Food bowl' },
@@ -49,7 +49,7 @@
     tea:    { who: 'baba', icon: '☕', pts: 120, pat: 26, hint: 'Tap Baba: Nena brews tea at the samovar and brings it.' },
     help:   { who: 'fariba', icon: '🍲', pts: 150, pat: 26, hint: 'Tap Maman to help her cook.' },
     talk:   { who: 'nasim', icon: '💬', pts: 130, pat: 18, hint: 'Nasim is back and angry: tap her to talk.' },
-    wake:   { who: 'negin', icon: '⏰', pts: 140, pat: 24, hint: 'Negin overslept: tap her door.' },
+    wake:   { who: 'negin', icon: '⏰', pts: 140, pat: 24, hint: 'Negin overslept: only Nena may enter the bedrooms. Tap Negin’s door in the hallway.' },
   };
   const ITEMS = { food: '🥣', tea: '🍵', brush: '🪮', ball: '🎾' };
   const CHIP = { kibble: '🥣', bowl: '👇', water: '💧', samovar: '☕', brush: '🪮', toy: '🎾', sink: '🧽', negin: '⏰', laptop: '💻' };
@@ -124,6 +124,41 @@
     if (rain) { o += '<rect width="400" height="300" fill="#7a8696" opacity=".3"/>'; for (let k = 0; k < 50; k++) o += `<path d="M${hash(k) * 400} ${hash(k + 2) * 300} l-4 12" stroke="#e6eef7" stroke-width="1.4" opacity=".7"/>`; }
     return o;
   }
+  // Bedroom hallway: an opening in the back wall with the four bedroom doors in perspective.
+  // Only Nena goes in there (a pet gate keeps Simba out).
+  function hallway() {
+    const X0 = 280, X1 = 398, T = 96, B = 376, E = { x0: 322, x1: 358, t: 166, b: 330 };
+    const wall = (side, t, v) => {
+      const x = side < 0 ? X0 + (E.x0 - X0) * t : X1 - (X1 - E.x1) * t;
+      const top = T + (E.t - T) * t, bot = B - (B - E.b) * t;
+      return [x, bot - v * (bot - top)];
+    };
+    const door = (side, t1, t2, col, frame) => {
+      const pts = [wall(side, t1, 0), wall(side, t1, 0.74), wall(side, t2, 0.74), wall(side, t2, 0)].map((q) => q.map((n) => n.toFixed(1)).join(',')).join(' ');
+      const k = wall(side, t2 - (t2 - t1) * 0.18, 0.36);
+      return `<polygon points="${pts}" fill="${col}" stroke="${frame}" stroke-width="2.5"/><circle cx="${k[0].toFixed(1)}" cy="${k[1].toFixed(1)}" r="1.8" fill="#c9a24a"/>`;
+    };
+    const tag = (x, y, txt, col) => `<g><rect x="${x - 19}" y="${y - 7}" width="38" height="13" rx="4" fill="#fff8ee" stroke="${col}" stroke-width="1.5"/><text x="${x}" y="${y + 3}" text-anchor="middle" font-size="7.5" font-family="Baloo 2, sans-serif" font-weight="800" fill="${col}">${txt}</text></g>`;
+    let runner = '';
+    return `
+      <!-- bedroom hallway -->
+      <rect x="${X0 - 6}" y="${T - 6}" width="${X1 - X0 + 12}" height="${B - T + 6}" fill="#e2d6c4"/>
+      <polygon points="${X0},${T} ${X1},${T} ${E.x1},${E.t} ${E.x0},${E.t}" fill="#efe7da"/>
+      <polygon points="${X0},${T} ${E.x0},${E.t} ${E.x0},${E.b} ${X0},${B}" fill="#e6dccd"/>
+      <polygon points="${X1},${T} ${E.x1},${E.t} ${E.x1},${E.b} ${X1},${B}" fill="#ddd1c0"/>
+      <polygon points="${X0},${B} ${X1},${B} ${E.x1},${E.b} ${E.x0},${E.b}" fill="#c99d70"/>
+      <polygon points="${X0 + 34},${B} ${X1 - 34},${B} ${E.x1 - 12},${E.b} ${E.x0 + 12},${E.b}" fill="#8c1f30" opacity=".85"/>${runner}
+      <rect x="${E.x0}" y="${E.t}" width="${E.x1 - E.x0}" height="${E.b - E.t}" fill="#f3ece1"/>
+      <circle cx="${(E.x0 + E.x1) / 2}" cy="${E.t + 6}" r="5" fill="#ffd98a" opacity=".9"/>
+      <rect x="${E.x0 + 9}" y="${E.b - 70}" width="${E.x1 - E.x0 - 18}" height="70" fill="#b98b5e" stroke="#8a6340" stroke-width="2"/>
+      ${door(-1, 0.1, 0.46, '#f2b7c8', '#c9496f')}
+      ${door(-1, 0.6, 0.92, '#c8a2d6', '#7d4a96')}
+      ${door(1, 0.1, 0.5, '#a9c2d4', '#4a5a8a')}
+      <text x="${(E.x0 + E.x1) / 2}" y="${E.b - 74}" text-anchor="middle" font-size="14">💤</text>
+      ${tag(...wall(-1, 0.28, 0.85), 'NENA', '#c9496f')}${tag(...wall(-1, 0.76, 0.86), 'NASIM', '#7d4a96')}${tag(...wall(1, 0.3, 0.85), 'NEGIN zZ', '#4a5a8a')}${tag((E.x0 + E.x1) / 2, E.b - 80, 'PARENTS', '#8a6340')}
+      <g stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".95"><path d="M${X0 + 2} 352 H${X1 - 2} M${X0 + 2} 368 H${X1 - 2}"/>${[...Array(9)].map((_, i) => `<path d="M${X0 + 8 + i * 12.5} 350 v24"/>`).join('')}</g>
+      <rect x="${X0 + 4}" y="${T - 40}" width="${X1 - X0 - 8}" height="30" rx="6" fill="#2f4a3e"/><text x="${(X0 + X1) / 2}" y="${T - 27}" text-anchor="middle" font-size="11" font-family="Baloo 2, sans-serif" font-weight="800" fill="#ffd98a">BEDROOMS</text><text x="${(X0 + X1) / 2}" y="${T - 15}" text-anchor="middle" font-size="8.5" font-family="Nunito, sans-serif" font-weight="800" fill="#fff">🔑 Nena only</text>`;
+  }
   function stageArt(cfg) {
     const night = cfg.n % 3 === 0, rain = !!cfg.rain;
     const sky = night ? ['#151838', '#3a3466'] : rain ? ['#8b97a8', '#c3cbd6'] : cfg.n % 3 === 2 ? ['#f2a07a', '#fde3c3'] : ['#8fcbee', '#d7eefa'];
@@ -140,7 +175,6 @@
       <rect width="600" height="380" fill="url(#rwall)"/>
       <rect width="600" height="14" fill="#f9f5ef"/><rect y="14" width="600" height="3" fill="#ffe2b0"/>
       ${win(400, 40, 190, 230, 200)}
-      ${win(276, 40, 110, 120, 140)}
       <rect x="0" y="376" width="600" height="424" fill="#d4ad82"/>${floor}
       <rect x="0" y="372" width="600" height="6" fill="#efe6d8"/>
       <!-- kitchen -->
@@ -152,9 +186,7 @@
       <rect x="84" y="268" width="50" height="6" fill="#222"/><ellipse cx="109" cy="258" rx="20" ry="10" fill="#e05b7b"/><rect x="89" y="250" width="40" height="12" rx="3" fill="#e05b7b"/>
       <g><ellipse cx="168" cy="276" rx="22" ry="4" fill="rgba(0,0,0,.15)"/><path d="M152 274 q-4 -28 6 -40 h20 q10 12 6 40z" fill="#d9b866"/><path d="M160 234 q8 -8 16 0" fill="#c9a24a"/><path d="M161 226 h14 l-2 10 h-10z" fill="#e05b7b"/><path d="M152 244 q-2 18 4 26" stroke="#fff6cc" stroke-width="3" fill="none" opacity=".7"/></g>
       <g><path d="M222 274 l4 -40 h28 l4 40z" fill="#c9a27a"/><path d="M226 240 h28" stroke="#9a6232" stroke-width="3"/><text x="240" y="262" text-anchor="middle" font-size="11" font-family="Baloo 2, sans-serif" font-weight="800" fill="#7a4a22">KIBBLE</text></g>
-      <!-- Negin's door -->
-      <rect x="296" y="180" width="88" height="196" fill="#e2d6c4"/><rect x="300" y="184" width="80" height="192" fill="#a9c2d4"/><rect x="368" y="270" width="4" height="34" rx="2" fill="#c9a24a"/>
-      <rect x="308" y="198" width="64" height="36" rx="5" fill="#fff8ee"/><text x="340" y="214" text-anchor="middle" font-size="10" font-family="Baloo 2, sans-serif" font-weight="800" fill="#4a5a8a">NEGIN</text><text x="340" y="228" text-anchor="middle" font-size="8" font-family="Nunito, sans-serif" font-weight="800" fill="#4a5a8a">DO NOT WAKE</text>
+      ${hallway()}
       <!-- front door -->
       <rect x="496" y="276" width="104" height="100" fill="#e2d6c4"/><rect x="502" y="282" width="98" height="94" fill="#5a3a26"/><rect x="590" y="324" width="4" height="22" rx="2" fill="#c9a24a"/>
       <!-- sofa, rug -->
@@ -175,7 +207,7 @@
       <!-- brush cabinet -->
       <rect x="492" y="650" width="80" height="70" rx="4" fill="#6b4632"/><rect x="488" y="646" width="88" height="7" rx="2" fill="#f3efe9"/><rect x="512" y="626" width="34" height="14" rx="5" fill="#ef8fb0"/><path d="M516 640 v6 M522 640 v6 M528 640 v6 M534 640 v6 M540 640 v6" stroke="#c9496f" stroke-width="2"/>
       <!-- plant -->
-      <g transform="translate(270 372)"><path d="M-14 0 h28 l-3 -30 h-22z" fill="#ebe5dc"/><ellipse cx="-10" cy="-50" rx="16" ry="8" fill="#4d8044" transform="rotate(-30 -10 -50)"/><ellipse cx="10" cy="-62" rx="16" ry="8" fill="#5a9150" transform="rotate(25 10 -62)"/><ellipse cx="-4" cy="-76" rx="14" ry="7" fill="#3f6f3a"/></g>
+      <g transform="translate(262 372)"><path d="M-14 0 h28 l-3 -30 h-22z" fill="#ebe5dc"/><ellipse cx="-10" cy="-50" rx="16" ry="8" fill="#4d8044" transform="rotate(-30 -10 -50)"/><ellipse cx="10" cy="-62" rx="16" ry="8" fill="#5a9150" transform="rotate(25 10 -62)"/><ellipse cx="-4" cy="-76" rx="14" ry="7" fill="#3f6f3a"/></g>
       ${night ? '<circle cx="330" cy="120" r="200" fill="url(#rglow)" opacity=".5"/><rect width="600" height="800" fill="#1a1838" opacity=".22"/>' : ''}
     </svg>`;
   }
@@ -277,7 +309,7 @@
   function anchorOf(who) {
     if (who === 'simba') return [G.simba.x, G.simba.y - G.simba.h - 6];
     if (G.npcs[who]) return [G.npcs[who].x, G.npcs[who].y - G.npcs[who].h - 6];
-    if (who === 'negin') return [STATIONS.negin.x, 176];
+    if (who === 'negin') return [STATIONS.negin.x, 196];
     if (who === 'nasim') return [DOOR[0], DOOR[1] - 150];
     return [300, 300];
   }
@@ -328,7 +360,7 @@
     if (r.type === 'walk') { addFur(true); toast('Oops! Simba couldn’t wait… a puddle to clean.', 'bad'); }
     else if (r.type === 'brush') { addFur(); addFur(); }
     else if (r.who === 'baba') toast('Baba grumbles at the TV.', 'bad');
-    else if (r.who === 'nasim') toast('Nasim slammed her door!', 'bad');
+    else if (r.who === 'nasim') toast('Nasim stormed out again!', 'bad');
     if (G.hearts <= 0) endLevel(true);
   }
   function complete(r, bonusMul) {
@@ -498,7 +530,7 @@
         return { dur: 0.6, done: () => { take('food'); simbaGo(STATIONS.bowl.x + 50, STATIONS.bowl.y + 30, 2, () => {}); complete(r); } };
       }
       case 'sink': if (!G.dishes) return { dur: 0.2, miss: 'No dirty dishes.' }; return { dur: 1.6 * sp, snd: 'water', done: () => { G.dishes--; renderDishes(); G.score += 60; floatText(60, 230, '+60', 'good'); } };
-      case 'negin': { const r = findReq('negin'); if (!r) return { dur: 0.2, miss: 'Shh… Negin is sleeping. Leave her be.' }; return { dur: 2 * sp, snd: 'click', done: () => { complete(r); toast('Negin: “I’m up… I’m up…”', '', 1500); } }; }
+      case 'negin': { const r = findReq('negin'); if (!r) return { dur: 0.2, miss: 'Shh… Negin is sleeping. Leave her be.' }; return { dur: 2 * sp, snd: 'click', start: () => { G.nena.el.classList.add('gone'); floatText(342, 300, 'Knock knock…', 'hint'); }, done: () => { G.nena.el.classList.remove('gone'); complete(r); toast('Negin: “I’m up… I’m up…”', '', 1500); } }; }
       case 'simba': {
         if (G.simbaAway) return null;
         const walk = findReq('simba', 'walk'), br = findReq('simba', 'brush'), pl = findReq('simba', 'play');
@@ -628,7 +660,7 @@
           G.nena.el.classList.remove('walking');
           if (!act) { /* nothing */ }
           else if (act.miss) { toast(act.miss, 'bad', 1300); snd('fail'); G.busy = { t: 0, dur: act.dur }; }
-          else { G.busy = { t: 0, dur: act.dur, done: act.done, id }; if (act.snd) snd(act.snd); if (act.dur > 0.5) { G.bar.hidden = false; G.nena.el.classList.add('working'); } }
+          else { G.busy = { t: 0, dur: act.dur, done: act.done, id }; if (act.snd) snd(act.snd); if (act.start) act.start(); if (act.dur > 0.5) { G.bar.hidden = false; G.nena.el.classList.add('working'); } }
         } else {
           G.nena.el.classList.add('walking');
           const step = Math.min(d, speed * dt);
