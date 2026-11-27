@@ -2706,7 +2706,7 @@
   }
   function routine() {
     const L = [
-      { k: 'breakfast', ico: '🍳', name: 'Family breakfast', desc: 'Sangak, panir, walnuts and tea for everyone.', win: [6, 11], done: () => save.life.breakfast === today(), go: () => openLife('breakfast') },
+      { k: 'breakfast', ico: '🍳', name: 'Family breakfast', desc: 'At the kitchen table: sangak, panir, walnuts and chai for the family.', win: [6, 11], done: () => save.life.breakfast === today(), go: () => openLife('breakfast') },
       { k: 'grocery', ico: '🛒', name: 'Groceries at Agha Reza’s shop', desc: 'Remember Maman’s list — no phone allowed!', win: [10, 14], done: () => save.life.grocery === today(), go: () => openLife('grocery') },
       { k: 'laundry', ico: '🧺', name: 'Hang the laundry', desc: 'Pair the socks and hang them on the line.', win: [13, 18], done: () => save.life.laundry === today(), go: () => openLife('laundry') },
       { k: 'zen', ico: '🧘', name: 'Meditation with oud', desc: 'Light the oud and breathe.', win: [6, 22], done: () => save.wellness.zen === today(), go: openZen },
@@ -2724,13 +2724,13 @@
     ['baba', 'mohsen', 'Baba', ['bread', 'panir', 'walnut', 'tea', 'egg', 'haleem'], 'Nena jan, for me:'],
     ['fariba', 'fariba', 'Maman', ['bread', 'butter', 'jam', 'tea', 'cucumber', 'sabzi'], 'Azizam, I’d like'],
     ['negin', 'negin', 'Negin', ['honey', 'butter', 'bread', 'tea', 'jam', 'egg'], '*yawns* just give me'],
-    ['pourya', 'pourya', 'Pourya', ['egg', 'tomato', 'haleem', 'bread', 'tea', 'sabzi'], 'Quick, I’m late:'],
+    ['nasim', 'nasim', 'Nasim', ['egg', 'tomato', 'cucumber', 'bread', 'tea', 'panir'], 'Hmph. Without talking to me, just give me'],
   ];
   const GR_ITEMS = { milk: ['🥛', 'Milk'], eggs: ['🥚', 'Eggs'], rice: ['🍚', 'Rice'], onion: ['🧅', 'Onions'], tomato: ['🍅', 'Tomatoes'], potato: ['🥔', 'Potatoes'], lime: ['🍋', 'Limes'], tea: ['🫖', 'Tea leaves'], lavash: ['🫓', 'Lavash'], cheese: ['🧀', 'Cheese'], paste: ['🥫', 'Tomato paste'], chicken: ['🍗', 'Chicken'] };
   const sockSvg = (c) => `<svg viewBox="0 0 40 48" class="sock"><path d="M12 2h16v22l8 10a7 7 0 0 1-2 10l-2 1a7 7 0 0 1-9-2L12 31Z" fill="${c}" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/><rect x="12" y="2" width="16" height="6" fill="#fff" opacity=".8"/><rect x="12" y="10" width="16" height="2.5" fill="#fff" opacity=".55"/></svg>`;
   const SOCKS = ['#e8577f', '#4f8fe0', '#f2c230', '#5bbf8a', '#9b6ad6', '#f08a3c', '#2b2b30', '#c9b28a'];
   const LIFE = {
-    breakfast: { title: '🍳 Family breakfast', rounds: 4, time: 50, friend: 'baba', who: 'fariba', intro: 'The sofreh is ready! Serve each person exactly what they ask for.' },
+    breakfast: { title: '🍳 Family breakfast', rounds: 4, time: 50, friend: 'baba', who: 'fariba', intro: 'Maman: “Breakfast is on the kitchen table! Nena jan, serve everyone what they ask for.”' },
     grocery: { title: '🛒 Agha Reza’s shop', rounds: 3, time: 55, friend: 'fariba', who: 'fariba', intro: 'Maman: “Nena jan, go to Agha Reza’s and buy what I tell you. Don’t forget anything!”' },
     laundry: { title: '🧺 Laundry day', rounds: 2, time: 45, friend: 'fariba', who: 'fariba', intro: 'Maman: “The washing machine is done! Pair the socks and hang them, please.”' },
   };
