@@ -45,6 +45,8 @@ window.Art = (function () {
 
   /* eyes: 'both' (CSS decides), 'open', 'closed' */
   const HL = 'rgba(255,255,255,.22)', SH = 'rgba(60,20,10,.14)';
+  // three tiny painted nails on a hand (from nail day)
+  const nailDots = (hx, col) => (col ? `<g fill="${col}" stroke="rgba(0,0,0,.25)" stroke-width=".4"><ellipse cx="${hx - 3.4}" cy="${167.4}" rx="1.6" ry="2"/><ellipse cx="${hx}" cy="${168.4}" rx="1.6" ry="2"/><ellipse cx="${hx + 3.4}" cy="${167.4}" rx="1.6" ry="2"/></g>` : '');
   function nena(opts) {
     const o = Object.assign({ dressed: false, outfit: 'basique', eyes: 'both', standalone: false }, opts || {});
     const c = OUTFITS[o.outfit] || OUTFITS.basique;
@@ -97,8 +99,8 @@ window.Art = (function () {
       ${legs}
       ${body}
       ${legs ? '' : shoes}
-      <g class="arm-l"><path d="M36 120 q-14 6 -14 22 v14 q0 6 7 6 q7 0 7 -6 v-12 q0 -10 6 -14z" fill="${arm}"/><circle cx="29" cy="162" r="7" fill="${SK}"/></g>
-      <g class="arm-r"><path d="M84 120 q14 6 14 22 v14 q0 6 -7 6 q-7 0 -7 -6 v-12 q0 -10 -6 -14z" fill="${arm}"/><path d="M84 122 q12 6 13 20 v14 q-2 4 -5 5 q2 -24 -8 -39z" fill="${SH}"/><circle cx="91" cy="162" r="7" fill="${SK}"/></g>
+      <g class="arm-l"><path d="M36 120 q-14 6 -14 22 v14 q0 6 7 6 q7 0 7 -6 v-12 q0 -10 6 -14z" fill="${arm}"/><circle cx="29" cy="162" r="7" fill="${SK}"/>${nailDots(29, o.nails)}</g>
+      <g class="arm-r"><path d="M84 120 q14 6 14 22 v14 q0 6 -7 6 q-7 0 -7 -6 v-12 q0 -10 -6 -14z" fill="${arm}"/><path d="M84 122 q12 6 13 20 v14 q-2 4 -5 5 q2 -24 -8 -39z" fill="${SH}"/><circle cx="91" cy="162" r="7" fill="${SK}"/>${nailDots(91, o.nails)}</g>
       <g class="head">
       <rect x="53" y="96" width="14" height="19" rx="6" fill="${SK2}"/>
       <ellipse cx="60" cy="108" rx="10" ry="4" fill="rgba(120,50,30,.18)"/>
@@ -207,6 +209,7 @@ window.Art = (function () {
     guest1:  { skin: '#f2c9a6', hair: '#2b1d16', hair2: '#3e2a20', style: 'bob', shirt: '#7aa6c2', collar: '#4f7f9c', pants: '#3a3550', earrings: '#ffd36b' },
     guest2:  { skin: '#dcae86', hair: '#1c1b22', hair2: '#2b2a33', style: 'short', shirt: '#6aa84f', collar: '#4d8044', pants: '#3a3a44', beard: true },
     guest3:  { skin: '#f4cdb0', hair: '#5a2a16', hair2: '#6e3820', style: 'ponytail', shirt: '#e98aab', collar: '#c9496f', pants: '#2f2b46' },
+    leila:   { skin: '#eec3a0', hair: '#1c1612', hair2: '#3a2a22', style: 'ponytail', shirt: '#ef8fb0', collar: '#ffffff', pants: '#2b2b30', earrings: '#ffd36b' },
     courier: { skin: '#e6b68e', hair: '#2b1d16', hair2: '#3e2a20', style: 'short', shirt: '#e05b3b', collar: '#ffd36b', pants: '#2f3a4a' },
     aunt:    { skin: '#efc39e', hair: '#5a3a2a', hair2: '#a89a90', style: 'bob', shirt: '#7a2d8c', collar: '#e0c27a', pants: '#3a2a44', earrings: '#ffd36b', belly: true },
     witch1:  { skin: '#f7ddd0', hair: '#f2d77e', hair2: '#dcbb55', style: 'curly', shirt: '#231a2b', collar: '#7a2d8c', pants: '#1a1420', earrings: '#b98bff' },
@@ -347,10 +350,33 @@ window.Art = (function () {
       <g transform="translate(60 72) scale(.82) translate(-80 -76)">${hp.back}</g>
       ${legs}${torso}${extras}
       <path d="M40 116 q20 -8 40 0" stroke="rgba(255,255,255,.18)" stroke-width="3" fill="none"/>
-      <g class="p-arm-l"><path d="${armL}" fill="${c.shirt}"/><circle cx="${c.belly ? 25 : 31}" cy="162" r="6.5" fill="${c.skin}"/></g>
-      <g class="p-arm-r"><path d="${armR}" fill="${c.shirt}"/><path d="${armR}" fill="rgba(60,20,10,.12)"/><circle cx="${c.belly ? 95 : 89}" cy="162" r="6.5" fill="${c.skin}"/></g>
+      <g class="p-arm-l"><path d="${armL}" fill="${c.shirt}"/><circle cx="${c.belly ? 25 : 31}" cy="162" r="6.5" fill="${c.skin}"/>${nailDots(c.belly ? 25 : 31, o.nails)}</g>
+      <g class="p-arm-r"><path d="${armR}" fill="${c.shirt}"/><path d="${armR}" fill="rgba(60,20,10,.12)"/><circle cx="${c.belly ? 95 : 89}" cy="162" r="6.5" fill="${c.skin}"/>${nailDots(c.belly ? 95 : 89, o.nails)}</g>
       <g class="p-head"><g transform="translate(60 72) scale(.82) translate(-80 -76)">${hp.head}</g></g>
       </g>
+    </svg>`;
+  }
+
+  // a big hand for the nail salon: colour + finish (glossy, glitter, hearts, french)
+  function hand(who, color, finish) {
+    const sk = (PEOPLE[who] || PEOPLE.nena).skin;
+    const F = [[64, 44, 26], [95, 26, 27], [126, 36, 26], [154, 62, 22]];
+    const nail = (x, y, w) => {
+      const nx = x - w / 2 + 4, nw = w - 8;
+      let o = `<rect class="nail" x="${nx}" y="${y + 4}" width="${nw}" height="26" rx="${nw / 2}" fill="${color || '#f6e6dc'}" stroke="rgba(120,60,50,.35)" stroke-width="1.2"/>`;
+      if (color && finish === 'french') o += `<path d="M${nx} ${y + 13} q${nw / 2} -8 ${nw} 0 v-${nw / 2 - 2} a${nw / 2} ${nw / 2} 0 0 0 -${nw} 0z" fill="#fff"/>`;
+      if (color && finish === 'glitter') o += [0, 1, 2, 3, 4].map((k) => `<circle cx="${nx + 3 + ((k * 7) % (nw - 4))}" cy="${y + 8 + k * 4.5}" r="1.3" fill="#fff" opacity=".9"/>`).join('');
+      if (color && finish === 'hearts') o += `<path d="M${x} ${y + 23} l-4 -4 a2.4 2.4 0 0 1 4 -3 a2.4 2.4 0 0 1 4 3z" fill="#fff"/>`;
+      if (color) o += `<path d="M${nx + 3} ${y + 9} v10" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".55"/>`;
+      return o;
+    };
+    return `<svg viewBox="0 0 200 230" class="hand-svg" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="104" cy="222" rx="70" ry="8" fill="rgba(0,0,0,.12)"/>
+      ${F.map(([x, y, w]) => `<rect x="${x - w / 2}" y="${y}" width="${w}" height="${150 - y}" rx="${w / 2}" fill="${sk}"/><path d="M${x - w / 2 + 4} ${y + 52} h${w - 8} M${x - w / 2 + 4} ${y + 78} h${w - 8}" stroke="rgba(150,80,60,.18)" stroke-width="2"/>`).join('')}
+      <rect x="40" y="110" width="132" height="112" rx="44" fill="${sk}"/>
+      <g transform="rotate(-38 46 150)"><rect x="28" y="96" width="30" height="80" rx="15" fill="${sk}"/>${nail(43, 94, 30)}</g>
+      ${F.map(([x, y, w]) => nail(x, y, w)).join('')}
+      <path d="M70 170 q34 18 70 0" stroke="rgba(150,80,60,.18)" stroke-width="3" fill="none"/>
     </svg>`;
   }
 
@@ -366,5 +392,5 @@ window.Art = (function () {
     return im;
   }
 
-  return { nena, simba, portrait, person, toImage, OUTFITS, COLLARS };
+  return { nena, simba, portrait, person, hand, toImage, OUTFITS, COLLARS };
 })();

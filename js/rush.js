@@ -20,6 +20,7 @@
   let save = { level: 1, stars: {}, best: {}, medals: {}, coins: 0, up: {}, sound: true, music: true, seen: {} };
   try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.level) save = Object.assign(save, d); } catch (e) { /* */ }
   save.medals = save.medals || {};
+  save.nails = save.nails || { week: -1 };
   ['tot', 'ach', 'friend', 'scenes', 'album', 'decor', 'chapters'].forEach((k) => { save[k] = save[k] || {}; });
   save.daily = save.daily || { last: '', streak: 0 };
   save.sortd = save.sortd || { date: '', done: [] };
@@ -227,7 +228,7 @@
   function spawnNpc(who) {
     const h = HOMES[G.cfg.place][who]; if (!h) return null;
     const [art, mood, w, hh] = NPC_ART[who];
-    const a = makeActor(who, A.person(art, { mood }), w, hh, 'npc', h[0]);
+    const a = makeActor(who, A.person(art, { mood, nails: nailOf(who) }), w, hh, 'npc', h[0]);
     a.el.dataset.target = who;
     place(a, h[1], h[2]);
     G.npcs[who] = a;
@@ -290,7 +291,7 @@
     });
     // characters
     const H = HOMES[cfg.place];
-    G.nena = makeActor('nena', A.nena({ dressed: true, outfit: save.outfit }), 84, 147, 'nena', H.nena[0]);
+    G.nena = makeActor('nena', A.nena({ dressed: true, outfit: save.outfit, nails: nailOf('nena') }), 84, 147, 'nena', H.nena[0]);
     place(G.nena, H.nena[1], H.nena[2]);
     G.nena.el.dataset.target = 'nena';
     if (H.simba) {
@@ -1455,6 +1456,7 @@
     { id: 'streak7', icon: '🎁', name: 'Loyal', desc: 'Claim 7 daily rewards in a row', test: () => save.daily.streak >= 7, r: 100 },
     { id: 'sort3', icon: '🧪', name: 'Colour genius', desc: 'Solve all 3 Color Sorts in a day', test: (t) => (t.sort3 || 0) >= 1, r: 60 },
     { id: 'admirer', icon: '💐', name: 'Secret admirer', desc: 'Receive 5 gifts from Jesus', test: (t) => (t.gift || 0) >= 5, r: 60 },
+    { id: 'nails', icon: '💅', name: 'Nail day', desc: 'Have your nails done with Leila', test: (t) => (t.nails || 0) >= 1, r: 30 },
     { id: 'cuddle10', icon: '🦁', name: 'Baba’s lion', desc: 'Put Simba on Baba’s belly 10 times', test: (t) => (t.req_cuddle || 0) >= 10, r: 60 },
   ];
   const MISSIONS = [
@@ -1541,7 +1543,7 @@
     const items = [
       ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
       ['missions', '📋', 'Missions', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
-      ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
+      ['nails', '💅', 'Nail day', nailsReady() ? '!' : ''], ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
       ['endless', '♾️', 'Endless', ''],
     ];
     $('m-hub').innerHTML = items.map(([id, ico, name, b]) => `<button type="button" class="hub-btn" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^\d+\/\d+$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
@@ -1551,6 +1553,7 @@
   /* ---- generic sheet ---- */
   let sheetKind = '';
   function openSheet(kind) {
+    if (kind === 'nails') { startNailDay(); return; }
     sheetKind = kind;
     const T = { daily: '🎁 Daily reward', sort: '🧪 Daily Color Sort', challenge: '🎯 Daily challenge', missions: '📋 Weekly missions', family: '❤️ Family', decor: '🛋️ Decorate the flat', wardrobe: '👗 Wardrobe', album: '📸 Photo album', trophies: '🏆 Trophies', endless: '♾️ Endless day' };
     $('sh2-title').textContent = T[kind] || '';
@@ -1611,6 +1614,68 @@
     openSheet(sheetKind);
   }
 
+  /* ---- weekly nail day with Leila ---- */
+  const POLISH = [['#e2433a', 'Cherry red'], ['#c9496f', 'Raspberry'], ['#ef8fb0', 'Baby pink'], ['#f6c3c9', 'Nude rose'], ['#f08a24', 'Saffron'], ['#f2c230', 'Gold'],
+    ['#3fa34d', 'Pistachio'], ['#1fb5a8', 'Turquoise'], ['#3b7dd8', 'Persian blue'], ['#8e4fc2', 'Lilac'], ['#5a1a2e', 'Wine'], ['#1c1a24', 'Black']];
+  const FINISH = [['glossy', '✨ Glossy'], ['glitter', '🌟 Glitter'], ['hearts', '💗 Hearts'], ['french', '🤍 French']];
+  const NAIL_GIRLS = [['nena', 'Nena'], ['nasim', 'Nasim'], ['negin', 'Negin']];
+  const nailsReady = () => save.nails.week !== weekNum();
+  const nailOf = (who) => (save.nails[who] && save.nails[who].c) || null;
+  let ND = null;
+  function startNailDay() {
+    const fresh = nailsReady();
+    const intro = fresh ? [['leila', 'happy', 'Salam girls! It’s nail day! I brought all my colours 💅'], ['nasim', 'neutral', 'Me first. Obviously.'], ['negin', 'sleepy', 'Can I get my nails done lying down?'], ['nena', 'happy', 'Yay! Let’s choose our colours!']]
+      : [['leila', 'happy', 'Back already? Your nails still look perfect! See you next week 💅']];
+    playScene(intro, '💅 Nail day', () => {
+      ND = { i: 0, picks: {}, fresh };
+      NAIL_GIRLS.forEach(([id]) => { ND.picks[id] = save.nails[id] ? Object.assign({}, save.nails[id]) : { c: null, f: 'glossy' }; });
+      show('screen-nails'); renderNails();
+      nailSay('leila', fresh ? 'Pick a colour, then a finish. Who’s first?' : 'Want to try new colours? Just for fun!');
+    });
+  }
+  function nailSay(who, txt) {
+    const el = $('na-say'); el.textContent = txt; el.className = 'say na-say' + (who === 'leila' ? ' leila' : ''); void el.offsetWidth; el.classList.add('pop');
+    snd('talk', who === 'leila' ? 700 : PITCH[who] || 600);
+  }
+  function renderNails() {
+    const [id, name] = NAIL_GIRLS[ND.i], pk = ND.picks[id];
+    $('na-girls').innerHTML = NAIL_GIRLS.map(([g, n], k) => `<button type="button" class="na-girl${k === ND.i ? ' on' : ''}${ND.picks[g].c ? ' done' : ''}" data-girl="${k}"><span>${A.portrait(g, 'happy')}</span><b>${n}</b>${ND.picks[g].c ? `<i style="background:${ND.picks[g].c}"></i>` : ''}</button>`).join('');
+    $('na-who').innerHTML = `<span class="na-pic">${A.portrait(id, 'happy')}</span><b>${name}’s nails</b>`;
+    $('na-hand').classList.remove('final');
+    $('na-hand').innerHTML = A.hand(id, pk.c, pk.f);
+    $('na-leila').innerHTML = A.person('leila', { mood: 'happy', nails: '#ef8fb0' });
+    $('na-pal').innerHTML = POLISH.map(([c, n]) => `<button type="button" class="bottle${pk.c === c ? ' on' : ''}" data-c="${c}" aria-label="${n}"><i style="background:${c}"></i><small>${n}</small></button>`).join('');
+    $('na-fin').innerHTML = FINISH.map(([f, n]) => `<button type="button" class="fin${pk.f === f ? ' on' : ''}" data-f="${f}">${n}</button>`).join('');
+    const last = ND.i === NAIL_GIRLS.length - 1;
+    $('na-done').textContent = last ? 'All done! 💅' : `Next: ${NAIL_GIRLS[ND.i + 1][1]} ›`;
+    $('na-done').disabled = !pk.c;
+  }
+  const NAIL_TALK = {
+    nena: (c) => (['#e2433a', '#c9496f', '#ef8fb0', '#f6c3c9'].includes(c) ? pick(['Jesus will love it… I mean, I love it! 🙈', 'So romantic! 💗']) : pick(['Ooh, so pretty!', 'Simba, don’t lick them!', 'Perfect for CLAP tonight!'])),
+    nasim: (c) => (['#1c1a24', '#5a1a2e', '#8e4fc2', '#e2433a'].includes(c) ? pick(['Perfect. Dark, like my soul.', 'Finally, a colour with attitude.']) : pick(['Ugh… fine. But only because Leila insists.', 'Pink? Seriously? …Okay, it’s cute.'])),
+    negin: () => pick(['Pretty… zzz…', 'Can it dry while I nap?', 'Ooh, Instagram-worthy! 📸', 'Take a photo for my story!']),
+  };
+  function nailsClick(e) {
+    const [id] = NAIL_GIRLS[ND.i], pk = ND.picks[id];
+    const g = e.target.closest('[data-girl]'); if (g) { ND.i = +g.dataset.girl; snd('tab'); renderNails(); nailSay('leila', `${NAIL_GIRLS[ND.i][1]}, your turn! 💅`); return; }
+    const b = e.target.closest('[data-c]');
+    if (b) { pk.c = b.dataset.c; snd('water'); renderNails(); $('na-hand').classList.remove('painting'); void $('na-hand').offsetWidth; $('na-hand').classList.add('painting'); nailSay(id, NAIL_TALK[id](pk.c)); return; }
+    const f = e.target.closest('[data-f]');
+    if (f) { pk.f = f.dataset.f; snd('pop'); renderNails(); nailSay('leila', { glossy: 'Classic and shiny ✨', glitter: 'Glitter! Very CLAP night 🌟', hearts: 'Little hearts… for someone special? 😉', french: 'So elegant. Very Paris!' }[pk.f]); }
+  }
+  function nailsNext() {
+    if (ND.i < NAIL_GIRLS.length - 1) { ND.i++; snd('tab'); renderNails(); nailSay('leila', `Next! ${NAIL_GIRLS[ND.i][1]}, sit down 💅`); return; }
+    NAIL_GIRLS.forEach(([g]) => { save.nails[g] = ND.picks[g]; });
+    let txt = 'Beautiful! See you next week, girls!';
+    if (ND.fresh) { save.nails.week = weekNum(); save.coins += 50; ['nasim', 'negin'].forEach((g) => { save.friend[g] = (save.friend[g] || 0) + 3; }); track('nails'); txt = 'Beautiful! +50 🪙 · Nasim & Negin ❤️ +3. See you next week!'; }
+    persist();
+    $('na-hand').classList.add('final');
+    $('na-who').innerHTML = '';
+    $('na-hand').innerHTML = `<div class="na-final">${NAIL_GIRLS.map(([g, n]) => `<div><span class="na-mini">${A.hand(g, ND.picks[g].c, ND.picks[g].f)}</span><b>${n}</b></div>`).join('')}</div>`;
+    nailSay('leila', txt); snd('fanfare'); confettiOn($('screen-nails'));
+    $('na-done').textContent = 'Back to the map'; $('na-done').disabled = false; ND.i = 99;
+  }
+
   /* ---- custom days: challenge and endless ---- */
   let CUSTOM = null;
   function challengeCfg(c) {
@@ -1656,7 +1721,7 @@
   /* Screens: title, map, story, shop                                    */
   /* ------------------------------------------------------------------ */
   function show(id) {
-    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game'); });
+    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game'); });
   }
   function renderMap() {
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
@@ -1707,7 +1772,7 @@
     if (cur) cur.scrollIntoView({ block: 'center' });
   }
   const PLACE_LABEL = { home: '🏠 Home', street: '🌳 Tehran street', clap: '🏮 CLAP' };
-  const NAMES = { courier: 'Delivery', aunt: 'Aunt Mahin', pourya: 'Pourya', nena: 'Nena', simba: 'Simba', mohsen: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin' };
+  const NAMES = { leila: 'Leila', courier: 'Delivery', aunt: 'Aunt Mahin', pourya: 'Pourya', nena: 'Nena', simba: 'Simba', mohsen: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin' };
   let storyLines = [], storyLevel = 1;
   function playStory(n) {
     CUSTOM = null; storyAfter = null; storyTitle = '';
@@ -1782,6 +1847,9 @@
   $('r-next').addEventListener('click', () => { const n = G.n + 1; afterScene(() => playStory(n)); });
   $('r-retry').addEventListener('click', () => { if (G.cfg.n > 900) playCustom(G.cfg); else renderPrep(G.n); });
   $('r-map').addEventListener('click', () => afterScene(renderMap));
+  $('na-body').addEventListener('click', (e) => { if (ND && ND.i < 99) nailsClick(e); });
+  $('na-done').addEventListener('click', () => { if (!ND) return; if (ND.i === 99) { ND = null; renderMap(); } else nailsNext(); });
+  $('na-back').addEventListener('click', () => { ND = null; renderMap(); });
   $('m-hub').addEventListener('click', (e) => { const b = e.target.closest('[data-hub]'); if (b) { snd('tab'); openSheet(b.dataset.hub); } });
   $('sh2-body').addEventListener('click', sheetAction);
   $('sh2-back').addEventListener('click', () => { snd('click'); renderMap(); });
@@ -1798,7 +1866,7 @@
   (function cast() {
     const box = $('t-cast'); if (!box) return;
     const fig = (html, w, h, cls, d) => `<div class="actor ${cls}" style="position:relative;display:inline-block;width:${w}px;height:${h}px;transform:none;--bd:${d}s">${html}</div>`;
-    box.innerHTML = fig(A.person('mohsen', { mood: 'happy' }), 46, 80, 'npc', -1) + fig(A.person('fariba', { mood: 'happy' }), 44, 77, 'npc', -2) + fig(A.nena({ dressed: true, outfit: save.outfit }), 52, 91, 'nena', -.5) + fig(A.simba({ collar: save.collar }), 70, 55, 'simba', -3) + fig(A.person('negin', { mood: 'happy' }), 44, 77, 'npc', -1.5) + fig(A.person('nasim', { mood: 'angry' }), 44, 77, 'npc', -2.5);
+    box.innerHTML = fig(A.person('mohsen', { mood: 'happy' }), 46, 80, 'npc', -1) + fig(A.person('fariba', { mood: 'happy' }), 44, 77, 'npc', -2) + fig(A.nena({ dressed: true, outfit: save.outfit, nails: nailOf('nena') }), 52, 91, 'nena', -.5) + fig(A.simba({ collar: save.collar }), 70, 55, 'simba', -3) + fig(A.person('negin', { mood: 'happy' }), 44, 77, 'npc', -1.5) + fig(A.person('nasim', { mood: 'angry' }), 44, 77, 'npc', -2.5);
     setInterval(() => { const kids = box.children; const k = kids[Math.floor(Math.random() * kids.length)]; if (!k) return; k.classList.add(k.classList.contains('simba') ? 'barking' : 'talking'); setTimeout(() => k.classList.remove('talking', 'barking'), 1200); }, 1800);
   })();
   $('t-progress').textContent = save.level > 1 ? `Day ${save.level} · ${save.coins} 🪙` : '';
