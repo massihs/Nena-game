@@ -151,7 +151,7 @@
   `, c);
 
   ART.hall = (c) => {
-    const door = (x, w, col, frame, name, extra) => `<rect x="${x - 6}" y="226" width="${w + 12}" height="206" fill="#e2d6c4"/><rect x="${x}" y="232" width="${w}" height="200" fill="${col}"/><rect x="${x + 10}" y="246" width="${w - 20}" height="70" rx="4" fill="none" stroke="${frame}" stroke-width="2" opacity=".5"/><rect x="${x + 10}" y="330" width="${w - 20}" height="88" rx="4" fill="none" stroke="${frame}" stroke-width="2" opacity=".5"/><circle cx="${x + w - 14}" cy="338" r="4" fill="#c9a24a"/><rect x="${x + w / 2 - 34}" y="196" width="68" height="22" rx="6" fill="#fff8ee" stroke="${frame}" stroke-width="2"/>${label(x + w / 2, 212, name, frame, 11)}${extra || ''}`;
+    const door = (x, w, col, frame, name, extra) => `<rect x="${x - 6}" y="226" width="${w + 12}" height="206" fill="#e2d6c4"/><rect x="${x}" y="232" width="${w}" height="200" fill="${col}"/><rect x="${x + 10}" y="246" width="${w - 20}" height="70" rx="4" fill="none" stroke="${frame}" stroke-width="2" opacity=".5"/><rect x="${x + 10}" y="330" width="${w - 20}" height="88" rx="4" fill="none" stroke="${frame}" stroke-width="2" opacity=".5"/><circle cx="${x + w - 14}" cy="338" r="4" fill="#c9a24a"/><rect x="${x + w / 2 - Math.max(34, name.length * 4.6)}" y="196" width="${Math.max(68, name.length * 9.2)}" height="22" rx="6" fill="#fff8ee" stroke="${frame}" stroke-width="2"/>${label(x + w / 2, 212, name, frame, 11)}${extra || ''}`;
     return svg(`
     ${wall(432, '#f1e7d8')}
     <rect y="300" width="600" height="132" fill="#e6d8c4"/><path d="M0 300 H600" stroke="#cdb99c" stroke-width="3"/>

@@ -240,6 +240,7 @@
   function startLevel(n) {
     const cfg = levelCfg(n);
     cancelAnimationFrame(raf);
+    $('s-bg').innerHTML = ''; $('s-bg').dataset.p = '';  // its gradients would shadow the room's
     const W = levelWorld(cfg);
     const st = stage();
     st.innerHTML = `<svg width="0" height="0" style="position:absolute" aria-hidden="true">${RA.defs(cfg)}</svg>`;
@@ -329,7 +330,7 @@
     // tutorial hints for newly introduced mechanics, one after another
     const fresh = cfg.types.filter((t) => !save.seen[t]);
     if (W.tabs.length > 1 && !save.seen._rooms) { fresh.unshift('_rooms'); }
-    fresh.forEach((t, i) => setTimeout(() => { if (G && G.n === n && !G.over) toast(t === '_rooms' ? 'The flat has several rooms: use the tabs at the bottom to look around. Tap an icon on a tab to send Nena!' : REQ[t].hint, 'hint', 4800); }, i * 5200));
+    fresh.forEach((t, i) => setTimeout(() => { if (G && G.n === n && !G.over) toast(t === '_rooms' ? 'Several rooms! Tap the room cards at the bottom (or the side arrows) to look around. Tap a request icon to send Nena.' : REQ[t].hint, 'hint', 4800); }, i * 5200));
     cfg.types.forEach((t) => { save.seen[t] = 1; });
     if (W.tabs.length > 1) save.seen._rooms = 1;
     persist();
@@ -1293,7 +1294,7 @@
       case 'tips': return { ok: st.tips >= o.n, txt: `${Math.min(st.tips, o.n)}/${o.n}` };
       case 'treat': return { ok: st.treat >= 1, txt: st.treat ? '✓' : '0/1' };
       case 'nomiss': return { ok: G.failed === 0, live: true, txt: G.failed ? '✗' : 'so far ✓' };
-      case 'clean': return { ok: G.furs.length + G.dishes === 0, live: true, txt: 'at the end' };
+      case 'clean': return { ok: G.furs.length + G.dishes === 0, live: true, txt: G.furs.length + G.dishes ? `${G.furs.length + G.dishes} mess left` : 'all clean ✓' };
       default: return { ok: false, txt: '' };
     }
   }
@@ -1816,6 +1817,8 @@
     $('s-portrait').innerHTML = A.portrait(who, mood);
     $('s-name').textContent = NAMES[who] || who;
     $('s-text').textContent = text;
+    const place = storyTitle ? (storyTitle.includes('Nail') ? 'bedroom' : 'salon') : ({ home: 'salon', street: 'street', clap: 'clap' }[levelCfg(storyLevel).place] || 'salon');
+    if ($('s-bg').dataset.p !== place) { $('s-bg').dataset.p = place; const c = levelCfg(storyLevel); $('s-bg').innerHTML = `<svg width="0" height="0" style="position:absolute">${RA.defs(c)}</svg>` + RA.ART[place](c); }
     $('s-day').textContent = storyTitle || `Day ${storyLevel} · ${levelCfg(storyLevel).day}`;
     snd('talk', 600);
   }
@@ -1889,6 +1892,7 @@
   $('so-restart').addEventListener('click', () => window.ColorSort.restart());
   $('g-pause').addEventListener('click', () => { if (!G || G.over) return; G.paused = true; show('screen-pause'); });
   $('p-resume').addEventListener('click', () => { G.paused = false; last = performance.now(); show('screen-game'); });
+  $('p-retry').addEventListener('click', () => { if (!G) return; G.over = true; cancelAnimationFrame(raf); if (G.cfg.n > 900) playCustom(G.cfg); else { pendingBoosts = {}; show('screen-game'); startLevel(G.n); } });
   $('p-quit').addEventListener('click', () => { G.over = true; cancelAnimationFrame(raf); CUSTOM = null; renderMap(); });
   $('p-sound').addEventListener('click', () => { save.sound = save.sound === false; save.music = save.sound; persist(); wake(); $('p-sound').textContent = save.sound ? 'Sound: on' : 'Sound: off'; });
   document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !G.paused) { G.paused = true; show('screen-pause'); } });

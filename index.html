@@ -51,6 +51,7 @@
 
   <!-- Story -->
   <section class="screen story" id="screen-story" hidden>
+    <div class="s-bg" id="s-bg" aria-hidden="true"></div>
     <p class="s-day" id="s-day">Day 1</p>
     <div class="s-card">
       <div class="s-portrait" id="s-portrait"></div>
@@ -163,10 +164,11 @@
   <section class="screen modal" id="screen-pause" hidden>
     <div class="card">
       <h2>Paused</h2>
-      <p class="r-sub">Tip: the room tabs at the bottom show who needs what in each room. Tap an icon on a tab and Nena goes there by herself. Glowing spots help right now!</p>
+      <p class="r-sub">Tip: tap a request bubble (or its icon on a room card) and Nena does every step herself. Golden spots help right now. Swipe or use the side arrows to change room.</p>
       <div class="row col">
         <button type="button" class="btn btn-primary" id="p-resume">Resume</button>
         <button type="button" class="btn" id="p-sound">Sound: on</button>
+        <button type="button" class="btn" id="p-retry">↻ Restart the day</button>
         <button type="button" class="btn" id="p-quit">Quit to map</button>
       </div>
     </div>
