@@ -113,7 +113,7 @@
   const REQ = {
     food:    { who: 'simba', icon: '🍖', pts: 100, pat: 24, item: 'food', src: 'kibble', at: 'bowl', dur: 0.6, hint: 'Simba is hungry: tap his bubble. Nena takes kibble in the kitchen and fills his bowl.' },
     water:   { who: 'simba', icon: '💧', pts: 80, pat: 22, at: 'water', dur: 1.2, hint: 'Tap Simba’s water bubble to refill his bowl.' },
-    walk:    { who: 'simba', icon: '🦮', pts: 150, pat: 26, at: 'simba', dur: 0.3, hint: 'Tap Simba to walk him in the street!' },
+    walk:    { who: 'simba', icon: '🦮', pts: 230, pat: 26, at: 'simba', dur: 0.3, hint: 'Tap Simba to walk him in the street!' },
     brush:   { who: 'simba', icon: '🪮', pts: 120, pat: 26, item: 'brush', src: 'brush', at: 'simba', dur: 1.6, hint: 'Tap Simba: Nena grabs the brush and grooms him.' },
     play:    { who: 'simba', icon: '🎾', pts: 110, pat: 24, item: 'ball', src: 'toy', at: 'simba', dur: 1.4, hint: 'Tap Simba: Nena grabs the ball and plays with him.' },
     blanket: { who: 'simba', icon: '🧸', pts: 130, pat: 26, item: 'blanket', src: 'blankie', at: 'simba', dur: 1, hint: 'Simba is sleepy: Nena fetches his blankie from her room.' },
@@ -177,6 +177,19 @@
     L(14, 'Simba’s birthday', 'Thursday', 'home', 110, HOME_ALL, [1650, 3000, 4700], [3.8, 5.3], { party: 'birthday', fur: 6, patience: 0.9, obj: { k: 'done', n: 20, label: 'Complete 20 requests' }, story: [['mohsen', 'happy', 'Happy birthday, my lion!'], ['nasim', 'neutral', 'I made the decorations. Don’t say anything.']] }),
     L(15, 'Cousin Sara’s wedding', 'Friday', 'home', 120, HOME_ALL, [1900, 3400, 5200], [3.4, 4.8], { party: 'wedding', boss: true, fur: 6, patience: 0.9, events: 16, obj: { k: 'nomiss', label: 'Don’t miss a single request' }, story: [['fariba', 'surprised', 'Cousin Sara’s wedding is TONIGHT and the whole family is getting ready here!'], ['mohsen', 'neutral', 'Where is my tie? Where is my tea? Where is everybody?!'], ['nena', 'happy', 'Boss day, Simba. Let’s do this!']] }),
   ];
+  // every home day is a different random mix of real-life needs (the day's theme and objective are always in it)
+  const EASY_POOL = ['water', 'walk', 'play', 'tea', 'help', 'plants', 'cuddle', 'brush', 'charger'];
+  function dailyCfg(base) {
+    if (base.place !== 'home' || base.party || base.n > 900) return Object.assign({}, base);
+    const must = new Set();
+    if (base.n === 1) must.add('food');
+    if (base.obj && base.obj.t) must.add(base.obj.t);
+    must.add(base.types[base.types.length - 1]);
+    const pool = base.n <= 3 ? EASY_POOL : HOME_ALL;
+    const size = Math.min(10, 5 + Math.floor(base.n / 2));
+    const rest = pool.filter((t) => !must.has(t)).sort(() => Math.random() - 0.5);
+    return Object.assign({}, base, { types: [...must, ...rest].slice(0, Math.max(size, must.size)) });
+  }
   function levelCfg(n) {
     if (n > 900 && CUSTOM) return CUSTOM;
     if (n <= LEVELS.length) return LEVELS[n - 1];
@@ -192,8 +205,9 @@
   // stations, rooms and characters a level needs
   function levelWorld(cfg) {
     const st = new Set(), who = new Set();
-    cfg.types.forEach((t) => { const R = REQ[t]; [R.src, R.at, R.who].concat(R.search || []).forEach((x) => { if (STATIONS[x]) st.add(x); }); who.add(R.who); });
-    if (cfg.types.includes('help')) st.add('sink');
+    const types = cfg.place === 'home' ? [...new Set(cfg.types.concat(HOME_ALL))] : cfg.types;
+    types.forEach((t) => { const R = REQ[t]; [R.src, R.at, R.who].concat(R.search || []).forEach((x) => { if (STATIONS[x]) st.add(x); }); who.add(R.who); });
+    if (types.includes('help')) st.add('sink');
     const rooms = new Set();
     if (cfg.place === 'home') {
       rooms.add('salon'); rooms.add('kitchen');
@@ -204,7 +218,7 @@
     } else rooms.add(cfg.place);
     const tabs = cfg.place === 'home' ? HOME_ORDER.filter((r) => rooms.has(r)) : [cfg.place];
     const layers = tabs.slice();
-    if (cfg.types.includes('walk')) layers.push('street');
+    if (types.includes('walk')) layers.push('street');
     if (cfg.place === 'clap') layers.push('parking', 'mall');
     return { stations: [...st], who, tabs, layers };
   }
@@ -266,7 +280,7 @@
   }
 
   function startLevel(n) {
-    const cfg = levelCfg(n);
+    const cfg = dailyCfg(levelCfg(n));
     cancelAnimationFrame(raf);
     music({ home: 'home', street: 'street', clap: 'clap' }[cfg.place] || 'home', cfg.night);
     $('s-bg').innerHTML = ''; $('s-bg').dataset.p = '';  // its gradients would shadow the room's
@@ -278,17 +292,17 @@
       reqs: [], queue: [], hand: [], furs: [], dishes: 0, spawnT: 2, furT: cfg.fur || 999, robotT: 8, paused: false, over: false,
       nena: null, simba: null, npcs: {}, busy: null, simbaAway: false, simbaTask: null, done: 0, failed: 0, layers: {}, st: {}, view: null,
       stats: { walk: 0, tea: 0, maxCombo: 0, tips: 0, treat: 0, type: {} }, objDone: false, boostT: 0, freezeT: 0,
-      boneT: n >= 2 ? 16 + rnd() * 8 : 999, bone: null, pkgT: n >= 4 && cfg.place === 'home' ? 28 + rnd() * 12 : 999, pkg: null,
-      zoomT: n >= 7 && cfg.place === 'home' ? 22 + rnd() * 10 : 999, rushHour: false, lastTick: 99, starsShown: 0, boosts: pendingBoosts || {}, tabKey: '',
+      boneT: n >= 2 ? 16 + rnd() * 8 : 999, bone: null, pkgT: n >= 2 && cfg.place === 'home' ? 28 + rnd() * 12 : 999, pkg: null,
+      zoomT: n >= 3 && cfg.place === 'home' ? 22 + rnd() * 10 : 999, rushHour: false, lastTick: 99, starsShown: 0, boosts: pendingBoosts || {}, tabKey: '',
     };
     if (G.boosts.time) G.time += 15;
-    G.evT = cfg.events || (cfg.mod && (cfg.mod.events || cfg.mod.blackout)) || (n >= 5 && n < 900 ? 30 + rnd() * 15 : n === 902 ? 25 : null);
+    G.evT = cfg.events || (cfg.mod && (cfg.mod.events || cfg.mod.blackout)) || (n >= 3 && n < 900 ? 32 + rnd() * 15 : n === 902 ? 25 : null);
     if (cfg.mod && cfg.mod.hearts) { G.hearts = cfg.mod.hearts; G.maxHearts = cfg.mod.hearts; }
     if (cfg.mod && cfg.mod.zoom) G.zoomT = 6;
     Object.keys(hudCache).forEach((k) => delete hudCache[k]);
     G.joy = 60; G.joyT = 0; G.muddy = false; G.searched = new Set(); G.remoteSpot = null; G.lastPet = 0;
     G.tabsBuilt = ''; G.mc = null; G.miniT = null; G.miniN = 0; G.miniWon = 0; $('g-mini').hidden = true;
-    G.giftT = (n >= 4 && (cfg.place === 'home' || cfg.place === 'clap')) || cfg.challenge ? 22 + rnd() * 30 : null;
+    G.giftT = (n >= 3 && (cfg.place === 'home' || cfg.place === 'clap')) || cfg.challenge ? 22 + rnd() * 30 : null;
     G.frStart = {}; FRIENDS.forEach((f) => { G.frStart[f.id] = friendLv(f.id); });
     if (G.boosts.heart) { G.hearts++; G.maxHearts++; }
     G.zen = n < 900 && save.wellness.zen === today();
@@ -687,17 +701,49 @@
     if (who === 'simba' && G.slept) m *= 1.15;
     return m;
   }
+  // how often each need really happens in a day: cap per day, cooldown (s), and weight by part of the day [morning, afternoon, evening]
+  const NEED = {
+    food: { cap: 2, cool: 'half', ph: [2.2, 0, 2.2] }, water: { cap: 3, cool: 30, ph: [1, 1, 1] }, walk: { cap: 2, cool: 45, ph: [1.6, 0.8, 1.3] },
+    brush: { cap: 1, ph: [0.6, 1, 1] }, play: { cap: 2, cool: 30, ph: [0.8, 1.5, 0.8] }, blanket: { cap: 1, ph: [0, 0.2, 2.5] }, bath: { cap: 1, ph: [0.3, 1, 1.4] },
+    tea: { cap: 3, cool: 28, ph: [0.8, 1.3, 1.5] }, charger: { cap: 1, ph: [0.5, 1, 1] }, cuddle: { cap: 2, cool: 35, ph: [0.3, 1, 1.6] }, help: { cap: 2, cool: 30, ph: [0.8, 2, 1.2] },
+    laundry: { cap: 1, ph: [0.6, 1.4, 0.6] }, talk: { cap: 2, cool: 35, ph: [0.5, 1.2, 1.2] }, wake: { cap: 1, ph: [3, 0.2, 0] }, ready: { cap: 1, ph: [2.2, 0.6, 0.3] },
+    study: { cap: 2, cool: 40, ph: [0.6, 2, 0.6] }, remote: { cap: 1, ph: [0.2, 1, 1.8] }, plants: { cap: 1, ph: [1.4, 1, 0.5] },
+    poop: { cap: 2, cool: 30 }, thirst: { cap: 2, cool: 30 }, bread: { cap: 2, cool: 35 }, calm: { cap: 2, cool: 30 }, kids: { cap: 2, cool: 30 }, juice: { cap: 1 }, dogfriend: { cap: 1 },
+    coals: { cap: 3, cool: 25 }, chai: { cap: 3, cool: 25 }, doze: { cap: 2, cool: 30 }, snack: { cap: 2, cool: 30 }, phone: { cap: 3, cool: 25 }, insta: { cap: 2, cool: 35 }, selfie: { cap: 2, cool: 30 },
+  };
+  const dayClock = () => (G.cfg.endless ? G.elapsed || 0 : G.cfg.dur + (G.boosts.time ? 15 : 0) - G.time);
   function spawn() {
     const busyWho = new Set(G.reqs.map((r) => r.who));
     let types = G.cfg.types.filter((t) => !busyWho.has(REQ[t].who));
     if (G.simbaAway || G.simbaTask || holding('pup')) types = types.filter((t) => REQ[t].who !== 'simba' && REQ[t].src !== 'simba');
     if (up('fountain')) types = types.filter((t) => (t !== 'water' && t !== 'thirst') || rnd() < 0.6);
     if (!types.length) return;
-    addReq(pick(types.concat(types.filter((x) => REQ[x].who === 'simba'))));
+    G.cnt = G.cnt || {}; G.last = G.last || {};
+    const now = dayClock(), dur = G.cfg.endless ? 90 : G.cfg.dur;
+    const prog = G.cfg.endless ? (now % 90) / 90 : now / dur, ph = prog < 0.34 ? 0 : prog < 0.67 ? 1 : 2;
+    const scale = Math.max(1, (G.cfg.endless ? now : dur) / 90);
+    const weight = (t) => {
+      const N = NEED[t] || {}, cap = Math.round((N.cap || 2) * scale), cool = N.cool === 'half' ? dur * 0.45 : (N.cool || 25);
+      if ((G.cnt[t] || 0) >= cap || t === G.lastType) return 0;
+      const since = now - (G.last[t] ?? -999); if (since < cool) return 0;
+      let w = N.ph ? N.ph[ph] : 1; if (REQ[t].who === G.lastWho) w *= 0.35;
+      return w * Math.min(2, 0.6 + since / 60);
+    };
+    let ws = types.map((t) => [t, weight(t)]).filter((x) => x[1] > 0);
+    if (G.n === 1 && !G.cnt.food && types.includes('food')) ws = [['food', 1]];
+    if (!ws.length) {
+      const ok = types.filter((t) => t !== G.lastType && now - (G.last[t] ?? -999) > 14 && (NEED[t] || {}).cool !== 'half' && (!(NEED[t] || {}).ph || NEED[t].ph[ph] > 0));
+      const min = Math.min(...ok.map((t) => G.cnt[t] || 0)); ws = ok.filter((t) => (G.cnt[t] || 0) === min).map((t) => [t, 1]);
+    }
+    if (!ws.length) return;
+    let r = Math.random() * ws.reduce((a, x) => a + x[1], 0), pickT = ws[0][0];
+    for (const [k, w] of ws) { if ((r -= w) < 0) { pickT = k; break; } }
+    addReq(pickT);
   }
   function addReq(t) {
     const R = REQ[t];
     if (G.reqs.some((r) => r.who === R.who)) return;
+    G.cnt = G.cnt || {}; G.last = G.last || {}; G.cnt[t] = (G.cnt[t] || 0) + 1; G.last[t] = dayClock(); G.lastType = t; G.lastWho = R.who;
     if (TRANSIENT[R.who] && !G.npcs[R.who]) { spawnNpc(R.who); snd('swoosh'); }
     if (R.who === 'simba' && G.simba) G.simba.el.classList.remove('lying', 'sniff');
     lifeHome(R.who);
@@ -1172,8 +1218,8 @@
     if (kind === 'choco' && G.simba && G.simba.room === G.nena.room && !G.simbaAway) setTimeout(() => { if (!G || G.over) return; speak(G.simba, '*sniff sniff* 🍫?', 'dog', 1600, true); setTimeout(() => G && speak(G.nena, 'NO Simba! Chocolate is poison for dogs!', '', 2200, true), 900); }, 3200);
   }
   function doWalk(r) {
-    G.simbaAway = true; G.busy = { t: 0, dur: 99, walking: true };
-    const away = 3.6 / (1 + 0.2 * up('shoes'));
+    G.simbaAway = true; G.busy = { t: 0, dur: 99, walking: true }; G.walkingOut = true;
+    const away = 8.5 / (1 + 0.2 * up('shoes'));
     const hasStreet = !!G.layers.street;
     G.nena.el.classList.add('walking'); G.simba.el.classList.add('walking');
     moveTo(G.simba, FRONT[0] - 20, FRONT[1] + 40, 0.9);
@@ -1183,11 +1229,24 @@
         place(G.nena, 20, 545); place(G.simba, 70, 540);
         G.nena.el.classList.remove('flip'); G.simba.el.classList.add('flip');
         setView('street');
-        moveTo(G.nena, 520, 545, away); moveTo(G.simba, 570, 540, away);
         floatText(300, 380, '🌳 Walk in Tehran…', 'hint', 'street');
+        const WALK_EV = [
+          () => { speak(G.simba, '*sniff sniff* 🌳', 'dog', 1400); G.simba.el.classList.add('sniff'); setTimeout(() => G && G.simba && G.simba.el.classList.remove('sniff'), 1200); },
+          () => { speak(G.nena, pick(['Salam, Agha Reza! 👋', 'Hello Mrs. Karimi!', 'Salam! Yes, he’s grown so much!']), '', 1500); },
+          () => { burst(G.simba.x, G.simba.y - 60, 'street', 'hearts', 5); speak(G.simba, '*rolls on his back for the kids*', 'dog', 1500); },
+          () => { speak(G.simba, 'WOOF! 🐦', 'dog', 1200); floatText(G.simba.x, G.simba.y - 120, '🕊️ Pigeons!', 'hint', 'street'); snd('bark'); },
+          () => { speak(G.nena, pick(['Simba, slow down!', 'Not the sangak shop again…', 'Good boy, Simba!']), '', 1400); },
+          () => { floatText(G.simba.x, G.simba.y - 110, '🫓 The bakery smells so good…', 'hint', 'street'); },
+        ].sort(() => Math.random() - 0.5);
+        const legs = [[200, 250], [380, 430], [520, 570]];
+        legs.forEach(([nx, sx], i) => setTimeout(() => {
+          if (!G || G.over || !G.walkingOut) return;
+          moveTo(G.nena, nx, 545, away / 4.2); moveTo(G.simba, sx, 540, away / 4.2, () => { if (G && G.walkingOut && i < 2) WALK_EV[i](); });
+        }, i * away / 3 * 1000));
       } else { G.nena.el.classList.add('gone'); G.simba.el.classList.add('gone'); }
       setTimeout(() => {
         if (!G || G.over) return;
+        G.walkingOut = false;
         if (hasStreet) { moveRoom(G.nena, 'salon'); moveRoom(G.simba, 'salon'); attachNenaOverlays(); G.simba.el.classList.remove('flip'); setView('salon'); }
         place(G.nena, FRONT[0] - 70, FRONT[1] + 40); place(G.simba, FRONT[0] - 20, FRONT[1] + 40);
         G.nena.el.classList.remove('gone'); G.simba.el.classList.remove('gone');
@@ -1460,7 +1519,7 @@
     G.evT -= dt; if (G.evT > 0) return;
     G.evT = (mod.events || mod.blackout || c.events || 26) + rnd() * 10;
     const opts = [];
-    if (c.place === 'home') { opts.push('blackout'); if (G.st.samovar && G.n >= 7) opts.push('aunt'); }
+    if (c.place === 'home') { opts.push('blackout'); if (G.st.samovar && G.n >= 4) opts.push('aunt'); }
     if (c.place === 'street') opts.push('chase');
     if (c.place === 'clap') opts.push('vip', 'curse');
     if (mod.blackout) opts.length = 0, opts.push('blackout');
@@ -1571,7 +1630,7 @@
     if (G.freezeT > 0) G.freezeT -= dt;
     for (const r of G.reqs.slice()) {
       if (r.who === 'simba' && G.simbaAway) continue;
-      if (G.freezeT <= 0) r.left -= dt;
+      if (G.freezeT <= 0) r.left -= dt * (G.walkingOut ? 0.5 : 1);
       if (r.left <= 0) fail(r); else posReq(r);
       if (G.over) return;
     }
