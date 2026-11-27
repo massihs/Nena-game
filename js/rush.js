@@ -294,6 +294,8 @@
     G.zen = n < 900 && save.wellness.zen === today();
     G.fit = n < 900 && save.wellness.gym === today();
     if (n < 900) { const w = weather(); setTimeout(() => { if (G && G.n === n) toast(`${w.ico} Tehran today: ${w.temp}°C, ${w.name.toLowerCase()}`, 'hint', 2000); }, 7800); }
+    G.golden = goldenNow();
+    if (G.golden) setTimeout(() => { if (G && G.n === n) toast('✨ Golden hour! Coins ×2 for this day', 'combo', 2000); }, 1200);
     G.slept = n < 900 && dayNum() - (save.wellness.bedN ?? -9) <= 1;
     if (G.slept) setTimeout(() => { if (G && G.n === n) toast('🌙 Simba slept in Nena’s arms: he is 15% more patient!', 'hint', 2200); }, 5200);
     if (G.fit) setTimeout(() => { if (G && G.n === n) toast('🏋️ Gym energy: Nena is 15% faster today!', 'hint', 2200); }, 3400);
@@ -1764,6 +1766,7 @@
       if (j >= 100) track('joy100');
       extra += `<li class="${j >= 45 ? 'ok' : 'ko'}"><span>🐶 Simba’s happiness ${j}% ${j >= 75 ? '😄' : j >= 45 ? '🙂' : '😕'}</span><b>+${jb} 🪙</b></li>`;
     }
+    if (G.golden && earned > 0) { extra += `<li class="ok"><span>✨ Golden hour</span><b>×2 · +${earned} 🪙</b></li>`; earned *= 2; }
     save.coins += earned;
     save.losses = save.losses || {};
     if (!c.endless && !c.challenge) save.losses[G.n] = stars > 0 ? 0 : (save.losses[G.n] || 0) + 1;
@@ -1884,6 +1887,7 @@
     { id: 'journey', icon: '🗺️', name: 'Full journey', desc: 'Complete a 30-minute daily journey', test: (t) => (t.journey || 0) >= 1, r: 80 },
     { id: 'lv10', icon: '⭐', name: 'Level 10', desc: 'Reach player level 10', test: () => save.plv >= 10, r: 100 },
     { id: 'set1', icon: '🎴', name: 'Collector', desc: 'Complete a sticker set', test: (t) => (t.set || 0) >= 1, r: 80 },
+    { id: 'clock12', icon: '🕐', name: 'Around the clock', desc: 'Live hourly moments at 12 different hours', test: () => Object.keys(save.momHours || {}).length >= 12, r: 120 },
     { id: 'life10', icon: '🏠', name: 'Real life', desc: 'Do 10 daily chores (breakfast, groceries, laundry)', test: (t) => (t.breakfast || 0) + (t.grocery || 0) + (t.laundry || 0) >= 10, r: 100 },
     { id: 'bed7', icon: '🌙', name: 'Only in her arms', desc: 'Rock Simba to sleep on 7 nights', test: (t) => (t.bed || 0) >= 7, r: 100 },
     { id: 'gym5', icon: '🏋️', name: 'Gym sisters', desc: 'Train 5 times with Negin', test: (t) => (t.gym || 0) >= 5, r: 80 },
@@ -1973,6 +1977,8 @@
   /* ---- hub on the map ---- */
   const UNLOCKS = [
     ['today', 1, '📅', 'Nena’s day', 'Her real-life routine on the real clock: breakfast, groceries, laundry…'],
+    ['gift', 1, '🐾', 'Simba’s surprise', 'A new gift every hour. They pile up while you’re away (up to 3) — no rush!'],
+    ['moment', 1, '🕐', 'Hourly moments', 'Every hour, something new happens in the house. Come and live it!'],
     ['daily', 1, '🎁', 'Daily reward', 'Come back every day — big gift on day 7.'],
     ['missions', 1, '📋', 'Quests', 'Three new quests every day, plus weekly missions.'],
     ['family', 2, '❤️', 'Family', 'Grow your friendship with everyone and unlock little scenes.'],
@@ -1980,6 +1986,7 @@
     ['wheel', 2, '🎡', 'Lucky wheel', 'Spin for coins, free boosters and stickers.'],
     ['stickers', 2, '🎴', 'Sticker album', 'Collect stickers and complete sets.'],
     ['bed', 2, '🌙', 'Bedtime', 'Simba only falls asleep in Nena’s arms.'],
+    ['golden', 2, '✨', 'Golden hours', 'At 13:00 and 20:00, every day pays double coins for an hour.'],
     ['challenge', 3, '🎯', 'Daily challenge', 'A special day with a twist, every day.'],
     ['zen', 3, '🧘', 'Meditation', 'Light the oud and breathe — everyone is calmer.'],
     ['album', 3, '📸', 'Photo album', 'Snap Simba’s funniest moments.'],
@@ -2007,7 +2014,7 @@
   }
   function renderHub() {
     const items = [
-      ['today', '📅', 'Today', routineNow() || ''], ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
+      ['gift', '🐾', 'Surprise', giftState().n > 0 ? String(giftState().n) : giftMin() + 'm'], ['today', '📅', 'Today', routineNow() || ''], ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
       ['missions', '📋', 'Quests', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
       ['nails', '💅', 'Nail day', nailsReady() ? '!' : ''], ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
       ['wheel', '🎡', 'Wheel', spinsLeft() || ''], ['stickers', '🎴', 'Stickers', `${Object.keys(save.stickers).length}/${STICKERS.length}`], ['bed', '🌙', 'Bedtime', new Date().getHours() >= 18 && save.wellness.bed !== today() ? '!' : ''], ['gym', '🏋️', 'Gym', gymDay() && save.wellness.gym !== today() ? '!' : ''], ['zen', '🧘', 'Zen', save.wellness.zen !== today() ? '!' : ''], ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
@@ -2016,7 +2023,7 @@
     const vis = items.filter(([id]) => unlocked(id)).map(([id, ico, name, b]) => [id, ico, name, b === '' && save.newF[id] ? 'new' : b]);
     const next = UNLOCKS.find((u) => !unlocked(u[0]));
     if (next) vis.push(['locked', '🔒', next[3], 'Soon']);
-    $('m-hub').innerHTML = vis.map(([id, ico, name, b]) => `<button type="button" class="hub-btn${id === 'locked' ? ' locked' : ''}" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^(\d+\/\d+|Soon)$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
+    $('m-hub').innerHTML = vis.map(([id, ico, name, b]) => `<button type="button" class="hub-btn${id === 'locked' ? ' locked' : ''}" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^(\d+\/\d+|Soon|\d+m)$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
   }
   let dailyShown = false;
 
@@ -2027,6 +2034,7 @@
     if (kind === 'wheel') { openWheel(); return; }
     if (kind === 'gym') { openGym(); return; }
     if (kind === 'bed') { openBed(); return; }
+    if (kind === 'gift') { openGift(); return; }
     if (kind === 'breakfast' || kind === 'grocery' || kind === 'laundry') { openLife(kind); return; }
     if (kind === 'nails') { startNailDay(); return; }
     sheetKind = kind;
@@ -2541,7 +2549,7 @@
   const DQ_POOL = [
     { k: 'pet', n: 3, ico: '🐶', label: 'Pet Simba 3 times' }, { k: 'day', n: 1, ico: '🌅', label: 'Finish a day' }, { k: 'game', n: 1, ico: '🎮', label: 'Play a mini-game' },
     { k: 'req', n: 15, ico: '⚡', label: 'Complete 15 requests' }, { k: 'perfect', n: 1, ico: '⭐', label: 'Get 3 stars on a day' }, { k: 'mini', n: 2, ico: '🔥', label: 'Win 2 mini challenges' },
-    { k: 'zen', n: 1, ico: '🧘', label: 'Meditate once' }, { k: 'gym', n: 1, ico: '🏋️', label: 'Go to the gym with Negin' }, { k: 'bed', n: 1, ico: '🌙', label: 'Rock Simba to sleep' }, { k: 'breakfast', n: 1, ico: '🍳', label: 'Serve the family breakfast' }, { k: 'grocery', n: 1, ico: '🛒', label: 'Do the groceries for Maman' }, { k: 'laundry', n: 1, ico: '🧺', label: 'Hang the laundry' }, { k: 'req_food', n: 3, ico: '🍖', label: 'Feed Simba 3 times' }, { k: 'req_tea', n: 2, ico: '☕', label: 'Serve Baba 2 teas' }, { k: 'photo', n: 1, ico: '📸', label: 'Take a Simba photo' },
+    { k: 'zen', n: 1, ico: '🧘', label: 'Meditate once' }, { k: 'gym', n: 1, ico: '🏋️', label: 'Go to the gym with Negin' }, { k: 'bed', n: 1, ico: '🌙', label: 'Rock Simba to sleep' }, { k: 'breakfast', n: 1, ico: '🍳', label: 'Serve the family breakfast' }, { k: 'gift', n: 2, ico: '🐾', label: 'Open 2 of Simba’s surprises' }, { k: 'moment', n: 2, ico: '🕐', label: 'Live 2 hourly moments' }, { k: 'grocery', n: 1, ico: '🛒', label: 'Do the groceries for Maman' }, { k: 'laundry', n: 1, ico: '🧺', label: 'Hang the laundry' }, { k: 'req_food', n: 3, ico: '🍖', label: 'Feed Simba 3 times' }, { k: 'req_tea', n: 2, ico: '☕', label: 'Serve Baba 2 teas' }, { k: 'photo', n: 1, ico: '📸', label: 'Take a Simba photo' },
   ];
   function dailyQuests() {
     if (save.dq.date !== today()) save.dq = { date: today(), base: Object.assign({}, save.tot), claimed: false };
@@ -2780,6 +2788,117 @@
     return L.filter((r) => unlocked({ hair: 'zen' }[r.k] || r.k));
   }
   const routineNow = () => { const h = new Date().getHours(); return routine().filter((r) => !r.done() && h >= r.win[0] && h < r.win[1]).length ? '!' : ''; };
+
+
+  /* ---- the hourly loop: Simba's surprise (one per hour, piles up to 3, never lost),
+     a different little moment of family life every hour, and two golden hours a day ---- */
+  const HOUR = 3600000;
+  const hourKey = () => today() + '-' + new Date().getHours();
+  function giftState() {
+    const g = save.gift || (save.gift = { n: 1, next: Date.now() + HOUR });
+    while (g.n < 3 && Date.now() >= g.next) { g.n++; g.next += HOUR; }
+    if (g.n >= 3) g.next = Date.now() + HOUR;
+    return g;
+  }
+  const giftMin = () => Math.max(1, Math.ceil((giftState().next - Date.now()) / 60000));
+  const GIFTS = [[40, 'coins', 20], [20, 'coins', 45], [15, 'boost'], [10, 'spin'], [10, 'sticker'], [5, 'xp', 30]];
+  function openGift() {
+    const g = giftState();
+    if (g.n <= 0) { snd('click'); toast(`🐾 Simba is preparing the next surprise… ready in ${giftMin()} min`, '', 1800); return; }
+    $('gf-pic').innerHTML = A.portrait('simba', 'happy');
+    $('gf-say').textContent = pick(['Simba drops three boxes at Nena’s feet. Pick one!', 'Woof! Simba found surprises under the sofa. Which one?', 'Simba wags his tail proudly. Choose a box!']);
+    $('gf-boxes').innerHTML = [0, 1, 2].map((i) => `<button type="button" class="gf-box" data-i="${i}" style="animation-delay:${i * 0.12}s">🎁</button>`).join('');
+    $('gf-res').textContent = ''; $('gf-ok').hidden = true;
+    $('gift').hidden = false; snd('happy'); haptic('tap');
+  }
+  function pickGift(btn) {
+    const g = giftState(); if (g.n <= 0 || $('gf-boxes').classList.contains('done')) return;
+    if (g.n >= 3) g.next = Date.now() + HOUR;
+    g.n--;
+    let r = Math.random() * 100, it = GIFTS[0];
+    for (const x of GIFTS) { if ((r -= x[0]) < 0) { it = x; break; } }
+    let txt = '';
+    if (it[1] === 'coins') { save.coins += it[2]; txt = `+${it[2]} 🪙`; }
+    else if (it[1] === 'boost') { const b = pick(BOOSTERS); save.freeB[b.id] = (save.freeB[b.id] || 0) + 1; txt = `${b.icon} Free ${b.name}`; }
+    else if (it[1] === 'spin') { save.wheel.extra = (save.wheel.extra || 0) + 1; txt = '🎡 Free wheel spin'; }
+    else if (it[1] === 'sticker') { const [s] = dropStickers(1); txt = `${s.ico} Sticker: ${s.name}${s.dup ? ' (+5 🪙)' : ''}`; }
+    else { gainXP(it[2]); txt = `⭐ +${it[2]} XP`; }
+    track('gift'); persist(); checkAch();
+    $('gf-boxes').classList.add('done');
+    btn.classList.add('open'); btn.textContent = '✨';
+    $('gf-res').textContent = txt; snd('coin'); setTimeout(() => snd('success'), 120); haptic('star'); confettiOn($('gift'));
+    $('gf-ok').hidden = false; $('gf-ok').textContent = g.n > 0 ? `Open the next one (${g.n}) 🎁` : `Yay! Next surprise in ${giftMin()} min`;
+  }
+  const MOM_NIGHT = [['🌙', 'simba', 'Night', 'It’s late — Nena and Simba are asleep. Tiptoe and leave a treat by his bed. See you in the morning ☾', 'hold']];
+  const MOMENTS = {
+    6: ['🌅', 'simba', 'Wake-up licks', 'Simba jumps on the bed and licks Nena’s face! Pet him good morning.', 'tap', 12],
+    7: ['🍵', 'fariba', 'Morning chai', 'Maman: “Nena jan, bring Baba his chai — the way he likes it.”', 'pick', [['🍵', 'Chai + sugar cube', 1], ['☕', 'Coffee', 0], ['🧃', 'Juice', 0]]],
+    8: ['👓', 'mohsen', 'Baba’s glasses', 'Baba: “Where are my glasses?!” Where could they be…?', 'pick', [['🙆‍♂️', 'On his head', 1], ['🛋️', 'In the sofa', 0], ['🧊', 'In the fridge', 0]]],
+    9: ['🦮', 'simba', 'Morning walk', 'Simba sits by the door and wiggles. What does he want?', 'pick', [['🦮', 'His leash', 1], ['🧶', 'Wool', 0], ['🪥', 'A toothbrush', 0]]],
+    10: ['😴', 'negin', 'Wake Negin', 'Negin is still asleep… wake her up gently!', 'tap', 10],
+    11: ['🫓', 'nena', 'Hot sangak', 'Fresh sangak from the bakery — blow on it before it burns your fingers!', 'tap', 12],
+    12: ['🍲', 'fariba', 'Ghormeh sabzi', 'Maman: “Stir the pot slowly while I chop the herbs.”', 'hold'],
+    13: ['🐾', 'simba', 'Siesta', 'Simba naps on the cool tiles. Stroke him softly.', 'hold'],
+    14: ['📦', 'mohsen', 'The postman', 'Ding-dong! A package for Baba. What do you need to sign?', 'pick', [['🖊️', 'A pen', 1], ['🥄', 'A spoon', 0], ['🍌', 'A banana', 0]]],
+    15: ['😤', 'nasim', 'Grumpy Nasim', 'Nasim is in a mood. What will cheer her up?', 'pick', [['🍫', 'Chocolate', 1], ['🧹', 'A broom', 0], ['📚', 'Homework', 0]]],
+    16: ['🌺', 'fariba', 'Balcony flowers', 'Maman’s geraniums on the balcony are thirsty. Water them gently.', 'hold'],
+    17: ['🫖', 'mohsen', 'Five o’clock tea', 'Baba: “Five o’clock! Tea and…?”', 'pick', [['🌴', 'Dates', 1], ['🧂', 'Salt', 0], ['🌶️', 'Chili', 0]]],
+    18: ['🐈', 'simba', 'The neighbour’s cat', 'Simba spotted the cat on the wall! Hold him and calm him down.', 'hold'],
+    19: ['🤳', 'simba', 'Selfie time', 'Negin wants a selfie with Simba. Tap to make him look at the camera!', 'tap', 8],
+    20: ['🍽️', 'fariba', 'Dinner table', 'Maman: “Help me set the table — what’s missing?”', 'pick', [['🌿', 'Sabzi khordan', 1], ['🧦', 'A sock', 0], ['🔨', 'A hammer', 0]]],
+    21: ['🤗', 'simba', 'Cuddle time', 'Simba puts his big fluffy head on Nena’s lap. Cuddles!', 'hold'],
+    22: ['📖', 'nena', 'Story time', 'Nena reads on the sofa while Simba yawns. Turn the pages!', 'tap', 8],
+    23: ['🛏️', 'simba', 'Lights off', 'Simba curls up next to Nena… hold to dim the lights.', 'hold'],
+  };
+  const momentNow = () => MOMENTS[new Date().getHours()] || MOM_NIGHT[0];
+  const MOM_FR = { simba: 'simba', mohsen: 'baba', fariba: 'fariba', negin: 'negin', nasim: 'nasim' };
+  let MO = null;
+  function openMoment() {
+    if (save.moment === hourKey()) { toast(`✓ Already lived this hour. Next moment in ${60 - new Date().getMinutes()} min`, '', 1600); return; }
+    const m = momentNow(); MO = { m, t: 0, n: 0, miss: 0, done: false };
+    $('mo-head').innerHTML = `<span>${m[0]}</span><b>${m[2]}</b><small>${String(new Date().getHours()).padStart(2, '0')}:00</small>`;
+    $('mo-pic').innerHTML = A.portrait(m[1], 'happy'); $('mo-pic').className = 'mo-pic' + (m[4] === 'tap' ? ' tappable' : '');
+    $('mo-say').textContent = m[3]; $('mo-ok').hidden = true; $('mo-res').textContent = '';
+    if (m[4] === 'pick') $('mo-play').innerHTML = `<div class="mo-picks">${m[5].map((o, i) => `<button type="button" class="mo-pick" data-i="${i}"><span>${o[0]}</span><small>${o[1]}</small></button>`).join('')}</div>`;
+    else if (m[4] === 'hold') $('mo-play').innerHTML = `<button type="button" class="mo-hold" id="mo-hold"><i id="mo-holdf"></i><span>Hold 💗</span></button>`;
+    else $('mo-play').innerHTML = `<p class="mo-cnt" id="mo-cnt">Tap the picture! 0/${m[5]}</p><div class="mo-bar"><i id="mo-bar"></i></div>`;
+    $('moment').hidden = false; snd('chime');
+    if (m[4] === 'tap') { const t0 = performance.now(); MO.iv = setInterval(() => { if (!MO || MO.done) return clearInterval(MO && MO.iv); const left = 7 - (performance.now() - t0) / 1000; $('mo-bar').style.width = Math.max(0, left / 7 * 100) + '%'; if (left <= 0) { clearInterval(MO.iv); momentDone(MO.n >= MO.m[5] * 0.6); } }, 100); }
+  }
+  function momentTap() {
+    if (!MO || MO.done || MO.m[4] !== 'tap') return;
+    MO.n++; snd('pop'); haptic('tap');
+    const p = $('mo-pic'); p.classList.remove('squish'); void p.offsetWidth; p.classList.add('squish');
+    const h = document.createElement('i'); h.className = 'mo-heart'; h.textContent = pick(['❤️', '💕', '✨', '💖']); h.style.left = (20 + Math.random() * 60) + '%'; p.appendChild(h); setTimeout(() => h.remove(), 900);
+    $('mo-cnt').textContent = `Tap the picture! ${Math.min(MO.n, MO.m[5])}/${MO.m[5]}`;
+    if (MO.n >= MO.m[5]) { clearInterval(MO.iv); momentDone(true); }
+  }
+  function momentDone(ok) {
+    if (!MO || MO.done) return; MO.done = true;
+    const coins = ok ? 15 : 6;
+    save.moment = hourKey(); save.coins += coins; gainXP(ok ? 8 : 3);
+    save.momHours = save.momHours || {}; save.momHours[new Date().getHours()] = 1;
+    const f = MOM_FR[MO.m[1]]; if (f && ok) save.friend[f] = (save.friend[f] || 0) + 1;
+    track('moment'); persist(); checkAch();
+    snd(ok ? 'win' : 'pop'); haptic(ok ? 'star' : 'deliver'); if (ok) confettiOn($('moment'));
+    $('mo-res').textContent = ok ? `Lovely! +${coins} 🪙${f ? ' · ❤️ +1' : ''}` : `Nice try! +${coins} 🪙`;
+    $('mo-ok').hidden = false; $('mo-ok').textContent = `Next moment at ${String((new Date().getHours() + 1) % 24).padStart(2, '0')}:00 ✓`;
+  }
+  const GOLD = [[13, 14], [20, 21]];
+  const goldenNow = () => { const h = new Date().getHours(); return unlocked('golden') && GOLD.some(([a, b]) => h >= a && h < b); };
+  const nextGold = () => { const h = new Date().getHours(); const g = GOLD.find(([a]) => a > h) || GOLD[0]; return `${g[0]}:00`; };
+  function renderNow() {
+    const w = weather(), P = dayPhase();
+    let html = `<div class="m-chips"><span>${P.ico} ${P.name}</span><span>${persianDate()}</span><span>${w.ico} ${w.temp}°C</span>${unlocked('golden') ? (goldenNow() ? '<span class="gold on">✨ Golden hour · coins ×2</span>' : `<span class="gold">✨ ×2 at ${nextGold()}</span>`) : ''}</div>`;
+    if (unlocked('moment')) {
+      const m = momentNow();
+      html += save.moment === hourKey()
+        ? `<div class="mo-banner done">✓ ${m[2]} · next moment in ${60 - new Date().getMinutes()} min</div>`
+        : `<button type="button" class="mo-banner" data-mo="1"><span class="mo-i">${m[0]}</span><span class="mo-t"><small>Now in the house · ${String(new Date().getHours()).padStart(2, '0')}:00</small><b>${m[2]}</b></span><em>Go ›</em></button>`;
+    }
+    $('m-now').innerHTML = html;
+  }
+  setInterval(() => { if (!$('screen-map').hidden) { renderNow(); renderHub(); } }, 30000);
 
   /* ---- daily chores mini-games: breakfast (orders), groceries (memory), laundry (pairs) ---- */
   const BF_ITEMS = { bread: ['🫓', 'Sangak'], panir: ['🧀', 'Panir'], walnut: ['🌰', 'Walnuts'], honey: ['🍯', 'Honey'], butter: ['🧈', 'Butter'], egg: ['🍳', 'Fried egg'], tomato: ['🍅', 'Tomato'], cucumber: ['🥒', 'Cucumber'], sabzi: ['🌿', 'Sabzi'], tea: ['🍵', 'Chai'], jam: ['🍓', 'Morabba'], haleem: ['🥣', 'Haleem'] };
@@ -3057,7 +3176,7 @@
   function renderMap() {
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
     $('m-coins').textContent = save.coins;
-    { const w = weather(), P = dayPhase(); $('m-now').innerHTML = `<span>${P.ico} ${P.name}</span><span>${persianDate()}</span><span>${w.ico} ${w.temp}°C</span>`; }
+    renderNow();
     $('m-prog').textContent = `Day ${Math.min(save.level, LEVELS.length)}/${LEVELS.length}`;
     $('m-stars').textContent = total;
     const max = Math.max(save.level + 2, LEVELS.length);
@@ -3257,6 +3376,25 @@
     if (save.newF[id]) { delete save.newF[id]; persist(); }
     snd('tab'); openSheet(id);
   });
+  $('m-now').addEventListener('click', (e) => { if (e.target.closest('[data-mo]')) { snd('tab'); openMoment(); } });
+  $('gf-boxes').addEventListener('click', (e) => { const b = e.target.closest('.gf-box'); if (b) pickGift(b); });
+  $('gf-ok').addEventListener('click', () => { snd('click'); $('gf-boxes').classList.remove('done'); if (giftState().n > 0) openGift(); else { $('gift').hidden = true; renderHub(); } });
+  $('gf-x').addEventListener('click', () => { $('gift').hidden = true; $('gf-boxes').classList.remove('done'); renderHub(); });
+  $('mo-pic').addEventListener('pointerdown', (e) => { e.preventDefault(); momentTap(); });
+  $('mo-play').addEventListener('click', (e) => {
+    const b = e.target.closest('.mo-pick'); if (!b || !MO || MO.done) return;
+    if (MO.m[5][+b.dataset.i][2]) { b.classList.add('right'); momentDone(MO.miss === 0); }
+    else { MO.miss++; b.classList.add('wrong'); b.disabled = true; snd('fail'); haptic('fail'); $('mo-say').textContent = pick(['Hmm… not that one! 😅', 'Nope! Try again.', 'Are you sure? 🤔']); }
+  });
+  $('mo-play').addEventListener('pointerdown', (e) => {
+    if (!e.target.closest('#mo-hold') || !MO || MO.done) return; e.preventDefault();
+    const btn = $('mo-hold'); btn.classList.add('on'); snd('chime'); MO.hold = true; const t0 = performance.now() - (MO.held || 0) * 1000;
+    const tick = () => { if (!MO || MO.done || !MO.hold) return; MO.held = (performance.now() - t0) / 1000; $('mo-holdf').style.height = Math.min(100, MO.held / 2.6 * 100) + '%'; if (MO.held >= 2.6) { momentDone(true); return; } if (Math.random() < 0.08) haptic('tap'); requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => $('mo-play').addEventListener(ev, () => { if (MO && MO.hold) { MO.hold = false; const b = $('mo-hold'); if (b) b.classList.remove('on'); } }, true));
+  $('mo-ok').addEventListener('click', () => { snd('click'); $('moment').hidden = true; if (MO) clearInterval(MO.iv); MO = null; renderNow(); renderHub(); });
+  $('mo-x').addEventListener('click', () => { $('moment').hidden = true; if (MO) clearInterval(MO.iv); MO = null; renderNow(); });
   $('ul-ok').addEventListener('click', () => { snd('click'); $('unlock').hidden = true; renderHub(); if (dailyReady() && !dailyShown && daysDone() >= 1) { dailyShown = true; setTimeout(() => openSheet('daily'), 300); } });
   $('m-play').addEventListener('click', () => { snd('click'); const n = Math.min(save.level, LEVELS.length); if (save.level > LEVELS.length) openSheet('endless'); else playStory(n); });
   $('sh2-body').addEventListener('click', sheetAction);
