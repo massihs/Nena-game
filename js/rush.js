@@ -72,7 +72,7 @@
   };
   const FUR_ZONE = { x0: 270, x1: 560, y0: 600, y1: 780 };
   const FRONT = [548, 430];
-  const NPC_ART = { baba: ['mohsen', 'happy', 84, 147], fariba: ['fariba', 'happy', 80, 140], nasim: ['nasim', 'angry', 80, 140], negin: ['negin', 'happy', 76, 132], kids: ['mia', 'happy', 64, 112], pourya: ['pourya', 'happy', 84, 147] };
+  const NPC_ART = { baba: ['mohsen', 'happy', 84, 147], fariba: ['fariba', 'happy', 80, 140], nasim: ['nasim', 'angry', 80, 140], negin: ['negin', 'happy', 80, 140], kids: ['mia', 'happy', 64, 112], pourya: ['pourya', 'happy', 84, 147] };
   const GUESTS = [['guest1', 40, 552, 'happy'], ['guest2', 112, 554, 'happy'], ['guest3', 42, 742, 'happy'], ['guest4', 112, 744, 'neutral'], ['witch1', 490, 552, 'angry'], ['witch2', 562, 554, 'angry']];
   const TRANSIENT = { nasim: 1, kids: 1 };
   const ELEV = { mall: [40, 228, 112, 192], parking: [436, 214, 112, 186] };

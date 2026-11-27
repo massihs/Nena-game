@@ -191,7 +191,7 @@ window.Art = (function () {
   const PEOPLE = {
     nena:    { skin: '#f8cfae', hair: '#7d3a1a', hair2: '#984f27', hl: '#c4743f', style: 'wavy', shirt: '#f4a3c0', collar: '#c9557d', freckles: true, pants: '#4f6d9a' },
     nasim:   { skin: '#f3c7a3', hair: '#7d4526', hair2: '#8f5430', style: 'ponytail', shirt: '#3d3a5c', collar: '#ef5f7f', pants: '#2f2b46', scale: 0.94, hoodie: true },
-    negin:   { skin: '#f4cbab', hair: '#4a2414', hair2: '#5b2f1c', style: 'messy', shirt: '#9cc2d9', collar: '#6f9bb7', pants: '#9cc2d9', mask: true, scale: 0.86 },
+    negin:   { skin: '#f4cbab', hair: '#3e1d10', hair2: '#5e321d', style: 'mid', shirt: '#7a2d4a', collar: '#e0c27a', pants: '#23202b', earrings: '#ffd36b', scale: 0.9 },
     mohsen:  { skin: '#eebd96', hair: '#b9b4be', hair2: '#d3cfd7', style: 'gray', shirt: '#dfe9f3', collar: '#8fa9c4', pants: '#4f5566', belly: true, shirtDetails: true },
     fariba:  { skin: '#f0c19c', hair: '#6b3a20', hair2: '#c99a62', style: 'bob', shirt: '#b5476d', collar: '#8c2f52', pants: '#5a3d6b', apron: true, earrings: '#ffd36b' },
     mia:     { skin: '#8d5a3b', hair: '#1f1612', hair2: '#2c201a', style: 'puff', shirt: '#f2c230', collar: '#d99a00', earrings: '#ffd36b' },
@@ -219,6 +219,13 @@ window.Art = (function () {
       back = `<path d="M80 30 C44 30 33 58 36 88 C34 108 40 122 35 136 C50 144 62 138 66 128 L94 128 C98 138 110 144 125 136 C120 122 126 108 124 88 C127 58 116 30 80 30Z" fill="${c.hair}"/>`;
       front = `<path d="M43 78 C41 45 62 32 82 34 C103 36 119 52 117 80 C109 61 97 53 83 52 C71 61 56 65 43 78Z" fill="${c.hair}"/>
         <g fill="none" stroke="${c.hair2}" stroke-linecap="round" opacity=".75"><path d="M56 42 C50 58 55 74 48 90 C44 104 49 116 45 128" stroke-width="3.2"/><path d="M92 38 C102 52 97 68 107 84 C113 98 109 112 116 126" stroke-width="3.2"/><path d="M72 36 C67 46 70 56 63 68" stroke-width="2.6"/><path d="M104 48 C110 60 108 72 114 86" stroke-width="2.4"/></g>`;
+    } else if (c.style === 'mid') {
+      // mid-length hair, just past the shoulders, soft waves at the ends
+      back = `<path d="M80 29 C43 29 31 58 34 90 C32 112 38 130 32 148 C42 160 58 156 64 146 L96 146 C102 156 118 160 128 148 C122 130 128 112 126 90 C129 58 117 29 80 29Z" fill="${c.hair}"/>
+        <path d="M34 140 q6 10 16 8 M126 140 q-6 10 -16 8" stroke="${c.hair2}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>`;
+      front = `<path d="M42 82 C38 46 60 31 82 33 C105 35 121 53 118 84 C112 64 102 54 90 50 C80 60 62 70 42 82Z" fill="${c.hair}"/>
+        <path d="M58 44 C70 36 92 36 106 48" stroke="${c.hair2}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>
+        <path d="M44 84 C40 104 46 124 40 142" stroke="${c.hair2}" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".6"/><path d="M116 84 C120 104 114 124 120 142" stroke="${c.hair2}" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".6"/>`;
     } else if (c.style === 'gray') {
       back = `<ellipse cx="80" cy="58" rx="41" ry="33" fill="${c.hair}"/><path d="M41 74 q-4 -18 4 -30 M119 74 q4 -18 -4 -30" stroke="${c.hair}" stroke-width="12" stroke-linecap="round" fill="none"/>`;
       front = `<path d="M42 72 Q40 33 80 30 Q120 33 118 72 Q113 52 99 47 Q86 54 70 49 Q55 49 46 61Z" fill="${c.hair2}"/>
