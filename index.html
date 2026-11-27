@@ -74,8 +74,10 @@
       <div class="hud-row small">
         <span class="hearts" id="g-hearts">♥♥♥♥♥</span>
         <span class="combo" id="g-combo"></span>
+        <span class="rush-badge" id="g-rush" hidden>Rush ×1.5</span>
         <span class="pill coin">🪙 <b id="g-coins">0</b></span>
       </div>
+      <div class="hud-obj" id="g-obj" hidden></div>
     </header>
     <div class="stage-wrap" id="stage-wrap"><div class="stage" id="stage"></div><div class="toast" id="toast"></div></div>
     <footer class="handbar"><span class="hand-label">Holding</span><span class="hand-items" id="g-hand"><em>Empty hands</em></span></footer>
@@ -83,6 +85,7 @@
 
   <!-- Result -->
   <section class="screen modal" id="screen-result" hidden>
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
     <div class="card">
       <h2 id="r-title">Great day!</h2>
       <div class="stars" id="r-stars"></div>
@@ -96,11 +99,26 @@
     </div>
   </section>
 
+  <!-- Prep: goals and boosters before a day -->
+  <section class="screen modal" id="screen-prep" hidden>
+    <div class="card prep">
+      <h2 id="pr-title">Day 1</h2>
+      <div class="pr-goals" id="pr-goals"></div>
+      <p class="pr-obj" id="pr-obj"></p>
+      <div class="pr-head"><span>Boosters for today</span><span class="pill coin">🪙 <b id="pr-coins">0</b></span></div>
+      <div class="pr-boosts" id="pr-boosts"></div>
+      <div class="row">
+        <button type="button" class="btn" id="pr-back">Map</button>
+        <button type="button" class="btn btn-primary btn-big" id="pr-start">Start the day</button>
+      </div>
+    </div>
+  </section>
+
   <!-- Pause -->
   <section class="screen modal" id="screen-pause" hidden>
     <div class="card">
       <h2>Paused</h2>
-      <p class="r-sub">Tip: tap several things in a row, Nena does them in order. Watch the rings around each request!</p>
+      <p class="r-sub">Tip: tap a request bubble or a character and Nena plans every step by herself. Glowing spots are the ones that help right now!</p>
       <div class="row col">
         <button type="button" class="btn btn-primary" id="p-resume">Resume</button>
         <button type="button" class="btn" id="p-sound">Sound: on</button>

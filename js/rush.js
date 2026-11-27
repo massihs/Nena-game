@@ -15,8 +15,9 @@
   /* Save                                                                */
   /* ------------------------------------------------------------------ */
   const KEY = 'nena-simba-rush-v1';
-  let save = { level: 1, stars: {}, best: {}, coins: 0, up: {}, sound: true, music: true, seen: {} };
+  let save = { level: 1, stars: {}, best: {}, medals: {}, coins: 0, up: {}, sound: true, music: true, seen: {} };
   try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.level) save = Object.assign(save, d); } catch (e) { /* */ }
+  save.medals = save.medals || {};
   const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* */ } };
   const up = (k) => save.up[k] || 0;
 
@@ -40,35 +41,36 @@
 
   /* request catalogue */
   const REQ = {
-    food:   { who: 'simba', icon: '🍖', pts: 100, pat: 24, hint: 'Tap the kibble, then Simba’s bowl.' },
+    food:   { who: 'simba', icon: '🍖', pts: 100, pat: 24, hint: 'Tap Simba’s bubble: Nena grabs kibble and fills his bowl.' },
     water:  { who: 'simba', icon: '💧', pts: 80, pat: 22, hint: 'Tap the water bowl to refill it.' },
     walk:   { who: 'simba', icon: '🦮', pts: 150, pat: 26, hint: 'Tap Simba to take him for a walk.' },
-    brush:  { who: 'simba', icon: '🪮', pts: 120, pat: 26, hint: 'Grab the brush, then tap Simba.' },
-    play:   { who: 'simba', icon: '🎾', pts: 110, pat: 24, hint: 'Grab the ball from the basket, then tap Simba.' },
-    tea:    { who: 'baba', icon: '☕', pts: 120, pat: 26, hint: 'Tap the samovar, then bring the tea to Baba.' },
+    brush:  { who: 'simba', icon: '🪮', pts: 120, pat: 26, hint: 'Tap Simba: Nena grabs the brush and grooms him.' },
+    play:   { who: 'simba', icon: '🎾', pts: 110, pat: 24, hint: 'Tap Simba: Nena grabs the ball and plays with him.' },
+    tea:    { who: 'baba', icon: '☕', pts: 120, pat: 26, hint: 'Tap Baba: Nena brews tea at the samovar and brings it.' },
     help:   { who: 'fariba', icon: '🍲', pts: 150, pat: 26, hint: 'Tap Maman to help her cook.' },
     talk:   { who: 'nasim', icon: '💬', pts: 130, pat: 18, hint: 'Nasim is back and angry: tap her to talk.' },
     wake:   { who: 'negin', icon: '⏰', pts: 140, pat: 24, hint: 'Negin overslept: tap her door.' },
   };
   const ITEMS = { food: '🥣', tea: '🍵', brush: '🪮', ball: '🎾' };
+  const CHIP = { kibble: '🥣', bowl: '👇', water: '💧', samovar: '☕', brush: '🪮', toy: '🎾', sink: '🧽', negin: '⏰', laptop: '💻' };
 
   /* ------------------------------------------------------------------ */
   /* Levels                                                              */
   /* ------------------------------------------------------------------ */
   const L = (n, title, day, dur, types, targets, every, extra) => Object.assign({ n, title, day, dur, types, targets, every }, extra || {});
   const LEVELS = [
-    L(1, 'First morning', 'Saturday', 60, ['food', 'water'], [300, 500, 700], [6, 9], { story: [['simba', 'happy', 'Woof! (Breakfast. Now. Please.)'], ['nena', 'happy', 'Okay Simba! Kibble first, then fresh water.']] }),
-    L(2, 'Walkies!', 'Sunday', 70, ['food', 'water', 'walk'], [450, 750, 1000], [6, 8.5], { story: [['nena', 'neutral', 'Negin was supposed to walk him… she’s still asleep.'], ['simba', 'happy', '*brings the leash*']] }),
-    L(3, 'Tea for Baba', 'Monday', 75, ['food', 'water', 'walk', 'tea'], [700, 1100, 1450], [5.5, 8], { laptop: true, story: [['mohsen', 'happy', 'Nena jan, is there tea? A father needs his tea!'], ['nena', 'happy', 'Coming, Baba! And I have work on my laptop too…']] }),
-    L(4, 'Fluffy trouble', 'Tuesday', 80, ['food', 'water', 'walk', 'tea', 'brush'], [900, 1350, 1750], [5.5, 7.5], { laptop: true, fur: 9, story: [['nena', 'surprised', 'Orange fur EVERYWHERE. Simba, you’re shedding again!'], ['simba', 'happy', '*shakes proudly*']] }),
-    L(5, 'Maman’s kitchen', 'Wednesday', 85, ['food', 'water', 'walk', 'tea', 'brush', 'help'], [1100, 1600, 2100], [5, 7], { laptop: true, fur: 9, story: [['fariba', 'happy', 'Nena jan, help me with the ghormeh sabzi? And then the dishes, please!']] }),
-    L(6, 'Nasim is home', 'Thursday', 90, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk'], [1300, 1900, 2500], [4.8, 6.8], { laptop: true, fur: 8, story: [['nasim', 'angry', 'DON’T talk to me. …Okay, maybe talk to me. Later.'], ['mohsen', 'neutral', 'Nena, go see your sister before she explodes.']] }),
-    L(7, 'Play time', 'Friday', 90, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play'], [1500, 2200, 2800], [4.6, 6.5], { laptop: true, fur: 8, story: [['simba', 'happy', '*drops the ball on your foot. Again.*'], ['nena', 'happy', 'Friday means play time!']] }),
-    L(8, 'Wake up, Negin!', 'Saturday', 95, ['food', 'water', 'walk', 'tea', 'help', 'talk', 'play', 'wake'], [1700, 2400, 3100], [4.4, 6.2], { laptop: true, fur: 8, story: [['negin', 'sleepy', '…zzz… five more minutes… zzz…'], ['fariba', 'neutral', 'Nena, wake your sister, she has class!']] }),
-    L(9, 'Busy Friday', 'Friday', 100, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play', 'wake'], [1900, 2700, 3500], [4.2, 6], { laptop: true, fur: 7, story: [['mohsen', 'happy', 'The whole family is home today! Tea for everyone!']] }),
-    L(10, 'Rainy day', 'Sunday', 100, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play'], [2000, 2900, 3700], [4.1, 5.8], { laptop: true, fur: 5, rain: true, story: [['nena', 'neutral', 'Rain… muddy paws, wet fur, more mess. Let’s go!']] }),
-    L(11, 'Party prep', 'Wednesday', 105, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play', 'wake'], [2200, 3100, 4000], [3.9, 5.5], { laptop: true, fur: 7, patience: 0.92, story: [['fariba', 'surprised', 'Simba’s birthday is tomorrow and nothing is ready!']] }),
-    L(12, 'Simba’s birthday', 'Thursday', 110, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play', 'wake'], [2400, 3400, 4400], [3.8, 5.3], { laptop: true, fur: 6, patience: 0.9, story: [['mohsen', 'happy', 'Happy birthday, my lion!'], ['nasim', 'neutral', 'I made the decorations. Don’t say anything.']] }),
+    L(1, 'First morning', 'Saturday', 60, ['food', 'water'], [300, 550, 800], [6, 9], { obj: { k: 'done', n: 6, label: 'Complete 6 requests' }, story: [['simba', 'happy', 'Woof! (Breakfast. Now. Please.)'], ['nena', 'happy', 'Okay Simba! Kibble first, then fresh water.']] }),
+    L(2, 'Walkies!', 'Sunday', 70, ['food', 'water', 'walk'], [400, 700, 1050], [6, 8.5], { obj: { k: 'walk', n: 2, label: 'Walk Simba 2 times' }, story: [['nena', 'neutral', 'Negin was supposed to walk him… she’s still asleep.'], ['simba', 'happy', '*brings the leash*']] }),
+    L(3, 'Tea for Baba', 'Monday', 75, ['food', 'water', 'walk', 'tea'], [650, 1150, 1750], [5.5, 8], { obj: { k: 'tea', n: 3, label: 'Serve Baba 3 teas' }, laptop: true, story: [['mohsen', 'happy', 'Nena jan, is there tea? A father needs his tea!'], ['nena', 'happy', 'Coming, Baba! And I have work on my laptop too…']] }),
+    L(4, 'Fluffy trouble', 'Tuesday', 80, ['food', 'water', 'walk', 'tea', 'brush'], [800, 1400, 2150], [5.5, 7.5], { obj: { k: 'combo', n: 3, label: 'Reach a ×3 combo' }, laptop: true, fur: 9, story: [['nena', 'surprised', 'Orange fur EVERYWHERE. Simba, you’re shedding again!'], ['simba', 'happy', '*shakes proudly*']] }),
+    L(5, 'Maman’s kitchen', 'Wednesday', 85, ['food', 'water', 'walk', 'tea', 'brush', 'help'], [900, 1550, 2400], [5, 7], { obj: { k: 'clean', label: 'Leave no mess at the end' }, laptop: true, fur: 9, story: [['fariba', 'happy', 'Nena jan, help me with the ghormeh sabzi? And then the dishes, please!']] }),
+    L(6, 'Nasim is home', 'Thursday', 90, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk'], [1100, 1950, 3000], [4.8, 6.8], { obj: { k: 'treat', label: 'Catch a golden bone' }, laptop: true, fur: 8, story: [['nasim', 'angry', 'DON’T talk to me. …Okay, maybe talk to me. Later.'], ['mohsen', 'neutral', 'Nena, go see your sister before she explodes.']] }),
+    L(7, 'Play time', 'Friday', 90, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play'], [1150, 2000, 3100], [4.6, 6.5], { obj: { k: 'nomiss', label: 'Don’t miss a single request' }, laptop: true, fur: 8, story: [['simba', 'happy', '*drops the ball on your foot. Again.*'], ['nena', 'happy', 'Friday means play time!']] }),
+    L(8, 'Wake up, Negin!', 'Saturday', 95, ['food', 'water', 'walk', 'tea', 'help', 'talk', 'play', 'wake'], [1200, 2100, 3250], [4.4, 6.2], { obj: { k: 'done', n: 16, label: 'Complete 16 requests' }, laptop: true, fur: 8, story: [['negin', 'sleepy', '…zzz… five more minutes… zzz…'], ['fariba', 'neutral', 'Nena, wake your sister, she has class!']] }),
+    L(9, 'Busy Friday', 'Friday', 100, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play', 'wake'], [1300, 2250, 3450], [4.2, 6], { obj: { k: 'combo', n: 5, label: 'Reach a ×5 combo' }, laptop: true, fur: 7, story: [['mohsen', 'happy', 'The whole family is home today! Tea for everyone!']] }),
+    L(10, 'Rainy day', 'Sunday', 100, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play'], [1450, 2550, 3950], [4.1, 5.8], { obj: { k: 'tips', n: 20, label: 'Earn 20 coins in tips' }, laptop: true, fur: 5, rain: true, story: [['nena', 'neutral', 'Rain… muddy paws, wet fur, more mess. Let’s go!']] }),
+    L(11, 'Party prep', 'Wednesday', 105, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play', 'wake'], [1700, 3000, 4800], [3.9, 5.5], { obj: { k: 'nomiss', label: 'Don’t miss a single request' }, laptop: true, fur: 7, patience: 0.92, story: [['fariba', 'surprised', 'Simba’s birthday is tomorrow and nothing is ready!']] }),
+    L(12, 'Simba’s birthday', 'Thursday', 110, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'play', 'wake'], [1850, 3300, 5200], [3.8, 5.3], { obj: { k: 'done', n: 22, label: 'Complete 22 requests' }, laptop: true, fur: 6, patience: 0.9, story: [['mohsen', 'happy', 'Happy birthday, my lion!'], ['nasim', 'neutral', 'I made the decorations. Don’t say anything.']] }),
   ];
   function levelCfg(n) {
     if (n <= LEVELS.length) return LEVELS[n - 1];
@@ -77,13 +79,18 @@
     return Object.assign({}, base, {
       n, title: 'Another busy day', day: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][(n - 1) % 7],
       dur: 110, targets: base.targets.map((t) => Math.round(t * (1 + k * 0.06))), every: [Math.max(2.8, 3.8 - k * 0.08), Math.max(4, 5.3 - k * 0.1)],
-      patience: Math.max(0.65, 0.9 - k * 0.02), rain: n % 4 === 0, story: [[pick(['mohsen', 'fariba', 'nasim', 'nena']), 'happy', pick(['Another day in the tower!', 'Simba, behave today, okay?', 'Who wants tea?', 'Yallah, let’s go!'])]],
+      patience: Math.max(0.65, 0.9 - k * 0.02), rain: n % 4 === 0, obj: [{ k: 'combo', n: 5, label: 'Reach a ×5 combo' }, { k: 'nomiss', label: 'Don’t miss a single request' }, { k: 'done', n: 22, label: 'Complete 22 requests' }, { k: 'tips', n: 22, label: 'Earn 22 coins in tips' }][n % 4], story: [[pick(['mohsen', 'fariba', 'nasim', 'nena']), 'happy', pick(['Another day in the tower!', 'Simba, behave today, okay?', 'Who wants tea?', 'Yallah, let’s go!'])]],
     });
   }
 
   /* ------------------------------------------------------------------ */
   /* Upgrades                                                            */
   /* ------------------------------------------------------------------ */
+  const BOOSTERS = [
+    { id: 'time', name: '+15 seconds', desc: 'A longer day.', icon: '⏱️', cost: 40 },
+    { id: 'coffee', name: 'Morning coffee', desc: 'Nena is 25% faster all day.', icon: '☕', cost: 35 },
+    { id: 'heart', name: 'Extra heart', desc: 'One more chance with the family.', icon: '💗', cost: 30 },
+  ];
   const UPGRADES = [
     { id: 'shoes', name: 'Sneakers', desc: 'Nena walks 20% faster per level.', icon: '👟', costs: [60, 130, 220] },
     { id: 'tray', name: 'Serving tray', desc: 'Carry 2 items at once.', icon: '🍽️', costs: [150] },
@@ -177,6 +184,7 @@
   /* Game state                                                          */
   /* ------------------------------------------------------------------ */
   let G = null;  // current level run
+  let pendingBoosts = {};
   let raf = 0, last = 0;
   const stage = () => $('stage');
 
@@ -204,7 +212,13 @@
       cfg, n, time: cfg.dur, score: 0, coins: 0, combo: 0, comboT: 0, hearts: 5 + (up('decor') ? 1 : 0), maxHearts: 5 + (up('decor') ? 1 : 0),
       reqs: [], queue: [], hand: [], furs: [], dishes: 0, spawnT: 2, furT: cfg.fur || 999, robotT: 8, paused: false, over: false,
       nena: null, simba: null, npcs: {}, busy: null, simbaAway: false, simbaTask: null, done: 0, failed: 0,
+      stats: { walk: 0, tea: 0, maxCombo: 0, tips: 0, treat: 0 }, objDone: false, boostT: 0, freezeT: 0,
+      boneT: n >= 2 ? 16 + rnd() * 8 : 999, bone: null, pkgT: n >= 4 ? 28 + rnd() * 12 : 999, pkg: null,
+      zoomT: n >= 7 ? 22 + rnd() * 10 : 999, rushHour: false, lastTick: 99, starsShown: 0, boosts: pendingBoosts || {},
     };
+    if (G.boosts.time) G.time += 15;
+    if (G.boosts.heart) { G.hearts++; G.maxHearts++; }
+    pendingBoosts = {};
     // stations hit areas
     Object.entries(STATIONS).forEach(([id, s]) => {
       if (id === 'laptop' && !cfg.laptop) return;
@@ -217,6 +231,7 @@
       b.type = 'button'; b.className = 'hit station'; b.dataset.target = id;
       b.setAttribute('aria-label', s.label);
       b.style.left = (s.x - s.r) + 'px'; b.style.top = (s.y - s.r) + 'px'; b.style.width = b.style.height = (s.r * 2) + 'px';
+      b.innerHTML = `<span class="st-ico">${CHIP[id] || ''}</span>`;
       st.appendChild(b);
     });
     // characters
@@ -230,9 +245,13 @@
     // overlays
     G.bar = document.createElement('div'); G.bar.className = 'workbar'; G.bar.innerHTML = '<i></i>'; G.bar.hidden = true; st.appendChild(G.bar);
     G.handEl = document.createElement('div'); G.handEl.className = 'hand'; st.appendChild(G.handEl);
+    G.tut = document.createElement('div'); G.tut.className = 'tut-hand'; G.tut.textContent = '👆'; G.tut.hidden = true; st.appendChild(G.tut);
+    if (G.boosts.coffee) G.nena.el.classList.add('coffee');
     renderHand();
     $('screen-game').hidden = false;
     $('g-level').textContent = `Day ${n} · ${cfg.title}`;
+    $('g-rush').hidden = true;
+    renderObj();
     $('g-star1').style.left = (cfg.targets[0] / cfg.targets[2] * 100) + '%';
     $('g-star2').style.left = (cfg.targets[1] / cfg.targets[2] * 100) + '%';
     fit();
@@ -263,7 +282,7 @@
     return [300, 300];
   }
   function patienceMul(who) {
-    let m = G.cfg.patience || 1;
+    let m = G.cfg.patience || (G.n <= 3 ? 1.3 : G.n <= 6 ? 1.15 : 1);
     if (who === 'simba' && up('treats')) m *= 1.2;
     if (who !== 'simba' && up('decor')) m *= 1.15;
     return m;
@@ -281,6 +300,7 @@
     const max = R.pat * patienceMul(R.who);
     const el = document.createElement('div');
     el.className = 'req';
+    el.dataset.target = R.who;
     el.innerHTML = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" class="ring-bg"/><circle cx="20" cy="20" r="17" class="ring"/></svg><span>${R.icon}</span>`;
     stage().appendChild(el);
     const r = { type: t, who: R.who, left: max, max, el };
@@ -294,13 +314,15 @@
     r.el.style.zIndex = '2000';
     const f = r.left / r.max;
     r.el.querySelector('.ring').style.strokeDashoffset = String((1 - f) * 106.8);
-    r.el.classList.toggle('urgent', f < 0.3);
+    r.el.classList.toggle('urgent', f < 0.3 && G.freezeT <= 0);
+    r.el.classList.toggle('frozen', G.freezeT > 0);
   }
   function removeReq(r) { r.el.remove(); G.reqs = G.reqs.filter((x) => x !== r); if (r.who === 'nasim' && G.npcs.nasim) { const n = G.npcs.nasim; delete G.npcs.nasim; n.el.classList.add('leave'); setTimeout(() => n.el.remove(), 500); } }
   function fail(r) {
     removeReq(r);
     G.hearts--; G.failed++; G.combo = 0;
-    snd('fail'); buzz(60);
+    snd('fail'); buzz(60); shake();
+    renderObj();
     const [x, y] = anchorOf(r.who);
     floatText(x, y, '💔', 'bad');
     if (r.type === 'walk') { addFur(true); toast('Oops! Simba couldn’t wait… a puddle to clean.', 'bad'); }
@@ -313,18 +335,26 @@
     const R = REQ[r.type];
     const speed = 1 + 0.5 * (r.left / r.max);
     G.combo = G.comboT > 0 ? Math.min(G.combo + 1, 8) : 1;
-    G.comboT = 4;
-    const mul = 1 + 0.25 * (G.combo - 1);
-    const pts = Math.round(R.pts * speed * mul * (bonusMul || 1));
+    G.comboT = 6;
+    const mul = 1 + 0.15 * (G.combo - 1);
+    const perfect = r.left / r.max > 0.75;
+    const pts = Math.round(R.pts * speed * mul * (bonusMul || 1) * (G.rushHour ? 1.5 : 1));
     G.score += pts; G.done++;
     const tip = r.who !== 'simba' ? 2 + Math.round(3 * r.left / r.max) : 0;
     G.coins += tip;
+    G.stats.tips += tip; G.stats.maxCombo = Math.max(G.stats.maxCombo, G.combo);
+    if (r.type === 'walk') G.stats.walk++;
+    if (r.type === 'tea') G.stats.tea++;
     const [x, y] = anchorOf(r.who);
     floatText(x, y, `+${pts}${G.combo > 1 ? ` ×${mul.toFixed(2).replace(/\.?0+$/, '')}` : ''}`, 'good');
+    if (perfect) floatText(x, y - 34, 'Perfect!', 'perfect');
+    sparkle(x, y + 20);
+    if ((G.combo === 5 || G.combo === 8) && G.boostT <= 0) { G.boostT = 6; G.nena.el.classList.add('boost'); toast('⚡ Chai rush! Nena is super fast!', 'combo', 1600); }
     if (tip) floatText(x + 30, y + 24, `+${tip} 🪙`, 'coin');
     if (G.combo >= 3) toast(`Combo ×${G.combo}!`, 'combo', 900);
     removeReq(r);
     snd(G.combo >= 3 ? 'fanfare' : 'success'); buzz(12);
+    checkObj();
   }
   function addFur(puddle) {
     if (G.furs.length >= 7) return;
@@ -355,15 +385,61 @@
   /* ------------------------------------------------------------------ */
   /* Tapping: queue targets for Nena                                     */
   /* ------------------------------------------------------------------ */
+  // One tap on a character or a request plans the whole chain (kibble → bowl, samovar → Baba…)
+  function chainFor(id) {
+    const planned = (x) => G.queue.includes(x) || (G.busy && G.busy.id === x);
+    if (id === 'simba') {
+      const r = findReq('simba');
+      if (r && r.type === 'food') return holding('food') || planned('kibble') ? ['bowl'] : ['kibble', 'bowl'];
+      if (r && r.type === 'water') return ['water'];
+      if (r && r.type === 'brush') return holding('brush') || planned('brush') ? ['simba'] : ['brush', 'simba'];
+      if (r && r.type === 'play') return holding('ball') || planned('toy') ? ['simba'] : ['toy', 'simba'];
+      return ['simba'];
+    }
+    if (id === 'baba' && findReq('baba') && !holding('tea') && !planned('samovar')) return ['samovar', 'baba'];
+    if (id === 'bowl' && findReq('simba', 'food') && !holding('food') && !planned('kibble')) return ['kibble', 'bowl'];
+    return [id];
+  }
   function onTap(e) {
     if (!G || G.paused || G.over) return;
+    const bone = e.target.closest('[data-bone]');
+    if (bone) { catchBone(); return; }
     const t = e.target.closest('[data-target]');
     if (!t) return;
-    const id = t.dataset.target;
-    if (G.queue.length >= 4) { toast('Nena can only remember 4 things at once!', 'bad', 1200); return; }
-    G.queue.push(id);
+    const chain = chainFor(t.dataset.target);
+    if (G.queue.length + chain.length > 6) { toast('Nena can only plan 6 things at once!', 'bad', 1200); return; }
+    chain.forEach((id) => G.queue.push(id));
     snd('click'); buzz(6);
     markQueue();
+  }
+  function spawnBone() {
+    const x = 120 + rnd() * 380, y = 560 + rnd() * 200;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'hit bone'; b.dataset.bone = '1';
+    b.innerHTML = '<span>🦴</span>';
+    b.style.left = (x - 30) + 'px'; b.style.top = (y - 30) + 'px';
+    stage().appendChild(b);
+    G.bone = { el: b, t: 7 };
+    snd('happy');
+  }
+  function catchBone() {
+    if (!G.bone) return;
+    const r = G.bone.el.getBoundingClientRect();
+    G.bone.el.remove(); G.bone = null;
+    G.freezeT = 5; G.stats.treat++; G.score += 50;
+    toast('🦴 Golden bone! Everyone waits patiently for 5 s', 'hint', 1800);
+    snd('fanfare'); buzz([20, 40, 20]);
+    checkObj();
+  }
+  function spawnPackage() {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'hit pkg'; b.dataset.target = 'pkg';
+    b.innerHTML = '<span>📦</span><i></i>';
+    b.style.left = (DOOR[0] - 70) + 'px'; b.style.top = (DOOR[1] - 30) + 'px';
+    stage().appendChild(b);
+    G.pkg = { el: b, t: 10 };
+    toast('🔔 Ding-dong! A delivery at the door', '', 1600);
+    snd('pop');
   }
   function markQueue() {
     stage().querySelectorAll('.qmark').forEach((m) => m.remove());
@@ -380,6 +456,7 @@
     if (STATIONS[id]) return visual ? [STATIONS[id].x, STATIONS[id].y] : STATIONS[id].stand;
     if (id === 'simba') return visual ? [G.simba.x, G.simba.y - 60] : [G.simba.x - 70, G.simba.y + 4];
     if (G.npcs[id]) return visual ? [G.npcs[id].x, G.npcs[id].y - 90] : [G.npcs[id].x + (id === 'nasim' ? -70 : 70), G.npcs[id].y + 6];
+    if (id === 'pkg') return G.pkg ? (visual ? [DOOR[0] - 40, DOOR[1] - 30] : [DOOR[0] - 70, DOOR[1] + 30]) : null;
     const f = G.furs.find((x) => x.id === id);
     if (f) return visual ? [f.x, f.y] : [f.x - 40, f.y + 8];
     return null;
@@ -389,7 +466,14 @@
   const take = (it) => { G.hand.splice(G.hand.indexOf(it), 1); renderHand(); };
   function give(it) {
     const cap = up('tray') ? 2 : 1;
-    if (G.hand.length >= cap) { toast(cap === 1 ? 'Hands full! (Buy the serving tray to carry 2.)' : 'Hands full!', 'bad', 1400); return false; }
+    if (G.hand.length >= cap) {
+      // swap: put down whatever nobody needs any more (or the oldest item)
+      const needed = { food: !!findReq('simba', 'food'), tea: !!findReq('baba'), brush: !!findReq('simba', 'brush'), ball: !!findReq('simba', 'play') };
+      let i = G.hand.findIndex((h) => !needed[h]);
+      if (i < 0) i = 0;
+      const old = G.hand.splice(i, 1)[0];
+      floatText(G.nena.x, G.nena.y - 120, `${ITEMS[old]} put down`, 'hint');
+    }
     G.hand.push(it); renderHand(); snd('pop'); return true;
   }
   function renderHand() {
@@ -399,7 +483,7 @@
 
   // Decide what happens when Nena reaches a target: returns {dur, done()} or null (nothing to do)
   function actionFor(id) {
-    const sp = 1 / (1 + 0.15 * up('shoes'));
+    const sp = (1 / (1 + 0.15 * up('shoes'))) * (G.boostT > 0 ? 0.6 : 1) * (G.boosts.coffee ? 0.85 : 1);
     switch (id) {
       case 'kibble': return { dur: 0.6, done: () => give('food') };
       case 'samovar': return { dur: (up('samovar') ? 1.2 : 2) * sp, snd: 'water', done: () => give('tea') };
@@ -428,6 +512,7 @@
       case 'baba': { const r = findReq('baba'); if (!r) return { dur: 0.2, miss: 'Baba is happily watching TV.' }; if (!holding('tea')) return { dur: 0.2, miss: 'Brew tea at the samovar first!' }; return { dur: 0.5, done: () => { take('tea'); complete(r); } }; }
       case 'fariba': { const r = findReq('fariba'); if (!r) return { dur: 0.2, miss: 'Maman is fine for now.' }; return { dur: 2.2 * sp, snd: 'swoosh', done: () => { complete(r); addDish(); } }; }
       case 'nasim': { const r = findReq('nasim'); if (!r) return null; return { dur: 1.6 * sp, done: () => { complete(r); toast('Nasim: “…Thanks. Whatever.”', '', 1500); } }; }
+      case 'pkg': if (!G.pkg) return null; return { dur: 0.8 * sp, done: () => { if (!G.pkg) return; G.pkg.el.remove(); G.pkg = null; G.score += 100; G.coins += 12; floatText(DOOR[0] - 40, DOOR[1] - 80, '+100 · +12 🪙', 'coin'); toast('📦 A package for Baba!', '', 1300); snd('coin'); } };
       default: {
         const f = G.furs.find((x) => x.id === id);
         if (!f) return null;
@@ -465,6 +550,21 @@
       }, stay * 1000);
     });
   }
+  function zoomies() {
+    if (G.simbaAway || G.simbaTask || findReq('simba')) { G.zoomT = 6; return; }
+    G.simbaTask = true;
+    G.simba.el.classList.add('walking', 'zoom');
+    toast('💨 ZOOMIES! Simba is running everywhere!', 'combo', 1500);
+    snd('bark');
+    const pts = [[180, 640], [470, 700], [420, 560], [200, 720], [HOME.simba[0], HOME.simba[1]]];
+    const step = (i) => {
+      if (!G || G.over) return;
+      if (i >= pts.length) { G.simba.el.classList.remove('walking', 'zoom'); G.simbaTask = false; return; }
+      if (i === 1 || i === 3) addFur();
+      moveTo(G.simba, pts[i][0], pts[i][1], 0.45, () => step(i + 1));
+    };
+    step(0);
+  }
   function simbaHop() { G.simba.el.classList.remove('hop'); void G.simba.el.offsetWidth; G.simba.el.classList.add('hop'); }
   // tweened moves for scripted motions
   const tweens = [];
@@ -483,13 +583,26 @@
     // spawn requests
     G.spawnT -= dt;
     const maxReq = Math.min(5, 2 + Math.floor(G.n / 3));
-    if (G.spawnT <= 0) { if (G.reqs.length < maxReq) spawn(); const [a, b] = G.cfg.every; G.spawnT = a + rnd() * (b - a); }
+    if (G.spawnT <= 0) { if (G.reqs.length < maxReq) spawn(); const [a, b] = G.cfg.every; G.spawnT = (a + rnd() * (b - a)) * (G.rushHour ? 0.7 : 1); }
     if (G.cfg.fur) { G.furT -= dt; if (G.furT <= 0) { addFur(); G.furT = G.cfg.fur * (0.7 + rnd() * 0.6); } }
+    // power-ups and events
+    if (G.boostT > 0) { G.boostT -= dt; if (G.boostT <= 0) G.nena.el.classList.remove('boost'); }
+    G.boneT -= dt;
+    if (G.boneT <= 0 && !G.bone) { spawnBone(); G.boneT = 22 + rnd() * 12; }
+    if (G.bone) { G.bone.t -= dt; G.bone.el.classList.toggle('fading', G.bone.t < 2); if (G.bone.t <= 0) { G.bone.el.remove(); G.bone = null; } }
+    G.pkgT -= dt;
+    if (G.pkgT <= 0 && !G.pkg) { spawnPackage(); G.pkgT = 32 + rnd() * 14; }
+    if (G.pkg) { G.pkg.t -= dt; G.pkg.el.querySelector('i').style.width = (G.pkg.t / 10 * 100) + '%'; if (G.pkg.t <= 0) { G.pkg.el.remove(); G.pkg = null; G.queue = G.queue.filter((q) => q !== 'pkg'); markQueue(); } }
+    G.zoomT -= dt;
+    if (G.zoomT <= 0) { zoomies(); if (G.zoomT <= 0) G.zoomT = 28 + rnd() * 12; }
+    if (!G.rushHour && G.time <= 15) { G.rushHour = true; $('g-rush').hidden = false; toast('⏰ Rush hour! Points ×1.5', 'combo', 1800); snd('fanfare'); }
+    if (G.time <= 5 && Math.ceil(G.time) !== G.lastTick) { G.lastTick = Math.ceil(G.time); snd('click'); }
     if (up('robot') && G.furs.length) { G.robotT -= dt; if (G.robotT <= 0) { const f = G.furs.find((x) => !x.puddle) || G.furs[0]; f.el.remove(); G.furs = G.furs.filter((x) => x !== f); floatText(f.x, f.y - 20, '🤖', 'hint'); G.robotT = 8; } }
     // patience
+    if (G.freezeT > 0) G.freezeT -= dt;
     for (const r of G.reqs.slice()) {
       if (r.who === 'simba' && G.simbaAway) continue;
-      r.left -= dt;
+      if (G.freezeT <= 0) r.left -= dt;
       if (r.left <= 0) fail(r); else posReq(r);
       if (G.over) return;
     }
@@ -507,7 +620,7 @@
       const p = targetPoint(id, false);
       if (!p) { G.queue.shift(); markQueue(); }
       else {
-        const speed = 300 * (1 + 0.2 * up('shoes'));
+        const speed = 300 * (1 + 0.2 * up('shoes')) * (G.boostT > 0 ? 1.7 : 1) * (G.boosts.coffee ? 1.25 : 1);
         const dx = p[0] - G.nena.x, dy = p[1] - G.nena.y, d = Math.hypot(dx, dy);
         if (d < 6) {
           G.queue.shift(); markQueue();
@@ -515,7 +628,7 @@
           G.nena.el.classList.remove('walking');
           if (!act) { /* nothing */ }
           else if (act.miss) { toast(act.miss, 'bad', 1300); snd('fail'); G.busy = { t: 0, dur: act.dur }; }
-          else { G.busy = { t: 0, dur: act.dur, done: act.done }; if (act.snd) snd(act.snd); if (act.dur > 0.5) { G.bar.hidden = false; G.nena.el.classList.add('working'); } }
+          else { G.busy = { t: 0, dur: act.dur, done: act.done, id }; if (act.snd) snd(act.snd); if (act.dur > 0.5) { G.bar.hidden = false; G.nena.el.classList.add('working'); } }
         } else {
           G.nena.el.classList.add('walking');
           const step = Math.min(d, speed * dt);
@@ -533,10 +646,81 @@
     if (!G.queue.length && !G.busy) G.nena.el.classList.remove('walking');
     G.handEl.style.transform = `translate(${G.nena.x + 14}px, ${G.nena.y - 74}px)`;
     G.handEl.style.zIndex = String(Math.round(G.nena.y) + 1);
+    highlights();
     if (G.time <= 0) { G.time = 0; endLevel(false); }
     hud();
   }
 
+  // Glow on whatever helps right now, so players always know where to tap.
+  let lastNeed = '';
+  function highlights() {
+    const need = new Set();
+    G.reqs.forEach((r) => {
+      if (r.type === 'food') need.add(holding('food') ? 'bowl' : 'kibble');
+      else if (r.type === 'water') need.add('water');
+      else if (r.type === 'brush' && !holding('brush')) need.add('brush');
+      else if (r.type === 'play' && !holding('ball')) need.add('toy');
+      else if (r.type === 'tea' && !holding('tea')) need.add('samovar');
+      else if (r.type === 'wake') need.add('negin');
+    });
+    if (G.dishes) need.add('sink');
+    const key = [...need].sort().join(',');
+    if (key !== lastNeed) {
+      lastNeed = key;
+      stage().querySelectorAll('.hit.station').forEach((b) => b.classList.toggle('need', need.has(b.dataset.target)));
+    }
+    // first day: a pointing hand on the next useful thing
+    const tutorial = G.n === 1 && G.done < 3 && !G.queue.length && !G.busy;
+    G.tut.hidden = !tutorial;
+    if (tutorial) {
+      const r = G.reqs[0];
+      let p = null;
+      if (r) p = r.type === 'water' ? [STATIONS.water.x, STATIONS.water.y] : holding('food') ? [STATIONS.bowl.x, STATIONS.bowl.y] : anchorOf(r.who);
+      if (p) G.tut.style.transform = `translate(${p[0] - 18}px, ${p[1] + 6}px)`; else G.tut.hidden = true;
+    }
+  }
+  function objProgress() {
+    const o = G.cfg.obj; if (!o) return { ok: false, txt: '' };
+    const st = G.stats;
+    switch (o.k) {
+      case 'done': return { ok: G.done >= o.n, txt: `${Math.min(G.done, o.n)}/${o.n}` };
+      case 'walk': return { ok: st.walk >= o.n, txt: `${Math.min(st.walk, o.n)}/${o.n}` };
+      case 'tea': return { ok: st.tea >= o.n, txt: `${Math.min(st.tea, o.n)}/${o.n}` };
+      case 'combo': return { ok: st.maxCombo >= o.n, txt: `best ×${st.maxCombo}` };
+      case 'tips': return { ok: st.tips >= o.n, txt: `${Math.min(st.tips, o.n)}/${o.n}` };
+      case 'treat': return { ok: st.treat >= 1, txt: st.treat ? '✓' : '0/1' };
+      case 'nomiss': return { ok: G.failed === 0, live: true, txt: G.failed ? '✗' : 'so far ✓' };
+      case 'clean': return { ok: G.furs.length + G.dishes === 0, live: true, txt: 'at the end' };
+      default: return { ok: false, txt: '' };
+    }
+  }
+  function renderObj() {
+    const o = G.cfg.obj, el = $('g-obj');
+    if (!o) { el.hidden = true; return; }
+    const pr = objProgress();
+    el.hidden = false;
+    el.classList.toggle('done', !!(G.objDone || (pr.ok && !pr.live)));
+    el.classList.toggle('failed', o.k === 'nomiss' && G.failed > 0);
+    el.innerHTML = `🏅 <span>${o.label}</span> <b>${pr.txt}</b>`;
+  }
+  function checkObj() {
+    const pr = objProgress();
+    if (!G.objDone && pr.ok && !pr.live) { G.objDone = true; toast('🏅 Bonus objective complete!', 'combo', 1500); snd('fanfare'); }
+    renderObj();
+  }
+  function shake() { const w = $('stage-wrap'); w.classList.remove('shake'); void w.offsetWidth; w.classList.add('shake'); }
+  function sparkle(x, y) {
+    for (let i = 0; i < 8; i++) {
+      const el = document.createElement('div');
+      el.className = 'spark';
+      el.style.left = x + 'px'; el.style.top = y + 'px';
+      const a = (i / 8) * Math.PI * 2;
+      el.style.setProperty('--dx', (Math.cos(a) * 46).toFixed(0) + 'px');
+      el.style.setProperty('--dy', (Math.sin(a) * 46).toFixed(0) + 'px');
+      stage().appendChild(el);
+      setTimeout(() => el.remove(), 650);
+    }
+  }
   function hud() {
     const c = G.cfg;
     const t = Math.ceil(G.time);
@@ -548,7 +732,9 @@
     $('g-star2').classList.toggle('on', G.score >= c.targets[1]);
     $('g-star3').classList.toggle('on', G.score >= c.targets[2]);
     $('g-hearts').textContent = '♥'.repeat(Math.max(0, G.hearts)) + '♡'.repeat(Math.max(0, G.maxHearts - G.hearts));
-    $('g-combo').textContent = G.combo > 1 ? `Combo ×${G.combo}` : '';
+    $('g-combo').innerHTML = G.combo > 1 ? `Combo ×${G.combo} <i style="width:${Math.max(0, G.comboT / 6) * 100}%"></i>` : (G.boostT > 0 ? '⚡ Chai rush!' : G.freezeT > 0 ? '❄️ Treat time' : '');
+    const starsNow = G.score >= c.targets[2] ? 3 : G.score >= c.targets[1] ? 2 : G.score >= c.targets[0] ? 1 : 0;
+    if (starsNow > G.starsShown) { G.starsShown = starsNow; snd('coin'); const st = $('g-star' + starsNow); st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop'); }
     $('g-coins').textContent = save.coins + G.coins;
   }
 
@@ -583,7 +769,11 @@
     const penalty = mess * 20;
     const final = Math.max(0, G.score - penalty);
     const stars = lost ? 0 : final >= c.targets[2] ? 3 : final >= c.targets[1] ? 2 : final >= c.targets[0] ? 1 : 0;
-    const earned = lost ? Math.floor(G.coins / 2) : G.coins + Math.floor(final / 25) + stars * 10;
+    const pr = objProgress();
+    const objOk = !lost && stars > 0 && (G.objDone || pr.ok);
+    const medalNew = objOk && !save.medals[G.n];
+    if (objOk) save.medals[G.n] = 1;
+    const earned = (lost ? Math.floor(G.coins / 2) : G.coins + Math.floor(final / 50) + stars * 10) + (medalNew ? 25 : 0);
     save.coins += earned;
     if (stars > 0) {
       save.stars[G.n] = Math.max(save.stars[G.n] || 0, stars);
@@ -593,18 +783,26 @@
     persist();
     $('r-title').textContent = lost ? 'Too many upset faces…' : stars ? ['', 'Day done!', 'Great day!', 'Perfect day!'][stars] : 'Not quite…';
     $('r-stars').innerHTML = [0, 1, 2].map((i) => `<span class="${i < stars ? 'on' : ''}">★</span>`).join('');
-    $('r-lines').innerHTML = `<li><span>Requests done</span><b>${G.done}</b></li><li><span>Missed</span><b>${G.failed}</b></li>${mess ? `<li><span>Mess left (${mess})</span><b>−${penalty}</b></li>` : ''}<li class="total"><span>Score</span><b>${final}</b></li><li><span>Coins earned</span><b>+${earned} 🪙</b></li>`;
+    $('r-lines').innerHTML = `<li><span>Requests done</span><b>${G.done}</b></li><li><span>Missed</span><b>${G.failed}</b></li>${mess ? `<li><span>Mess left (${mess})</span><b>−${penalty}</b></li>` : ''}${c.obj ? `<li class="${objOk ? 'ok' : 'ko'}"><span>🏅 ${c.obj.label}</span><b>${objOk ? (medalNew ? '+25 🪙' : '✓') : '✗'}</b></li>` : ''}<li class="total"><span>Score</span><b>${final}</b></li><li><span>Coins earned</span><b>+${earned} 🪙</b></li>`;
     $('r-sub').textContent = lost ? 'The family lost patience. Try again, and watch the rings!' : stars ? `Goal: ${c.targets[0]} · ${c.targets[1]} · ${c.targets[2]}` : `You needed ${c.targets[0]} points for 1 star.`;
     $('r-next').hidden = !stars;
     $('screen-result').hidden = false;
     snd(stars >= 2 ? 'fanfare' : stars ? 'success' : 'fail');
+    if (stars === 3) confetti();
+  }
+
+  function confetti() {
+    const box = $('confetti'); box.innerHTML = '';
+    const cols = ['#ef8fb0', '#ffd98a', '#e38c30', '#7fe0b4', '#86aaff', '#ffffff'];
+    for (let i = 0; i < 46; i++) { const c = document.createElement('i'); c.style.left = (rnd() * 100) + '%'; c.style.background = cols[i % cols.length]; c.style.animationDelay = (rnd() * 0.5) + 's'; c.style.setProperty('--r', (rnd() * 720 - 360) + 'deg'); box.appendChild(c); }
+    setTimeout(() => { box.innerHTML = ''; }, 3000);
   }
 
   /* ------------------------------------------------------------------ */
   /* Screens: title, map, story, shop                                    */
   /* ------------------------------------------------------------------ */
   function show(id) {
-    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game'); });
+    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game'); });
   }
   function renderMap() {
     const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
@@ -616,7 +814,7 @@
       const cfg = levelCfg(n), locked = n > save.level, st = save.stars[n] || 0;
       html += `<button type="button" class="lvl${locked ? ' locked' : ''}${n === save.level ? ' current' : ''}" data-level="${n}" ${locked ? 'disabled' : ''}>
         <span class="lvl-n">${locked ? '🔒' : n}</span><span class="lvl-t"><b>${cfg.title}</b><small>${cfg.day}${n > LEVELS.length ? '' : ' · ' + cfg.types.length + ' tasks'}</small></span>
-        <span class="lvl-s">${'★'.repeat(st)}<i>${'★'.repeat(3 - st)}</i></span></button>`;
+        <span class="lvl-s">${save.medals[n] ? '<em>🏅</em>' : ''}${'★'.repeat(st)}<i>${'★'.repeat(3 - st)}</i></span></button>`;
     }
     $('m-levels').innerHTML = html;
     show('screen-map');
@@ -633,13 +831,26 @@
   }
   function nextLine() {
     const l = storyLines.shift();
-    if (!l) { show('screen-game'); startLevel(storyLevel); return; }
+    if (!l) { renderPrep(storyLevel); return; }
     const [who, mood, text] = l;
     $('s-portrait').innerHTML = A.portrait(who, mood);
     $('s-name').textContent = NAMES[who] || who;
     $('s-text').textContent = text;
     $('s-day').textContent = `Day ${storyLevel} · ${levelCfg(storyLevel).day}`;
     snd('talk', 600);
+  }
+  let prepPick = {};
+  function renderPrep(n) {
+    const cfg = levelCfg(n);
+    $('pr-title').textContent = `Day ${n} · ${cfg.title}`;
+    $('pr-goals').innerHTML = cfg.targets.map((t, i) => `<span>${'★'.repeat(i + 1)} <b>${t}</b></span>`).join('');
+    $('pr-obj').innerHTML = cfg.obj ? `🏅 ${cfg.obj.label}${save.medals[n] ? ' <em>(done)</em>' : ' <em>+25 🪙</em>'}` : '';
+    const cost = BOOSTERS.reduce((a, b) => a + (prepPick[b.id] ? b.cost : 0), 0);
+    $('pr-coins').textContent = save.coins - cost;
+    $('pr-boosts').innerHTML = BOOSTERS.map((b) => `<button type="button" class="boost${prepPick[b.id] ? ' on' : ''}" data-boost="${b.id}" ${!prepPick[b.id] && save.coins - cost < b.cost ? 'disabled' : ''}>
+      <span class="b-i">${b.icon}</span><span class="b-t"><b>${b.name}</b><small>${b.desc}</small></span><span class="b-c">${prepPick[b.id] ? '✓' : b.cost + ' 🪙'}</span></button>`).join('');
+    $('pr-start').dataset.level = String(n);
+    show('screen-prep');
   }
   function renderShop() {
     $('sh-coins').textContent = save.coins;
@@ -668,8 +879,18 @@
     save.coins -= cost; save.up[u.id] = lv + 1; persist(); snd('coin'); setTimeout(() => snd('success'), 120); renderShop();
   });
   $('screen-story').addEventListener('click', () => { snd('click'); nextLine(); });
+  $('pr-boosts').addEventListener('click', (e) => { const b = e.target.closest('[data-boost]'); if (!b || b.disabled) return; prepPick[b.dataset.boost] = !prepPick[b.dataset.boost]; snd('click'); renderPrep(+$('pr-start').dataset.level); });
+  $('pr-start').addEventListener('click', () => {
+    const n = +$('pr-start').dataset.level;
+    const cost = BOOSTERS.reduce((a, b) => a + (prepPick[b.id] ? b.cost : 0), 0);
+    if (cost > save.coins) return;
+    save.coins -= cost; persist();
+    pendingBoosts = Object.assign({}, prepPick); prepPick = {};
+    show('screen-game'); startLevel(n);
+  });
+  $('pr-back').addEventListener('click', () => { prepPick = {}; renderMap(); });
   $('r-next').addEventListener('click', () => { playStory(G.n + 1); });
-  $('r-retry').addEventListener('click', () => { show('screen-game'); startLevel(G.n); });
+  $('r-retry').addEventListener('click', () => { renderPrep(G.n); });
   $('r-map').addEventListener('click', () => renderMap());
   $('g-pause').addEventListener('click', () => { if (!G || G.over) return; G.paused = true; show('screen-pause'); });
   $('p-resume').addEventListener('click', () => { G.paused = false; last = performance.now(); show('screen-game'); });
