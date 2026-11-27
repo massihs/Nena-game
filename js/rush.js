@@ -116,8 +116,9 @@
     insta:   { who: 'pourya', icon: '📸', pts: 90, pat: 18, at: 'pourya', dur: 1, hint: 'Pourya asks for Nena’s Instagram. Again. Answer him (politely)!' },
     chai:    { who: 'negin', icon: '🍵', pts: 120, pat: 24, item: 'teapot', src: 'teabar', at: 'negin', dur: 0.6, hint: 'Negin wants tea: bring the teapot from the tea bar.' },
     doze:    { who: 'negin', icon: '😴', pts: 110, pat: 20, at: 'negin', dur: 1.2, hint: 'Negin fell asleep at the table. Of course. Wake her up!' },
-    flowers: { who: 'courier', icon: '💐', pts: 200, pat: 20, at: 'courier', dur: 0.8, special: true, vip: true, hint: 'Ding-dong! A bouquet of flowers for Nena… from a boy named Jesus! 💐' },
-    choco:   { who: 'courier', icon: '🍫', pts: 200, pat: 20, at: 'courier', dur: 0.8, special: true, vip: true, hint: 'A box of chocolates for Nena… from Jesus again! 🍫' },
+    flowers: { who: 'courier', icon: '💐', pts: 200, pat: 20, at: 'courier', dur: 0.8, special: true, vip: true, hint: 'Ding-dong! Flowers for Nena… from Jesus. Oh no. 💐' },
+    choco:   { who: 'courier', icon: '🍫', pts: 200, pat: 20, at: 'courier', dur: 0.8, special: true, vip: true, hint: 'Chocolates for Nena… from Jesus. AGAIN. 🍫' },
+    jtext:   { who: 'nena', icon: '📱', pts: 120, pat: 14, at: 'phone', dur: 1.2, special: true, hint: 'Jesus is texting Nena AGAIN. Tap 📱 to answer him…' },
     aunt:    { who: 'aunt', icon: '🎁', pts: 260, pat: 26, item: 'tea', src: 'samovar', at: 'aunt', dur: 0.8, special: true, vip: true, hint: 'Surprise! Aunt Mahin is visiting. Bring her tea, quick!' },
     vip:     { who: 'guest2', icon: '👑', pts: 240, pat: 22, item: 'mochi', src: 'sushi', at: 'guest2', dur: 0.6, special: true, vip: true, hint: 'A VIP at CLAP! Serve him mochi for a big tip.' },
     curse:   { who: 'witch1', icon: '🔮', pts: 160, pat: 16, at: 'witch1', dur: 1.2, special: true, hint: 'The witches are cursing your hookah! Ask them (nicely) to stop.' },
@@ -143,7 +144,7 @@
     L(7, 'Nasim is home', 'Friday', 'home', 90, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'talk', 'cuddle'], [900, 1600, 2450], [4.8, 6.8], { obj: { k: 'treat', label: 'Catch a golden bone' }, fur: 8, story: [['nasim', 'angry', 'DON’T talk to me. …Okay, maybe talk to me. Later.'], ['mohsen', 'happy', 'And bring me my little lion! I want him on my belly.']] }),
     L(8, 'Wake up, Negin!', 'Saturday', 'home', 95, ['food', 'water', 'walk', 'tea', 'help', 'talk', 'wake', 'charger'], [1000, 1800, 2750], [4.6, 6.4], { obj: { k: 'done', n: 14, label: 'Complete 14 requests' }, fur: 8, story: [['negin', 'sleepy', '…zzz… five more minutes… zzz…'], ['fariba', 'neutral', 'Nena, wake your sister, she has class! You’re the only one she lets in.']] }),
     L(9, 'Night at CLAP', 'Saturday', 'clap', 85, ['coals', 'chai', 'doze', 'snack', 'phone', 'insta'], [750, 1350, 2150], [4.6, 6.4], { night: true, obj: { k: 'type', t: 'phone', n: 3, label: 'Answer Baba 3 times' }, story: [['negin', 'happy', 'CLAP tonight? Hookah and tea, my treat… I mean your treat.'], ['nena', 'happy', 'Okay! I park the 4×4 under Hayat Sabz, we go up to the mall, and CLAP is on the ground floor.'], ['pourya', 'happy', 'Salam Nena! A new hookah head? …And your Instagram, maybe?'], ['mohsen', 'neutral', 'Girls, be home by ten! I will call. Many times.']] }),
-    L(10, 'Nena’s own day', 'Sunday', 'home', 100, ['food', 'water', 'walk', 'tea', 'ready', 'study', 'blanket', 'laundry'], [1000, 1800, 2800], [4.4, 6.2], { obj: { k: 'type', t: 'study', n: 2, label: 'Study 2 times' }, story: [['nena', 'neutral', 'Exams, Simba, Baba, Maman… and I still have to get ready myself!'], ['nasim', 'happy', 'Oh, and someone sent you flowers AGAIN. Who is this Jesus?!'], ['nena', 'surprised', '…No idea what you’re talking about. 🙈']] }),
+    L(10, 'Nena’s own day', 'Sunday', 'home', 100, ['food', 'water', 'walk', 'tea', 'ready', 'study', 'blanket', 'laundry'], [1000, 1800, 2800], [4.4, 6.2], { obj: { k: 'type', t: 'study', n: 2, label: 'Study 2 times' }, story: [['nena', 'neutral', 'Exams, Simba, Baba, Maman… and I still have to get ready myself!'], ['nasim', 'happy', 'Oh, and someone sent you flowers AGAIN. Who is this Jesus?!'], ['nena', 'angry', 'JESUS AGAIN?! I told him to stop! Next time I block him!']] }),
     L(11, 'Rainy day', 'Monday', 'home', 100, ['food', 'water', 'walk', 'tea', 'brush', 'help', 'play', 'bath', 'blanket', 'charger'], [1100, 1950, 3000], [4.2, 6], { rain: true, fur: 6, obj: { k: 'tips', n: 20, label: 'Earn 20 coins in tips' }, story: [['nena', 'neutral', 'Rain… muddy paws. Bath time in my bathroom, Simba.'], ['simba', 'sad', '*hides under the sofa*']] }),
     L(12, 'Tehran evening', 'Tuesday', 'street', 95, ['poop', 'thirst', 'bread', 'calm', 'kids', 'juice', 'phone'], [1250, 2250, 3500], [4.2, 6], { night: true, obj: { k: 'nomiss', label: 'Don’t miss a single request' }, story: [['nasim', 'angry', 'I’m coming too. And you’re buying me a juice.'], ['mohsen', 'neutral', 'It’s getting dark! I’ll call you every five minutes.']] }),
     L(13, 'Late night at CLAP', 'Wednesday', 'clap', 100, ['coals', 'chai', 'doze', 'snack', 'phone', 'insta'], [950, 1750, 2700], [3.9, 5.6], { night: true, patience: 0.92, obj: { k: 'combo', n: 5, label: 'Reach a ×5 combo' }, story: [['negin', 'sleepy', 'One more hookah… and a nap… on this cushion…'], ['pourya', 'happy', 'Nena! Today you give me your Instagram, yes?'], ['negin', 'neutral', 'Don’t look now… the two blonde witches are here again. Corner table.'], ['nena', 'surprised', 'No, Pourya. And Baba already called three times. It’s only 9!']] }),
@@ -495,6 +496,7 @@
     markQueue();
   }
   function fail(r) {
+    if (r.type === 'jtext') { removeReq(r); toast('Jesus: “…You’re ignoring me? 🥺”', '', 1500); return; }
     if (r.type === 'insta') { removeReq(r); toast('Pourya: “Okay… I’ll ask next time!” 😏', '', 1500); return; }
     removeReq(r);
     G.hearts--; G.failed++; G.combo = 0;
@@ -821,6 +823,7 @@
     doze: { snd: 'click', after: () => say('Negin: “I wasn’t sleeping! I was… resting my eyes.”') },
     snack: { after: () => say('Mochi time! 🍡') },
     flowers: { snd: 'fanfare', after: () => giftFrom('flowers') },
+    jtext: { snd: 'fail', start: () => G.nena.el.classList.add('talking'), end: () => G.nena.el.classList.remove('talking'), after: () => { track('gift'); toast('📱 Jesus: “' + pick(['Did you like the flowers? 🌹', 'Good morning beautiful ☀️', 'Can I call you? 🥺', 'Coffee tomorrow?']) + '”', '', 1800); speak(G.nena, pick(['Don’t call me, don’t text me EVER again!', 'Stop texting me or I’ll block you!', 'Jesus, NO. Leave me alone!', 'Blocked. …Okay, almost blocked. 😤']), '', 2600, true); } },
     choco: { snd: 'fanfare', after: () => giftFrom('choco') },
     aunt: { after: () => say('Aunt Mahin: “Such a good girl! When is YOUR wedding?” 😅') },
     vip: { after: () => { G.coins += 15; floatText(112, 400, '+15 🪙 VIP tip!', 'coin', 'clap'); } },
@@ -830,22 +833,22 @@
   };
   // gifts from Jesus, Nena's secret admirer
   const GIFT_REACT = {
-    baba: ['WHO is this Jesus?! I want his phone number!', 'Flowers?! In my day we asked the father first!'],
-    fariba: ['Ooh, he has good taste, azizam 😊', 'Is he from a good family? Invite him for tea!'],
-    nasim: ['Ewww. Nena has a BOYFRIEND!', 'I’m telling Baba. …Can I have a chocolate?'],
-    negin: ['Is he cute? Show me his Instagram!', 'Jesus again?! He really likes you!'],
-    pourya: ['…Jesus? Who is Jesus?! 😤', 'I could make him a hookah… a VERY strong one.'],
+    baba: ['WHO is this Jesus?! Give me his number, I will call HIM!', 'Good girl. Block him!'],
+    fariba: ['Azizam, at least be polite to the boy…', 'Such nice flowers… a shame.'],
+    nasim: ['Block him! Block him! 😂', 'Can I have the chocolates if you don’t want them?'],
+    negin: ['Poor Jesus… he really tries.', 'Calm down, it’s just chocolate!'],
+    pourya: ['Yes! Block him, Nena! 😏', 'Finally someone who gets rejected more than me.'],
   };
   function giftFrom(kind) {
     track('gift');
     G.coins += 10;
     G.boostT = Math.max(G.boostT, 6); G.nena.el.classList.add('boost');
-    toast(kind === 'flowers' ? '💌 “For Nena, the prettiest girl in Tehran. — Jesus” 💐' : '💌 “Sweet chocolates for a sweet girl. — Jesus” 🍫', 'combo', 2600);
-    floatText(G.nena.x, G.nena.y - 160, '💗 Love boost!', 'perfect');
-    speak(G.nena, pick(kind === 'flowers' ? ['Aww… Jesus again! 🙈', 'They’re beautiful! 💐', 'Who gave him my address?!'] : ['Chocolate! Jesus, you’re sweet 🙈', 'Mmm… just one. Okay, two.', 'Don’t tell Maman!']), '', 2400, true);
+    toast(kind === 'flowers' ? '💐 Flowers from Jesus… again. Nena is NOT happy.' : '🍫 Chocolates from Jesus… again. Nena is fuming.', 'bad', 2400);
+    floatText(G.nena.x, G.nena.y - 160, '😤 Angry boost!', 'perfect');
+    speak(G.nena, pick(['Jesus, WHY do you keep sending me gifts?!', 'Don’t call me, don’t text me ever again, or I’ll block you!', 'Again?! I said NO, Jesus!', 'One more gift and I block you. For real!']), '', 2800, true);
     const who = Object.keys(GIFT_REACT).filter((w) => G.npcs[w] && G.npcs[w].room === G.view);
-    if (who.length) { const w = pick(who); setTimeout(() => { if (G && !G.over) speak(G.npcs[w], pick(GIFT_REACT[w]), '', 2800, true); }, 1400); }
-    if (kind === 'choco' && G.simba && G.simba.room === G.nena.room && !G.simbaAway) setTimeout(() => { if (!G || G.over) return; speak(G.simba, '*sniff sniff* 🍫?', 'dog', 1600, true); setTimeout(() => G && speak(G.nena, 'NO Simba! Chocolate is poison for dogs!', '', 2200, true), 900); }, 3000);
+    if (who.length) { const w = pick(who); setTimeout(() => { if (G && !G.over) speak(G.npcs[w], pick(GIFT_REACT[w]), '', 2800, true); }, 1600); }
+    if (kind === 'choco' && G.simba && G.simba.room === G.nena.room && !G.simbaAway) setTimeout(() => { if (!G || G.over) return; speak(G.simba, '*sniff sniff* 🍫?', 'dog', 1600, true); setTimeout(() => G && speak(G.nena, 'NO Simba! Chocolate is poison for dogs!', '', 2200, true), 900); }, 3200);
   }
   function doWalk(r) {
     G.simbaAway = true; G.busy = { t: 0, dur: 99, walking: true };
@@ -947,7 +950,7 @@
     guest: ['Haha!', 'Delicious!', 'One more tea please', '…and then she said…', '😂', 'So cozy here', 'Cheers! 🍵'],
     witch: ['hehehe…', '*whispers*', 'Look at her…', '🔮 …', 'Mwahaha', 'Her aura is… orange.', 'Another tea, darling.'],
     nena: ['Phew!', 'Simba, no!', 'So much to do…', 'Okay, focus!', '😅', 'I love this family. Mostly.', 'Coffee… I need coffee.'],
-    courier: ['Delivery for Nena!', 'Sign here, please!', 'Someone really likes you 😉', 'From a certain Jesus…'],
+    courier: ['Delivery for Nena!', 'Sign here, please!', 'Don’t shoot the messenger!', 'From a certain Jesus… sorry.'],
     passer: ['Salam!', 'What a cute dog!', 'Is that a lion?!', '🙂', 'Hot sangak!'],
   };
   const PITCH = { baba: 290, fariba: 470, negin: 610, pourya: 340, nena: 650, nasim: 560, kids: 820, witch: 760, guest: 520, simba: 0 };
@@ -1077,7 +1080,7 @@
       el.style.background = `radial-gradient(circle at ${x.toFixed(0)}px ${y.toFixed(0)}px, rgba(10,8,24,0) 0, rgba(10,8,24,0) 95px, rgba(10,8,24,.9) 175px)`;
       if (G.blackout.t <= 0) { el.remove(); G.blackout = null; toast('💡 The power is back!', '', 1200); }
     }
-    if (G.giftT != null) { G.giftT -= dt; if (G.giftT <= 0) { G.giftT = 45 + rnd() * 30; if (c.place === 'home' || c.place === 'clap') addReq(rnd() < 0.5 ? 'flowers' : 'choco'); } }
+    if (G.giftT != null) { G.giftT -= dt; if (G.giftT <= 0) { G.giftT = 45 + rnd() * 30; if (c.place === 'home' || c.place === 'clap') addReq(pick(['flowers', 'choco', 'jtext'])); } }
     if (G.evT == null) return;
     G.evT -= dt; if (G.evT > 0) return;
     G.evT = (mod.events || mod.blackout || c.events || 26) + rnd() * 10;
@@ -1455,7 +1458,7 @@
     { id: 'endless', icon: '♾️', name: 'Never-ending day', desc: 'Score 3000 in Endless', test: () => save.endless >= 3000, r: 100 },
     { id: 'streak7', icon: '🎁', name: 'Loyal', desc: 'Claim 7 daily rewards in a row', test: () => save.daily.streak >= 7, r: 100 },
     { id: 'sort3', icon: '🧪', name: 'Colour genius', desc: 'Solve all 3 Color Sorts in a day', test: (t) => (t.sort3 || 0) >= 1, r: 60 },
-    { id: 'admirer', icon: '💐', name: 'Secret admirer', desc: 'Receive 5 gifts from Jesus', test: (t) => (t.gift || 0) >= 5, r: 60 },
+    { id: 'admirer', icon: '💐', name: 'Leave me alone, Jesus!', desc: 'Turn Jesus down 5 times', test: (t) => (t.gift || 0) >= 5, r: 60 },
     { id: 'nails', icon: '💅', name: 'Nail day', desc: 'Have your nails done with Leila', test: (t) => (t.nails || 0) >= 1, r: 30 },
     { id: 'cuddle10', icon: '🦁', name: 'Baba’s lion', desc: 'Put Simba on Baba’s belly 10 times', test: (t) => (t.req_cuddle || 0) >= 10, r: 60 },
   ];
@@ -1465,7 +1468,7 @@
     { k: 'sort', n: 6, label: 'Solve 6 Color Sorts', r: 100 }, { k: 'req_phone', n: 8, label: 'Answer Baba 8 times', r: 90 },
     { k: 'req', n: 80, label: 'Complete 80 requests', r: 150 }, { k: 'combo5', n: 5, label: 'Reach a ×5 combo 5 times', r: 120 },
     { k: 'photo', n: 2, label: 'Take 2 Simba photos', r: 100 }, { k: 'req_bread', n: 5, label: 'Buy 5 sangak breads', r: 80 },
-    { k: 'gift', n: 3, label: 'Receive 3 gifts from Jesus', r: 90 },
+    { k: 'gift', n: 3, label: 'Turn Jesus down 3 times', r: 90 },
     { k: 'challenge', n: 2, label: 'Finish 2 daily challenges', r: 150 }, { k: 'req_cuddle', n: 4, label: 'Put Simba on Baba’s belly 4 times', r: 90 },
   ];
   const DAILY = [20, 30, 40, 50, 60, 80, 150];
