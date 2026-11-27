@@ -350,14 +350,14 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 .pr-obj em { font-style: normal; color: #a8761b; }
 .pr-head { display: flex; align-items: center; justify-content: space-between; font-weight: 800; font-size: .85rem; color: var(--cocoa-soft); text-transform: uppercase; letter-spacing: .06em; }
 .pr-boosts { display: flex; flex-direction: column; gap: 6px; }
-.boost { display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; align-items: center; text-align: left; background: var(--duvet); border: 2px solid var(--line); border-radius: 14px; padding: 7px 10px; }
-.boost.on { border-color: var(--pink-deep); background: #fde6ee; }
-.boost:disabled { opacity: .45; }
+.pr-boosts .boost { display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; align-items: center; text-align: left; background: var(--duvet); border: 2px solid var(--line); border-radius: 14px; padding: 7px 10px; }
+.pr-boosts .boost.on { border-color: var(--pink-deep); background: #fde6ee; }
+.pr-boosts .boost:disabled { opacity: .45; }
 .b-i { font-size: 1.6rem; text-align: center; }
 .b-t b { display: block; font-size: .92rem; }
 .b-t small { color: var(--cocoa-soft); font-size: .76rem; }
 .b-c { font-weight: 800; color: #a8761b; white-space: nowrap; }
-.boost.on .b-c { color: var(--pink-deep); font-size: 1.2rem; }
+.pr-boosts .boost.on .b-c { color: var(--pink-deep); font-size: 1.2rem; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; } }
 
@@ -609,3 +609,4 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 .pill.coin.bump { animation: bump .25s ease-out; }
 @keyframes bump { 50% { transform: scale(1.18); } }
 .qmark { transition: transform .15s; }
+.actor.boost::after { content: ""; position: absolute; left: 10%; right: 10%; top: 10%; bottom: 0; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,217,138,.55), rgba(255,217,138,0)); z-index: -1; animation: glowP 1s ease-in-out infinite; }
