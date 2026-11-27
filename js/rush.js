@@ -1892,6 +1892,8 @@
     { id: 'set1', icon: '🎴', name: 'Collector', desc: 'Complete a sticker set', test: (t) => (t.set || 0) >= 1, r: 80 },
     { id: 'detective', icon: '🕵️‍♀️', name: 'Detective Nena', desc: 'Guess 5 mysteries right', test: (t) => (t.mystery || 0) >= 5, r: 100 },
     { id: 'festival', icon: '🎉', name: 'Festival queen', desc: 'Complete a Persian festival track', test: (t) => (t.eventDone || 0) >= 1, r: 150 },
+    { id: 'hokm1', icon: '🃏', name: 'Hokm champion', desc: 'Beat Haj Mohsen & Negin at Hokm', test: (t) => (t.hokmWin || 0) >= 1, r: 80 },
+    { id: 'hokmkot', icon: '👑', name: 'Kot!', desc: 'Win a Hokm hand 7–0', test: (t) => (t.hokmKot || 0) >= 1, r: 80 },
     { id: 'clock12', icon: '🕐', name: 'Around the clock', desc: 'Live hourly moments at 12 different hours', test: () => Object.keys(save.momHours || {}).length >= 12, r: 120 },
     { id: 'life10', icon: '🏠', name: 'Real life', desc: 'Do 10 daily chores (breakfast, groceries, laundry)', test: (t) => (t.breakfast || 0) + (t.grocery || 0) + (t.laundry || 0) >= 10, r: 100 },
     { id: 'bed7', icon: '🌙', name: 'Only in her arms', desc: 'Rock Simba to sleep on 7 nights', test: (t) => (t.bed || 0) >= 7, r: 100 },
@@ -2022,7 +2024,7 @@
   function renderHub() {
     const items = [
       ...(unlocked('event') ? [(() => { const E = activeEvent(), nx = eventList()[0]; return E ? ['event', E.def.ico, E.def.name.replace('Chaharshanbe ', '').replace('Shab-e ', ''), evState() && evState().act !== today() ? '!' : ''] : ['event', '🎉', EVENTS[nx.id].name.replace('Chaharshanbe ', '').replace('Shab-e ', ''), daysTo(nx.start) + 'd']; })()] : []),
-      ['gift', '🐾', 'Surprise', giftState().n > 0 ? String(giftState().n) : giftMin() + 'm'], ['today', '📅', 'Today', routineNow() || ''], ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
+      ['hokm', '🃏', 'Hokm', ''], ['gift', '🐾', 'Surprise', giftState().n > 0 ? String(giftState().n) : giftMin() + 'm'], ['today', '📅', 'Today', routineNow() || ''], ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
       ['missions', '📋', 'Quests', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
       ['nails', '💅', 'Nail day', nailsReady() ? '!' : ''], ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
       ['wheel', '🎡', 'Wheel', spinsLeft() || ''], ['stickers', '🎴', 'Stickers', `${Object.keys(save.stickers).length}/${STICKERS.length}`], ['bed', '🌙', 'Bedtime', new Date().getHours() >= 18 && save.wellness.bed !== today() ? '!' : ''], ['gym', '🏋️', 'Gym', gymDay() && save.wellness.gym !== today() ? '!' : ''], ['zen', '🧘', 'Zen', save.wellness.zen !== today() ? '!' : ''], ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
@@ -2043,6 +2045,7 @@
     if (kind === 'gym') { openGym(); return; }
     if (kind === 'bed') { openBed(); return; }
     if (kind === 'gift') { openGift(); return; }
+    if (kind === 'hokm') { openHokm(); return; }
     if (kind === 'breakfast' || kind === 'grocery' || kind === 'laundry') { openLife(kind); return; }
     if (kind === 'nails') { startNailDay(); return; }
     sheetKind = kind;
@@ -2079,6 +2082,7 @@
       return card('play-tricks', '🐾', 'Simba’s tricks', 'Watch Simba’s tricks, then repeat them in the same order.', `Best: ${g.tricksBest || 0} tricks`, g.tricksDay !== today())
         + card('play-tahdig', '🍚', 'Tahdig master', 'Flip Maman’s tahdig at the perfect moment for a golden crust.', `Best: ${g.tahdigBest || 0}/15`, g.tahdigDay !== today())
         + card('play-zen', '🧘', 'Meditation', 'Light the oud and breathe with Nena. Gives a Zen bonus for today.', save.wellness.zen === today() ? 'Done today ✓' : 'Not done today', save.wellness.zen !== today())
+        + card('play-hokm', '🃏', 'Hokm', 'Nena & Nasim vs Haj Mohsen & Negin. The real Persian card game, to 7 points.', `Wins: ${(save.hokm || {}).wins || 0}/${(save.hokm || {}).games || 0}`, false)
         + card('play-hair', '💇‍♀️', 'Hair day with Maman', 'After her shower, Maman dries Nena’s hair. Don’t burn her!', `Best: ${save.games.hairBest || 0}★`, save.wellness.hair !== today())
         + card('go-sort', '🧪', 'Color Sort', 'Three new glass puzzles every day.', `${sortLeft()} left today`, false)
         + card('go-nails', '💅', 'Nail day', 'Leila comes once a week.', nailsReady() ? 'Available now!' : 'Done this week', false);
@@ -2132,6 +2136,7 @@
     snd('click');
     if (act === 'play-tricks') { openTricks(); return; }
     if (act === 'play-zen') { openZen(); return; }
+    if (act === 'play-hokm') { openHokm(); return; }
     if (act === 'ev-act') { openEventAct(); return; }
     if (act === 'ev-claim') { evClaim(+b.dataset.i); openSheet('event'); return; }
     if (act === 'ev-preview') { EV_PREVIEW = b.dataset.id; toast(`👀 Preview: ${EVENTS[EV_PREVIEW].name} decorations are on (until you stop it)`, '', 2000); openSheet('event'); return; }
@@ -2354,7 +2359,7 @@
   const JOURNEY = [{ m: 5, c: 20, ico: '🎁' }, { m: 10, c: 40, ico: '🎁' }, { m: 20, c: 70, ico: '💎' }, { m: 30, c: 150, ico: '👑', outfit: 'zen' }];
   let lastInput = Date.now(), jReadyShown = -1;
   document.addEventListener('pointerdown', () => { lastInput = Date.now(); }, true);
-  const ACTIVE = ['screen-game', 'screen-tricks', 'screen-tahdig', 'screen-sort', 'screen-nails', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-gym', 'screen-bed', 'screen-life'];
+  const ACTIVE = ['screen-game', 'screen-tricks', 'screen-tahdig', 'screen-sort', 'screen-nails', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-gym', 'screen-bed', 'screen-life', 'screen-hokm'];
   function journeyToday() { if (save.journey.date !== today()) save.journey = { date: today(), sec: 0, got: [] }; return save.journey; }
   setInterval(() => {
     if (document.hidden || Date.now() - lastInput > 60000) return;
@@ -3022,6 +3027,189 @@
     el.hidden = false;
   }
 
+  /* ---- Hokm: Nena & Nasim vs Haj Mohsen & Negin. Classic Iranian rules:
+     first ace dealt picks the Hakem, Hakem chooses Hokm (trump) from 5 cards, must follow suit,
+     7 tricks win a hand, Kot = 2, Hakem-Kot = 3, first team to 7 points wins. Play goes counter-clockwise. ---- */
+  const HK_S = ['♠', '♥', '♣', '♦'], HK_SN = ['Pik', 'Del', 'Khaj', 'Khesht'];
+  const HK_R = (r) => (r <= 10 ? String(r) : ['J', 'Q', 'K', 'A'][r - 11]);
+  const HK_SEAT = [{ who: 'nena', name: 'Nena', pos: 'bottom' }, { who: 'negin', name: 'Negin', pos: 'right' }, { who: 'nasim', name: 'Nasim', pos: 'top' }, { who: 'mohsen', name: 'Haj Mohsen', pos: 'left' }];
+  const HK_TALK = {
+    mohsen: { win: ['Haha! Haj Mohsen still has it! 😎', 'You need to wake up early to beat your Baba!', 'Bring me tea, this is going well!'], lose: ['Hmm… lucky cards.', 'In my day, we played better.', 'Negin, wake up!'], hokm: ['Hokm is {s}. Let’s go!', '{s}! Trust me.'] },
+    negin: { win: ['Yesss! 😏', 'Sorry not sorry.', 'Too easy.'], lose: ['*yawns* I wasn’t even trying.', 'Baba, why did you play that?!'], hokm: ['Ummm… {s}?', '{s}! Final answer.'] },
+    nasim: { win: ['Obviously.', 'Finally.', 'Watch and learn.'], lose: ['Nena, concentrate!', 'Ugh.'], hokm: ['Hokm: {s}. Don’t mess it up, Nena.', '{s}. Easy.'] },
+  };
+  const hkTeam = (p) => p % 2;
+  const hkKey = (c) => c.s * 20 + c.r;
+  const hkWait = (ms) => new Promise((r) => setTimeout(r, ms));
+  let HK = null;
+  const hkAlive = (g) => HK && HK.g === g && !$('screen-hokm').hidden;
+  function hkDeck() { const d = []; for (let s = 0; s < 4; s++) for (let r = 2; r <= 14; r++) d.push({ s, r }); for (let i = d.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; } return d; }
+  function hkSort(h) { const T = HK.T, order = (s) => (s === T ? -1 : s); h.sort((a, b) => (a.s === b.s ? b.r - a.r : order(a.s) - order(b.s))); }
+  function hkCard(c, cls) { return `<div class="hk-card${HK_S[c.s] === '♥' || HK_S[c.s] === '♦' ? ' red' : ''}${cls ? ' ' + cls : ''}" data-k="${hkKey(c)}"><b>${HK_R(c.r)}<i>${HK_S[c.s]}</i></b><span>${c.r > 10 && c.r < 14 ? HK_R(c.r) : HK_S[c.s]}</span><b class="br">${HK_R(c.r)}<i>${HK_S[c.s]}</i></b></div>`; }
+  function hkSay(p, kind, sub) {
+    const s = HK_SEAT[p], L = HK_TALK[s.who]; if (!L) return;
+    const el = $('hk-seat' + p).querySelector('.hk-say'); el.textContent = pick(L[kind]).replace('{s}', sub || '');
+    el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  }
+  function hkMsg(t) { const e = $('hk-msg'); e.textContent = t; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
+  function hkRenderSeats() {
+    for (let p = 0; p < 4; p++) {
+      const s = HK_SEAT[p], el = $('hk-seat' + p);
+      el.querySelector('.hk-pic').innerHTML = A.portrait(s.who, 'happy');
+      el.querySelector('.hk-nm').innerHTML = `${HK.hakem === p ? '👑 ' : ''}${s.name}`;
+      el.querySelector('.hk-n').textContent = HK.H ? HK.H[p].length : '';
+      el.classList.toggle('turn', HK.turn === p); el.classList.toggle('hakem', HK.hakem === p);
+    }
+  }
+  function hkRenderHud() {
+    $('hk-score').innerHTML = `<span class="us">Nena & Nasim <b>${HK.score[0]}</b></span><span class="vs">to 7</span><span class="them"><b>${HK.score[1]}</b> Baba & Negin</span>`;
+    $('hk-info').innerHTML = (HK.T != null ? `<span class="hk-trump${HK.T % 2 ? ' red' : ''}">Hokm <b>${HK_S[HK.T]}</b> ${HK_SN[HK.T]}</span>` : '<span class="hk-trump">Hokm ?</span>') + (HK.tricks ? `<span class="hk-tr">Tricks · Us <b>${HK.tricks[0]}</b> · Them <b>${HK.tricks[1]}</b></span>` : '');
+  }
+  function hkLegal(p) {
+    const h = HK.H[p]; if (!HK.trick.length) return h.slice();
+    const led = HK.trick[0].c.s, f = h.filter((c) => c.s === led); return f.length ? f : h.slice();
+  }
+  function hkRenderHand() {
+    const h = HK.H[0], legal = HK.waiting ? new Set(hkLegal(0).map(hkKey)) : null;
+    const el = $('hk-hand'); el.innerHTML = h.map((c) => hkCard(c, legal ? (legal.has(hkKey(c)) ? 'ok' : 'no') : '')).join('');
+    const W = el.clientWidth || 360, n = h.length, cw = 58; el.style.setProperty('--ov', n > 1 ? Math.min(4, (W - 8 - cw * n) / (n - 1)) + 'px' : '0px');
+  }
+  function hkRenderTrick() { $('hk-trick').innerHTML = HK.trick.map((t) => hkCard(t.c, 'in p' + t.p)).join(''); }
+  function hkBest(trick) { let b = trick[0]; for (const t of trick.slice(1)) { if (t.c.s === b.c.s ? t.c.r > b.c.r : t.c.s === HK.T) b = t; } return b; }
+  function hkMaster(p, c) { for (let r = c.r + 1; r <= 14; r++) { const k = c.s * 20 + r; if (!HK.played.has(k) && !HK.H[p].some((x) => x.s === c.s && x.r === r)) return false; } return true; }
+  function hkTrumpsOut(p) { let n = 0; for (let r = 2; r <= 14; r++) { const k = HK.T * 20 + r; if (!HK.played.has(k) && !HK.H[p].some((x) => x.s === HK.T && x.r === r)) n++; } return n; }
+  const hkLow = (a) => a.slice().sort((x, y) => x.r - y.r)[0];
+  function hkDiscard(p, legal) {
+    const nt = legal.filter((c) => c.s !== HK.T), pool = nt.length ? nt : legal, nm = pool.filter((c) => !hkMaster(p, c)), P = nm.length ? nm : pool;
+    const cnt = (s) => HK.H[p].filter((c) => c.s === s).length;
+    return P.slice().sort((a, b) => (cnt(a.s) - cnt(b.s)) || (a.r - b.r))[0];
+  }
+  function hkChooseTrump(five) {
+    let best = 0, bs = -1;
+    for (let s = 0; s < 4; s++) { const cs = five.filter((c) => c.s === s); const sc = cs.length * 3 + cs.reduce((a, c) => a + Math.max(0, c.r - 9), 0); if (sc > bs) { bs = sc; best = s; } }
+    return best;
+  }
+  function hkAI(p) {
+    const T = HK.T, h = HK.H[p], legal = hkLegal(p), mate = (p + 2) % 4, opp = [(p + 1) % 4, (p + 3) % 4], tOut = hkTrumpsOut(p);
+    if (!HK.trick.length) {
+      const myT = h.filter((c) => c.s === T), nonT = h.filter((c) => c.s !== T);
+      if (myT.length >= 3 && tOut > 0 && hkTeam(p) === hkTeam(HK.hakem)) { const m = myT.find((c) => hkMaster(p, c)); if (m) return m; }
+      const masters = nonT.filter((c) => hkMaster(p, c) && (tOut === 0 || !opp.some((o) => HK.voids[o][c.s])));
+      if (masters.length) return masters.sort((a, b) => b.r - a.r)[0];
+      for (const c of nonT.slice().sort((a, b) => a.r - b.r)) if (HK.voids[mate][c.s] && !HK.voids[mate][T] && !opp.some((o) => HK.voids[o][c.s])) return c;
+      if (nonT.length) { const suits = [0, 1, 2, 3].filter((s) => s !== T).map((s) => nonT.filter((c) => c.s === s)).filter((a) => a.length).sort((a, b) => b.length - a.length); return hkLow(suits[0]); }
+      return hkLow(myT);
+    }
+    const led = HK.trick[0].c.s, best = hkBest(HK.trick), following = h.some((c) => c.s === led);
+    const after = []; for (let i = HK.trick.length + 1; i < 4; i++) after.push((HK.trick[0].p + i) % 4);
+    const oppAfter = after.filter((o) => hkTeam(o) !== hkTeam(p));
+    const safe = (c) => !oppAfter.length || (c.s === T ? hkMaster(p, c) : hkMaster(p, c) && (tOut === 0 || !oppAfter.some((o) => HK.voids[o][led])));
+    if (hkTeam(best.p) === hkTeam(p) && safe(best.c)) return following ? hkLow(legal) : hkDiscard(p, legal);
+    const beats = (c) => (c.s === best.c.s ? c.r > best.c.r : c.s === T);
+    const winners = legal.filter(beats);
+    if (winners.length) {
+      const sw = winners.filter(safe).sort((a, b) => a.r - b.r);
+      if (sw.length) return sw[0];
+      if (!oppAfter.length) return hkLow(winners);
+      if (hkTeam(best.p) === hkTeam(p)) return following ? hkLow(legal) : hkDiscard(p, legal);
+      if (following) return HK.trick.length === 1 ? hkLow(legal) : winners.sort((a, b) => b.r - a.r)[0];
+      return hkLow(winners);
+    }
+    return following ? hkLow(legal) : hkDiscard(p, legal);
+  }
+  function openHokm() {
+    HK = { g: Date.now(), score: [0, 0], hakem: null, T: null, H: null, trick: [], tricks: null, turn: -1 };
+    $('hk-trick').innerHTML = ''; $('hk-hand').innerHTML = ''; $('hk-over').hidden = true; $('hk-pick').hidden = true;
+    hkRenderSeats(); hkRenderHud(); show('screen-hokm'); music('clap');
+    hkGame(HK.g);
+  }
+  async function hkGame(g) {
+    hkMsg('Dealing to find the Hakem… first Ace wins!');
+    await hkWait(900); if (!hkAlive(g)) return;
+    const d = hkDeck(); let p = 0;
+    for (const c of d) {
+      HK.trick = [{ p, c }]; $('hk-trick').innerHTML = hkCard(c, 'in p' + p); snd('click');
+      await hkWait(c.r === 14 ? 900 : 260); if (!hkAlive(g)) return;
+      if (c.r === 14) break; p = (p + 1) % 4;
+    }
+    HK.hakem = p; HK.trick = []; $('hk-trick').innerHTML = ''; snd('fanfare');
+    hkMsg(`${HK_SEAT[p].name} got the Ace — ${HK_SEAT[p].name} is the Hakem 👑`); hkRenderSeats();
+    await hkWait(1500);
+    while (hkAlive(g) && HK.score[0] < 7 && HK.score[1] < 7) { await hkHand(g); }
+    if (!hkAlive(g)) return;
+    hkEnd();
+  }
+  async function hkHand(g) {
+    const d = hkDeck(); HK.H = [[], [], [], []]; HK.T = null; HK.trick = []; HK.tricks = [0, 0]; HK.played = new Set(); HK.voids = [{}, {}, {}, {}];
+    for (let i = 0; i < 4; i++) { const p = (HK.hakem + i) % 4; HK.H[p] = d.splice(0, 5); }
+    hkSort(HK.H[0]); hkRenderHand(); hkRenderSeats(); hkRenderHud(); snd('swoosh');
+    let T;
+    if (HK.hakem === 0) {
+      hkMsg('You are the Hakem: choose the Hokm from your first 5 cards');
+      T = await new Promise((res) => {
+        const sug = hkChooseTrump(HK.H[0]);
+        $('hk-pick').innerHTML = `<p>Choose the Hokm 👑</p><div class="hk-suits">${HK_S.map((s, i) => `<button type="button" class="${i % 2 ? 'red' : ''}${i === sug ? ' sug' : ''}" data-s="${i}"><b>${s}</b><small>${HK_SN[i]} · ${HK.H[0].filter((c) => c.s === i).length}</small></button>`).join('')}</div>`;
+        $('hk-pick').hidden = false; HK.pickRes = res;
+      });
+      $('hk-pick').hidden = true; if (!hkAlive(g)) return;
+    } else {
+      hkMsg(`${HK_SEAT[HK.hakem].name} is choosing the Hokm…`); await hkWait(1300); if (!hkAlive(g)) return;
+      T = hkChooseTrump(HK.H[HK.hakem]);
+      hkSay(HK.hakem, 'hokm', HK_S[T]);
+    }
+    HK.T = T; snd('chime'); hkMsg(`Hokm is ${HK_S[T]} ${HK_SN[T]}!`); hkRenderHud();
+    for (let i = 0; i < 4; i++) { const p = (HK.hakem + i) % 4; HK.H[p] = HK.H[p].concat(d.splice(0, 8)); }
+    hkSort(HK.H[0]); hkRenderHand(); hkRenderSeats(); snd('swoosh');
+    await hkWait(900);
+    let leader = HK.hakem;
+    while (hkAlive(g) && HK.tricks[0] < 7 && HK.tricks[1] < 7) { leader = await hkTrick(g, leader); if (leader == null) return; }
+    if (!hkAlive(g)) return;
+    const w = HK.tricks[0] >= 7 ? 0 : 1, kot = HK.tricks[1 - w] === 0, hakemKot = kot && hkTeam(HK.hakem) !== w;
+    const pts = hakemKot ? 3 : kot ? 2 : 1;
+    HK.score[w] += pts; HK.kots = HK.kots || [0, 0]; if (kot) HK.kots[w]++;
+    hkRenderHud();
+    const txt = `${w === 0 ? 'You win the hand' : 'Baba & Negin win the hand'}${hakemKot ? ' — HAKEM KOT! +3' : kot ? ' — KOT! +2' : ' +1'}`;
+    hkMsg(txt); snd(w === 0 ? 'win' : 'lose'); haptic(w === 0 ? 'star' : 'fail');
+    if (w === 0 && kot) confettiOn($('screen-hokm'));
+    hkSay(w === 0 ? 2 : (Math.random() < 0.5 ? 3 : 1), 'win'); setTimeout(() => { if (hkAlive(g)) hkSay(w === 0 ? 3 : 2, 'lose'); }, 900);
+    if (hkTeam(HK.hakem) !== w) { HK.hakem = (HK.hakem + 1) % 4; }
+    HK.T = null; HK.H = [[], [], [], []]; hkRenderHand(); hkRenderSeats();
+    await hkWait(2600); if (!hkAlive(g)) return;
+    if (HK.score[0] < 7 && HK.score[1] < 7) { hkMsg(`New hand — ${HK_SEAT[HK.hakem].name} is the Hakem 👑`); hkRenderSeats(); hkRenderHud(); await hkWait(1200); }
+  }
+  async function hkTrick(g, leader) {
+    HK.trick = []; hkRenderTrick();
+    for (let i = 0; i < 4; i++) {
+      const p = (leader + i) % 4; HK.turn = p; hkRenderSeats();
+      let c;
+      if (p === 0) {
+        HK.waiting = true; hkRenderHand(); if (!HK.trick.length) hkMsg('Your lead'); else hkMsg('Your turn');
+        c = await new Promise((res) => { HK.playRes = res; });
+        HK.waiting = false; if (!hkAlive(g)) return null;
+      } else { await hkWait(550 + Math.random() * 450); if (!hkAlive(g)) return null; c = hkAI(p); }
+      if (HK.trick.length && c.s !== HK.trick[0].c.s) HK.voids[p][HK.trick[0].c.s] = 1;
+      HK.H[p] = HK.H[p].filter((x) => x !== c); HK.played.add(hkKey(c)); HK.trick.push({ p, c });
+      snd('click'); hkRenderTrick(); hkRenderSeats(); if (p === 0) hkRenderHand();
+    }
+    HK.turn = -1; hkRenderSeats();
+    const b = hkBest(HK.trick), w = hkTeam(b.p);
+    await hkWait(750); if (!hkAlive(g)) return null;
+    $('hk-trick').querySelectorAll('.hk-card').forEach((e) => e.classList.add('take', 't' + b.p));
+    HK.tricks[w]++; hkRenderHud(); snd(w === 0 ? 'coin' : 'pop');
+    if (b.p !== 0 && (b.c.r >= 13 || b.c.s === HK.T) && Math.random() < 0.3) hkSay(b.p, 'win');
+    await hkWait(450); return b.p;
+  }
+  function hkEnd() {
+    const win = HK.score[0] >= 7, k = (HK.kots || [0, 0])[0];
+    save.hokm = save.hokm || { games: 0, wins: 0, kots: 0 };
+    save.hokm.games++; if (win) save.hokm.wins++; save.hokm.kots += k;
+    const coins = (win ? 80 : 20) + k * 20;
+    save.coins += coins; gainXP(win ? 40 : 15); save.friend.nasim = (save.friend.nasim || 0) + (win ? 3 : 1);
+    track('hokm'); if (win) track('hokmWin'); if (k) track('hokmKot', k); persist(); checkAch();
+    $('hk-over').innerHTML = `<div class="hk-ov-card"><div class="hk-ov-pics">${A.portrait(win ? 'nena' : 'mohsen', 'happy')}${A.portrait(win ? 'nasim' : 'negin', 'happy')}</div><h3>${win ? 'You win! 🏆' : 'Baba & Negin win…'}</h3><p>${HK.score[0]} – ${HK.score[1]}${k ? ` · ${k} kot${k > 1 ? 's' : ''}!` : ''}</p><p class="hk-rew">+${coins} 🪙 · ❤️ Nasim</p><p class="hk-quote">${win ? pick(['Nasim: “Not bad, partner. Not bad at all.”', 'Haj Mohsen: “Revenge tomorrow night!”']) : pick(['Haj Mohsen: “Haha! The master is back!” 😎', 'Negin: “Again? Same teams?”'])}</p><div class="row"><button type="button" class="btn btn-primary" data-hk="again">Play again</button><button type="button" class="btn" data-hk="back">Back</button></div></div>`;
+    $('hk-over').hidden = false; snd(win ? 'win' : 'lose'); if (win) confettiOn($('screen-hokm'));
+  }
+
   /* ---- daily chores mini-games: breakfast (orders), groceries (memory), laundry (pairs) ---- */
   const BF_ITEMS = { bread: ['🫓', 'Sangak'], panir: ['🧀', 'Panir'], walnut: ['🌰', 'Walnuts'], honey: ['🍯', 'Honey'], butter: ['🧈', 'Butter'], egg: ['🍳', 'Fried egg'], tomato: ['🍅', 'Tomato'], cucumber: ['🥒', 'Cucumber'], sabzi: ['🌿', 'Sabzi'], tea: ['🍵', 'Chai'], jam: ['🍓', 'Morabba'], haleem: ['🥣', 'Haleem'] };
   const BF_WHO = [
@@ -3292,7 +3480,7 @@
   /* ------------------------------------------------------------------ */
   function show(id) {
     const target = $(id), was = target.hidden;
-    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-welcome', 'screen-gym', 'screen-bed', 'screen-life'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
+    ['screen-title', 'screen-map', 'screen-game', 'screen-result', 'screen-shop', 'screen-story', 'screen-pause', 'screen-prep', 'screen-sheet', 'screen-sort', 'screen-nails', 'screen-continue', 'screen-tricks', 'screen-tahdig', 'screen-zen', 'screen-hair', 'screen-tree', 'screen-wheel', 'screen-welcome', 'screen-gym', 'screen-bed', 'screen-life', 'screen-hokm'].forEach((s) => { $(s).hidden = s !== id && !(id === 'screen-result' && s === 'screen-game') && !(id === 'screen-pause' && s === 'screen-game') && !(id === 'screen-continue' && s === 'screen-game'); });
     if (was && !target.classList.contains('modal')) { target.classList.remove('scr-in'); void target.offsetWidth; target.classList.add('scr-in'); }
   }
   function renderMap() {
@@ -3531,6 +3719,14 @@
   $('mo-ok').addEventListener('click', () => { snd('click'); $('moment').hidden = true; const back = MO && MO.custom && MO.custom.back; if (MO) clearInterval(MO.iv); MO = null; renderNow(); renderHub(); if (back) openSheet(back); });
   $('mo-x').addEventListener('click', () => { $('moment').hidden = true; if (MO) clearInterval(MO.iv); MO = null; renderNow(); });
   $('r-myst').addEventListener('click', (e) => { const b = e.target.closest('[data-g]'); if (!b) return; const n = G ? G.n : 0; if (!MYST[n]) return; save.myst.guess[n] = +b.dataset.g; persist(); snd('pop'); haptic('tap'); renderMyst(n); });
+  $('hk-hand').addEventListener('click', (e) => {
+    const el = e.target.closest('.hk-card'); if (!el || !HK || !HK.waiting) return;
+    if (!el.classList.contains('ok')) { snd('fail'); hkMsg(`You must follow ${HK_S[HK.trick[0].c.s]} ${HK_SN[HK.trick[0].c.s]}!`); el.classList.remove('shk'); void el.offsetWidth; el.classList.add('shk'); return; }
+    const c = HK.H[0].find((x) => hkKey(x) === +el.dataset.k); if (c && HK.playRes) { const r = HK.playRes; HK.playRes = null; r(c); }
+  });
+  $('hk-pick').addEventListener('click', (e) => { const b = e.target.closest('[data-s]'); if (b && HK && HK.pickRes) { const r = HK.pickRes; HK.pickRes = null; snd('click'); r(+b.dataset.s); } });
+  $('hk-over').addEventListener('click', (e) => { const b = e.target.closest('[data-hk]'); if (!b) return; snd('click'); if (b.dataset.hk === 'again') openHokm(); else { HK = null; renderMap(); } });
+  $('hk-back').addEventListener('click', () => { HK = null; renderMap(); });
   $('ul-ok').addEventListener('click', () => { snd('click'); $('unlock').hidden = true; renderHub(); if (dailyReady() && !dailyShown && daysDone() >= 1) { dailyShown = true; setTimeout(() => openSheet('daily'), 300); } });
   $('m-play').addEventListener('click', () => { snd('click'); const n = Math.min(save.level, LEVELS.length); if (save.level > LEVELS.length) openSheet('endless'); else playStory(n); });
   $('sh2-body').addEventListener('click', sheetAction);
