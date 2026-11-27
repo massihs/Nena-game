@@ -2561,17 +2561,21 @@
     { k: 'plank', name: 'Plank', ico: '🧘‍♀️', help: 'Hold the button for 7 seconds. Don’t let go!' },
   ];
   const NEGIN_GYM = { start: ['Ugh, the gym… okay, for you, Nena.', 'Five minutes and then a nap, deal?'], good: ['Wow, you’re on fire!', 'Show-off! 😅', 'Okay okay, I’m impressed.'], bad: ['Haha, you look like me!', 'Even I can do better… maybe.'], end: ['I’m dead. Smoothie time? 🥤', 'Same time in two days? …If I’m awake.'] };
-  function gySay(who, t) { const e = $('gy-say'); e.textContent = (who === 'negin' ? 'Negin: ' : 'Nena: ') + t; e.classList.remove('pop'); void e.offsetWidth; e.classList.add('pop'); }
+  const SHADI = { start: ['Salam girls! Warm-up done? Let’s go! 📣', 'Phones away, Negin. Today we sweat! 💪', 'Nena, Negin — ready? Big smiles, strong legs!'],
+    squat: ['Squats! Hips back, chest up… and down!', 'Squats: tap when the marker hits the pink!'], run: ['Treadmill! Faster, faster — don’t drop below the line!', 'Run, girls! Imagine Simba chasing a cat!'], plank: ['Plank! Hold it… hold it… I’m counting!', 'Last one: plank. Don’t you dare let go!'],
+    end: { 3: ['Perfect session! You two are my stars ⭐', 'Wow! Shadi-approved 💯'], 2: ['Very good! A bit more next time.', 'Nice work, girls! Stretch now.'], 1: ['Hmm… we’ll work on that. See you in two days!', 'Not bad, not great. Drink water!'], 0: ['Did you two even try? 😂 Again in two days!'] } };
+  function gySay(who, t) { const e = $('gy-say'); e.textContent = ({ negin: 'Negin: ', shadi: 'Coach Shadi: ' }[who] || 'Nena: ') + t; e.classList.remove('pop'); void e.offsetWidth; e.classList.add('pop'); }
   function openGym() {
     GY = { step: -1, scores: [], run: false };
     $('gy-bg').innerHTML = GYM_BG;
     $('gy-nena').innerHTML = A.nena({ dressed: true, outfit: 'sweat', nails: nailOf('nena') });
     $('gy-negin').innerHTML = A.person('negin', { mood: 'sleepy', nails: nailOf('negin') });
+    $('gy-shadi').innerHTML = A.person('shadi', { mood: 'happy' });
     $('gy-meter').hidden = true; $('gy-steps').innerHTML = GYM_STEPS.map((x) => `<span>${x.ico} ${x.name}</span>`).join('');
     const ok = gymDay();
     $('gy-info').textContent = ok ? (save.wellness.gym === today() ? 'Already trained today ✓ (practice)' : 'Gym day! Reward: Nena 15% faster in today’s days') : 'Rest day today — next session tomorrow (practice only)';
     $('gy-btn').textContent = 'Start the workout 💪'; $('gy-btn').disabled = false; $('gy-btn').dataset.mode = 'start';
-    gySay('negin', pick(NEGIN_GYM.start));
+    gySay('shadi', pick(SHADI.start)); setTimeout(() => { if (GY && GY.step < 0 && !$('screen-gym').hidden) gySay('negin', pick(NEGIN_GYM.start)); }, 2200);
     show('screen-gym'); music('street');
   }
   function gyNext() {
@@ -2582,7 +2586,8 @@
     if (!st) { gymEnd(); return; }
     $('gy-meter').hidden = false; $('gy-help').textContent = st.help; $('gy-mark').hidden = st.k !== 'squat'; $('gy-zone').hidden = st.k !== 'squat'; $('gy-line').hidden = st.k !== 'run';
     $('gy-fill').style.width = '0%';
-    ['gy-nena', 'gy-negin'].forEach((id) => { $(id).className = 'actor gy-actor ' + (id === 'gy-negin' ? 'gy-negin' : 'gy-nena'); });
+    ['gy-nena', 'gy-negin', 'gy-shadi'].forEach((id) => { $(id).className = 'actor gy-actor ' + id; });
+    gySay('shadi', pick(SHADI[st.k]));
     GY.st = { k: st.k, t: 0, reps: 0, hits: 0, x: 0, dir: 1, speed: 0, good: 0, hold: false, held: 0 };
     $('gy-btn').dataset.mode = st.k; $('gy-btn').textContent = st.k === 'squat' ? 'SQUAT! 🍑' : st.k === 'run' ? 'RUN! 👟' : 'HOLD 🧘‍♀️';
     GY.run = true;
@@ -2603,13 +2608,14 @@
     } else if (S.k === 'run') {
       S.speed = Math.max(0, S.speed - dt * 0.55); if (S.speed >= 0.6) S.good += dt;
       $('gy-fill').style.width = (S.speed * 100).toFixed(0) + '%';
-      $('gy-nena').classList.toggle('walking', S.speed > 0.2); $('gy-negin').classList.add('walking');
+      $('gy-nena').classList.toggle('walking', S.speed > 0.2); $('gy-negin').classList.add('walking'); $('gy-shadi').classList.toggle('walking', S.t % 2 < 1);
       $('gy-help').textContent = `Treadmill · ${Math.max(0, 8 - S.t).toFixed(1)} s`;
       if (S.t >= 8) gyStepDone(Math.min(1, S.good / 6.5));
     } else if (S.k === 'plank') {
       if (S.hold) S.held += dt;
       $('gy-fill').style.width = Math.min(100, S.held / 7 * 100).toFixed(0) + '%';
       $('gy-nena').classList.toggle('plank', S.hold);
+      if (S.hold && Math.floor(S.held) !== S.cnt) { S.cnt = Math.floor(S.held); if (S.cnt > 0 && S.cnt < 7) gySay('shadi', `${S.cnt}… ${S.cnt >= 5 ? 'almost!' : 'keep going!'}`); }
       if (S.held >= 7) gyStepDone(1);
     }
   }
@@ -2620,7 +2626,7 @@
       S.reps++; const hit = S.x > 38 && S.x < 62;
       if (hit) S.hits++;
       const n = $('gy-nena'); n.classList.remove('squat'); void n.offsetWidth; n.classList.add('squat');
-      const g = $('gy-negin'); g.classList.remove('squat'); void g.offsetWidth; g.classList.add('squat');
+      ['gy-negin', 'gy-shadi'].forEach((id) => { const g = $(id); g.classList.remove('squat'); void g.offsetWidth; g.classList.add('squat'); });
       snd(hit ? 'pop' : 'fail');
       if (S.reps === 4) gySay('negin', pick(S.hits >= 3 ? NEGIN_GYM.good : NEGIN_GYM.bad));
       if (S.reps >= 8) gyStepDone(S.hits / 8);
@@ -2632,7 +2638,7 @@
   }
   function gyStepDone(score) {
     GY.run = false; cancelAnimationFrame(gyRaf); GY.scores.push(score);
-    ['gy-nena', 'gy-negin'].forEach((id) => $(id).classList.remove('walking', 'plank', 'squat'));
+    ['gy-nena', 'gy-negin', 'gy-shadi'].forEach((id) => $(id).classList.remove('walking', 'plank', 'squat'));
     snd(score >= 0.7 ? 'success' : 'pop');
     gySay(score >= 0.7 ? 'negin' : 'nena', score >= 0.7 ? pick(NEGIN_GYM.good) : pick(['Phew… harder than it looks!', 'My legs are jelly…']));
     $('gy-btn').dataset.mode = 'next'; $('gy-btn').textContent = GY.step < GYM_STEPS.length - 1 ? `Next: ${GYM_STEPS[GY.step + 1].name} ›` : 'Finish 🏁';
@@ -2646,7 +2652,7 @@
     track('game'); gainXP(15); save.friend.negin = (save.friend.negin || 0) + stars; persist(); checkAch();
     snd(stars >= 2 ? 'win' : 'lose');
     $('gy-negin').innerHTML = A.person('negin', { mood: 'happy', nails: nailOf('negin') });
-    gySay('negin', pick(NEGIN_GYM.end));
+    gySay('shadi', pick(SHADI.end[stars])); setTimeout(() => { if (GY && !$('screen-gym').hidden) gySay('negin', pick(NEGIN_GYM.end)); }, 2600);
     $('gy-info').textContent = `${'★'.repeat(stars)}${'☆'.repeat(3 - stars)} · ${first ? `Gym energy: Nena 15% faster today · +${coins} 🪙` : 'Great practice!'}`;
     $('gy-btn').dataset.mode = 'done'; $('gy-btn').textContent = 'Back to the map';
     if (stars === 3) confettiOn($('screen-gym'));

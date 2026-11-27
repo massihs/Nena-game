@@ -216,6 +216,7 @@ window.Art = (function () {
     aunt:    { skin: '#efc39e', hair: '#5a3a2a', hair2: '#a89a90', style: 'bob', shirt: '#7a2d8c', collar: '#e0c27a', pants: '#3a2a44', earrings: '#ffd36b', belly: true },
     witch1:  { skin: '#f7ddd0', hair: '#f2d77e', hair2: '#dcbb55', style: 'curly', shirt: '#231a2b', collar: '#7a2d8c', pants: '#1a1420', earrings: '#b98bff' },
     witch2:  { skin: '#f4d8c6', hair: '#f7e7a6', hair2: '#e2c66c', style: 'curly', shirt: '#1d2420', collar: '#2f7a5a', pants: '#14181a', earrings: '#7fe0b4' },
+    shadi:   { skin: '#eec09a', hair: '#1c1410', hair2: '#33241b', style: 'ponytail', shirt: '#17a589', collar: '#ffffff', pants: '#22252e', earrings: '#ffffff' },
     guest4:  { skin: '#c99872', hair: '#241a14', hair2: '#33261e', style: 'side', shirt: '#e7b84a', collar: '#c9952a', pants: '#3a3550' },
   };
 
