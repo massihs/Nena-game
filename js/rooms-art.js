@@ -205,29 +205,65 @@
   `, c);
   };
 
-  const elevator = (x, y, w, h, sign) => `<rect x="${x - 10}" y="${y - 34}" width="${w + 20}" height="${h + 34}" fill="url(#rsteel)"/><rect x="${x + w / 2 - 24}" y="${y - 28}" width="48" height="20" rx="4" fill="#1a1a1e"/><text x="${x + w / 2}" y="${y - 13}" text-anchor="middle" font-size="12" font-family="Nunito, sans-serif" font-weight="900" fill="#ff8a3a">▲ 4</text><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff4d6"/><rect x="${x + 6}" y="${y + 6}" width="${w - 12}" height="${h - 6}" fill="#e9dcc0"/><path d="M${x + 10} ${y + 30} H${x + w - 10}" stroke="#c9a24a" stroke-width="3"/>${sign ? label(x + w / 2, y - 40, sign, '#ffd98a', 10) : ''}`;
-  ART.clap = (c) => svg(`
-    <rect width="600" height="420" fill="#2b1d1a"/>${[...Array(30)].map((_, i) => `<path d="M${i * 20} 0 V420" stroke="#3a2723" stroke-width="6"/>`).join('')}
-    ${win(26, 112, 196, 160, 80, 3)}
+  const elevator = (x, y, w, h, sign, floor) => `<rect x="${x - 10}" y="${y - 34}" width="${w + 20}" height="${h + 34}" fill="url(#rsteel)"/><rect x="${x + w / 2 - 24}" y="${y - 28}" width="48" height="20" rx="4" fill="#1a1a1e"/><text x="${x + w / 2}" y="${y - 13}" text-anchor="middle" font-size="12" font-family="Nunito, sans-serif" font-weight="900" fill="#ff8a3a">▲ ${floor || 'G'}</text><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff4d6"/><rect x="${x + 6}" y="${y + 6}" width="${w - 12}" height="${h - 6}" fill="#e9dcc0"/><path d="M${x + 10} ${y + 30} H${x + w - 10}" stroke="#c9a24a" stroke-width="3"/>${sign ? label(x + w / 2, y - 40, sign, '#ffd98a', 10) : ''}`;
+  // bamboo stalks: CLAP is wrapped in bamboo
+  const bamboo = (x, y0, y1, w, shade) => {
+    const col = shade ? '#7f9a3e' : '#9bb54c', node = shade ? '#5f7a2a' : '#6f8a32';
+    let o = `<rect x="${x}" y="${y0}" width="${w}" height="${y1 - y0}" rx="${w / 2}" fill="${col}"/><rect x="${x + w * 0.2}" y="${y0}" width="${w * 0.18}" height="${y1 - y0}" fill="#c9dc84" opacity=".5"/>`;
+    for (let y = y0 + 30 + (x % 23); y < y1; y += 46 + (x % 9)) o += `<rect x="${x - 1}" y="${y}" width="${w + 2}" height="4" rx="2" fill="${node}"/>`;
+    return o;
+  };
+  const leaves = (x, y, flip) => `<g transform="translate(${x} ${y}) scale(${flip ? -1 : 1} 1)" fill="#6f9a3a">${[[0, 0, -30], [14, -10, -55], [6, 14, -10], [22, 4, -40]].map(([dx, dy, r]) => `<ellipse cx="${dx + 18}" cy="${dy}" rx="20" ry="5" transform="rotate(${r} ${dx} ${dy})"/>`).join('')}</g>`;
+  ART.clap = (c) => {
+    let wall = '<rect width="600" height="420" fill="#c8b98a"/>';
+    for (let x = 0; x < 600; x += 15) wall += bamboo(x, 0, 420, 13, (x / 15) % 2);
+    let edge = '';
+    for (let x = 0; x < 40; x += 13) edge += bamboo(x, 0, 800, 11, x % 2);
+    for (let x = 562; x < 600; x += 13) edge += bamboo(x, 0, 800, 11, x % 2);
+    return svg(`
+    ${wall}<rect width="600" height="420" fill="#2b1d1a" opacity=".38"/>
     <rect x="236" y="20" width="200" height="74" rx="14" fill="#1a1011"/><circle cx="336" cy="57" r="120" fill="url(#rneon)"/>
     <text x="336" y="72" text-anchor="middle" font-size="44" font-family="Baloo 2, sans-serif" font-weight="800" fill="#ffd1e6" stroke="#ff5fa2" stroke-width="2.5">CLAP</text>
     <text x="336" y="88" text-anchor="middle" font-size="10" font-family="Nunito, sans-serif" font-weight="800" fill="#ff9cc8">クラップ · HOOKAH &amp; TEA</text>
-    ${label(336, 112, 'HAYAT SABZ MALL · 4TH FLOOR', '#c9a24a', 10)}
     ${[90, 210, 470, 560].map((x, i) => `<path d="M${x} 0 v${26 + i % 2 * 14}" stroke="#111" stroke-width="2"/><ellipse cx="${x}" cy="${50 + i % 2 * 14}" rx="18" ry="24" fill="#d63a3a"/><path d="M${x - 18} ${50 + i % 2 * 14} h36 M${x - 16} ${40 + i % 2 * 14} h32 M${x - 16} ${60 + i % 2 * 14} h32" stroke="#a52525" stroke-width="2"/><circle cx="${x}" cy="${50 + i % 2 * 14}" r="40" fill="url(#rglow)" opacity=".5"/>`).join('')}
-    ${elevator(282, 206, 104, 214, '')}${label(334, 166, 'ELEVATOR', '#9aa2a8', 9)}
-    <g transform="translate(470 150)">${[[10, 0], [74, -12], [-40, -10], [40, 40], [96, 30]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="16" fill="#f6b7cf" opacity=".9"/><circle cx="${x}" cy="${y}" r="5" fill="#fff"/>`).join('')}</g>
-    <rect x="0" y="300" width="196" height="22" fill="#6b4632"/><rect x="0" y="322" width="196" height="98" fill="#4a2f22"/>
-    <g><ellipse cx="70" cy="294" rx="26" ry="20" fill="#2a2a2e"/><path d="M48 290 q-14 -6 -10 -18" stroke="#2a2a2e" stroke-width="6" fill="none"/><rect x="64" y="268" width="12" height="8" rx="2" fill="#2a2a2e"/>${[118, 144, 170].map((x) => `<rect x="${x - 7}" y="284" width="14" height="16" rx="3" fill="#e8dcc2"/>`).join('')}</g>
-    ${label(98, 345, 'TEA BAR', '#e8dcc2', 11)}
-    <rect x="198" y="304" width="76" height="26" rx="5" fill="#1a1011"/>${label(236, 321, 'POURYA’S', '#ffd98a', 10)}
-    ${[212, 236, 260].map((x) => `<path d="M${x - 7} 352 h14 l-3 12 h-8z" fill="#b4572a"/><rect x="${x - 2}" y="364" width="4" height="8" fill="#7a3a1a"/>`).join('')}<rect x="200" y="372" width="72" height="5" fill="#6b4632"/>
-    <g><rect x="208" y="398" width="58" height="26" rx="4" fill="#2a2a2e"/><rect x="214" y="390" width="46" height="12" rx="3" fill="#e05b3b"/><circle cx="228" cy="394" r="4" fill="#ffcf73"/><circle cx="244" cy="396" r="4" fill="#ff8a3a"/><path d="M226 384 q6 -12 0 -22 M246 384 q6 -12 0 -22" stroke="#bbb" stroke-width="2" fill="none" opacity=".6"/></g>
-    <rect x="400" y="300" width="200" height="22" fill="#6b4632"/><rect x="400" y="322" width="200" height="98" fill="#4a2f22"/>
-    <path d="M410 196 h180 v60 h-180z" fill="#1f2a5a"/><circle cx="500" cy="226" r="16" fill="#fff" opacity=".9"/><path d="M455 196 v60 M545 196 v60" stroke="#16204a" stroke-width="3"/>
-    ${[430, 480, 530].map((x) => `<ellipse cx="${x}" cy="296" rx="20" ry="6" fill="#fff"/><rect x="${x - 10}" y="284" width="8" height="8" rx="2" fill="#e05b3b"/><rect x="${x + 2}" y="284" width="8" height="8" rx="2" fill="#f2b33a"/>`).join('')}
-    ${label(500, 345, 'SUSHI', '#e8dcc2', 11)}
+    <circle cx="124" cy="190" r="74" fill="#3b2a20"/><circle cx="124" cy="190" r="66" fill="#f3d9a0"/><circle cx="124" cy="190" r="66" fill="url(#rglow)"/>${[96, 118, 142].map((x, i) => `<rect x="${x}" y="${130 + i * 8}" width="7" height="120" fill="#4a5a2a" opacity=".55"/>`).join('')}${leaves(100, 160, 0)}${leaves(150, 180, 1)}
+    <rect x="272" y="168" width="124" height="252" fill="#3a2418"/><rect x="282" y="206" width="104" height="214" fill="#b9d2dc" opacity=".55"/><path d="M334 206 V420" stroke="#3a2418" stroke-width="4"/><path d="M292 230 l30 -16 M346 250 l30 -16" stroke="#fff" stroke-width="5" opacity=".45"/>
+    ${label(334, 196, 'ENTRANCE', '#ffd98a', 11)}${label(334, 312, 'CLAP', '#ff5fa2', 18)}<text x="334" y="330" text-anchor="middle" font-size="8.5" font-family="Nunito, sans-serif" font-weight="800" fill="#3a2418">HAYAT SABZ MALL · G</text>
+    <rect x="40" y="300" width="160" height="22" fill="#6b4632"/><rect x="40" y="322" width="160" height="98" fill="#4a2f22"/>
+    <g><ellipse cx="80" cy="294" rx="26" ry="20" fill="#2a2a2e"/><path d="M58 290 q-14 -6 -10 -18" stroke="#2a2a2e" stroke-width="6" fill="none"/><rect x="74" y="268" width="12" height="8" rx="2" fill="#2a2a2e"/>${[124, 150, 176].map((x) => `<rect x="${x - 7}" y="284" width="14" height="16" rx="3" fill="#e8dcc2"/>`).join('')}</g>
+    ${label(120, 395, 'TEA BAR', '#e8dcc2', 11)}
+    <rect x="200" y="304" width="66" height="26" rx="5" fill="#1a1011"/>${label(233, 321, 'POURYA’S', '#ffd98a', 10)}
+    ${[212, 233, 254].map((x) => `<path d="M${x - 7} 352 h14 l-3 12 h-8z" fill="#b4572a"/><rect x="${x - 2}" y="364" width="4" height="8" fill="#7a3a1a"/>`).join('')}<rect x="202" y="372" width="64" height="5" fill="#6b4632"/>
+    <g><rect x="206" y="398" width="56" height="26" rx="4" fill="#2a2a2e"/><rect x="212" y="390" width="44" height="12" rx="3" fill="#e05b3b"/><circle cx="226" cy="394" r="4" fill="#ffcf73"/><circle cx="242" cy="396" r="4" fill="#ff8a3a"/><path d="M224 384 q6 -12 0 -22 M244 384 q6 -12 0 -22" stroke="#bbb" stroke-width="2" fill="none" opacity=".6"/></g>
+    <rect x="404" y="300" width="160" height="22" fill="#6b4632"/><rect x="404" y="322" width="160" height="98" fill="#4a2f22"/>
+    <path d="M412 196 h146 v60 h-146z" fill="#1f2a5a"/><circle cx="485" cy="226" r="16" fill="#fff" opacity=".9"/><path d="M461 196 v60 M510 196 v60" stroke="#16204a" stroke-width="3"/>
+    ${[432, 482, 532].map((x) => `<ellipse cx="${x}" cy="296" rx="20" ry="6" fill="#fff"/><rect x="${x - 10}" y="284" width="8" height="8" rx="2" fill="#e05b3b"/><rect x="${x + 2}" y="284" width="8" height="8" rx="2" fill="#f2b33a"/>`).join('')}
+    ${label(484, 395, 'SUSHI', '#e8dcc2', 11)}
     ${wood(420, '#8a5c3c', 'rgba(40,20,10,.28)')}
+    ${edge}${leaves(26, 120, 0)}${leaves(26, 520, 0)}${leaves(574, 260, 1)}${leaves(574, 640, 1)}
   `, c, true);
+  };
+
+  // ground floor of Hayat Sabz mall: from the elevator to CLAP's entrance
+  ART.mall = (c) => {
+    const shop = (x, w, col, name) => `<rect x="${x}" y="190" width="${w}" height="230" fill="${col}"/><rect x="${x + 10}" y="236" width="${w - 20}" height="184" fill="#dfe9ee" opacity=".85"/><rect x="${x}" y="196" width="${w}" height="30" fill="#2a2a30"/>${label(x + w / 2, 216, name, '#fff', 12)}<path d="M${x + w / 2} 236 V420" stroke="#9aa2a8" stroke-width="2"/>`;
+    let bam = '';
+    for (let x = 440; x < 600; x += 14) bam += bamboo(x, 170, 420, 12, (x / 14) % 2);
+    return svg(`
+    <rect width="600" height="420" fill="#efe9df"/>
+    <rect x="0" y="0" width="600" height="70" fill="#dfe9ee"/>${[...Array(7)].map((_, i) => `<path d="M${i * 100} 0 V70" stroke="#c3ccd2" stroke-width="3"/>`).join('')}<path d="M0 70 H600" stroke="#c3ccd2" stroke-width="4"/>
+    <rect x="0" y="120" width="600" height="14" fill="#cfd5da"/><rect x="0" y="100" width="600" height="20" fill="#bfe0ea" opacity=".6"/>
+    <rect x="170" y="78" width="260" height="34" rx="8" fill="#2f6b3e"/>${label(300, 101, 'HAYAT SABZ MALL · G', '#fff', 14)}
+    ${elevator(40, 228, 112, 192, '', 'G')}
+    ${shop(176, 120, '#c9785a', 'BOUTIQUE')}${shop(306, 120, '#b98bc9', 'PERFUME')}
+    ${bam}<rect x="452" y="210" width="136" height="210" fill="#2b1d1a"/><path d="M462 210 h116 v50 h-116z" fill="#a52525"/><path d="M500 210 v50 M540 210 v50" stroke="#7a1c1c" stroke-width="3"/>
+    <rect x="456" y="150" width="128" height="44" rx="10" fill="#1a1011"/><circle cx="520" cy="172" r="70" fill="url(#rneon)"/><text x="520" y="184" text-anchor="middle" font-size="30" font-family="Baloo 2, sans-serif" font-weight="800" fill="#ffd1e6" stroke="#ff5fa2" stroke-width="2">CLAP</text>
+    ${[470, 570].map((x) => `<ellipse cx="${x}" cy="246" rx="12" ry="16" fill="#d63a3a"/><circle cx="${x}" cy="246" r="26" fill="url(#rglow)" opacity=".6"/>`).join('')}
+    <rect x="0" y="420" width="600" height="380" fill="#efe8dc"/>${[...Array(6)].map((_, r) => [...Array(6)].map((_, k) => `<rect x="${k * 100}" y="${420 + r * 64}" width="100" height="64" fill="${(r + k) % 2 ? '#f6f1e8' : '#e9e1d3'}"/>`).join('')).join('')}<rect x="0" y="420" width="600" height="380" fill="url(#rshine)"/>
+    ${plant(170, 430, 1.3)}${plant(430, 430, 1.3)}
+    <rect x="230" y="600" width="140" height="44" rx="8" fill="#d9d2c6"/>${label(300, 628, '→ CLAP · Hookah & Tea', '#7a5c4e', 11)}
+  `, c, true);
+  };
 
   // the underground parking of Hayat Sabz mall
   ART.parking = (c) => svg(`
@@ -235,7 +271,7 @@
     <path d="M0 52 H600" stroke="#6b7076" stroke-width="10"/><path d="M0 70 H600" stroke="#c0392b" stroke-width="5" opacity=".8"/>
     ${[110, 300].map((x) => `<rect x="${x - 22}" y="40" width="44" height="360" fill="#a3a8ae"/><rect x="${x - 22}" y="250" width="44" height="18" fill="#f2c230"/><rect x="${x - 22}" y="290" width="44" height="18" fill="#f2c230"/>`).join('')}
     <rect x="140" y="100" width="130" height="60" rx="6" fill="#2f6b3e"/>${label(205, 124, 'HAYAT SABZ', '#fff', 15)}${label(205, 146, 'MALL · PARKING P2', '#d8f0dc', 10)}
-    ${elevator(436, 214, 112, 186, 'CLAP · 4F ↑')}
+    ${elevator(436, 214, 112, 186, 'MALL · CLAP ↑', 'G')}
     <rect x="0" y="400" width="600" height="400" fill="#5d6168"/>
     ${[0, 1, 2, 3].map((i) => `<path d="M${i * 150} 560 V800" stroke="#e9e6d6" stroke-width="5"/>`).join('')}<path d="M0 560 H600" stroke="#e9e6d6" stroke-width="5" opacity=".6"/>
     ${label(75, 780, 'P2-14', '#e9e6d6', 16)}${label(375, 780, 'P2-16', '#e9e6d6', 16)}${label(525, 780, 'P2-17', '#e9e6d6', 16)}
@@ -244,15 +280,17 @@
     <g><rect x="470" y="640" width="120" height="50" rx="14" fill="#2c3e50"/><path d="M490 640 q14 -28 40 -28 h14 q22 0 34 28z" fill="#22313f"/><circle cx="496" cy="692" r="14" fill="#2a2a2e"/><circle cx="566" cy="692" r="14" fill="#2a2a2e"/></g>
   `, c, true);
 
-  // foreground props (drawn above characters standing behind them)
-  const table = (w, top, legs, extra) => `<svg viewBox="0 0 ${w} ${top + legs + 4}" width="${w}" height="${top + legs + 4}">${extra || ''}<rect x="0" y="${top}" width="${w}" height="16" rx="4" fill="#b07a48"/><path d="M8 ${top + 6} H${w - 8}" stroke="#8a5a32" stroke-width="1.5" opacity=".6"/><rect x="0" y="${top + 14}" width="${w}" height="6" fill="#8a5a32"/><rect x="12" y="${top + 20}" width="9" height="${legs - 16}" fill="#7a4e2c"/><rect x="${w - 21}" y="${top + 20}" width="9" height="${legs - 16}" fill="#7a4e2c"/></svg>`;
+  // foreground props (tables with a front board hide the legs of people sitting behind them)
+  const table = (w, top, extra) => `<svg viewBox="0 0 ${w} ${top + 72}" width="${w}" height="${top + 72}">${extra || ''}<rect x="0" y="${top}" width="${w}" height="14" rx="4" fill="#b07a48"/><path d="M8 ${top + 6} H${w - 8}" stroke="#8a5a32" stroke-width="1.5" opacity=".6"/><rect x="4" y="${top + 12}" width="${w - 8}" height="40" fill="#9a683c"/>${[...Array(Math.floor(w / 30))].map((_, i) => `<path d="M${12 + i * 30} ${top + 14} v36" stroke="#86582f" stroke-width="2"/>`).join('')}<rect x="10" y="${top + 52}" width="9" height="18" fill="#7a4e2c"/><rect x="${w - 19}" y="${top + 52}" width="9" height="18" fill="#7a4e2c"/></svg>`;
   const glasses = (x, y) => `<rect x="${x - 6}" y="${y}" width="12" height="16" rx="3" fill="#f8e3c2" opacity=".9"/><rect x="${x - 4}" y="${y + 6}" width="8" height="9" fill="#b4472a"/>`;
   const hookah = (x, y) => `<path d="M${x - 14} ${y + 98} q-8 -22 14 -34 q22 12 14 34z" fill="#7ec8e3" opacity=".85"/><rect x="${x - 4}" y="${y + 24}" width="8" height="42" fill="#c9a24a"/><path d="M${x - 12} ${y + 24} h24 l-4 -10 h-16z" fill="#b4572a"/><circle cx="${x}" cy="${y + 10}" r="6" fill="#ff8a3a"/><path d="M${x + 4} ${y + 60} q40 10 60 34" stroke="#2a2a2e" stroke-width="3" fill="none"/><path d="M${x - 6} ${y} q-8 -20 6 -36 q-10 -16 4 -30" stroke="#ddd" stroke-width="5" fill="none" opacity=".35"/>`;
   const PROPS = {
     clap: () => [
-      { x: 160, y: 490, w: 330, h: 170, z: 662, svg: table(330, 110, 56, hookah(160, 12) + glasses(220, 96) + glasses(244, 96) + '<ellipse cx="270" cy="108" rx="22" ry="5" fill="#f3efe9"/>') },
-      { x: 0, y: 440, w: 182, h: 92, z: 526, svg: table(182, 34, 54, glasses(60, 20) + glasses(120, 20)) },
-      { x: 438, y: 668, w: 162, h: 92, z: 756, svg: table(162, 34, 54, glasses(50, 20) + '<ellipse cx="110" cy="32" rx="20" ry="5" fill="#f3efe9"/>') },
+      { x: 170, y: 490, w: 300, h: 182, z: 668, svg: table(300, 110, hookah(150, 12) + glasses(206, 96) + glasses(228, 96) + '<ellipse cx="255" cy="108" rx="22" ry="5" fill="#f3efe9"/>') },
+      { x: 0, y: 470, w: 150, h: 112, z: 576, svg: table(150, 40, glasses(50, 26) + glasses(100, 26)) },
+      { x: 0, y: 660, w: 150, h: 112, z: 766, svg: table(150, 40, glasses(46, 26) + '<ellipse cx="104" cy="38" rx="20" ry="5" fill="#f3efe9"/>') },
+      { x: 450, y: 470, w: 150, h: 112, z: 576, svg: table(150, 40, '<circle cx="75" cy="30" r="10" fill="#7a2d8c" opacity=".85"/><circle cx="75" cy="30" r="16" fill="url(#rglow)"/>' + glasses(40, 26) + glasses(112, 26)) },
+      { x: 450, y: 660, w: 150, h: 112, z: 766, svg: table(150, 40, glasses(60, 26) + glasses(90, 26)) },
     ],
   };
 

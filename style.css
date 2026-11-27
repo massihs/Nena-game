@@ -300,3 +300,5 @@ button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 .elev.open i:last-child { transform: translateX(100%); }
 .actor.car > svg { animation: none; }
 .actor.guest > svg { animation: breathe 4s ease-in-out infinite; }
+
+.actor.witch > svg { filter: drop-shadow(0 0 6px rgba(150, 90, 220, .55)); }

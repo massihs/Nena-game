@@ -201,6 +201,8 @@ window.Art = (function () {
     guest1:  { skin: '#f2c9a6', hair: '#2b1d16', hair2: '#3e2a20', style: 'bob', shirt: '#7aa6c2', collar: '#4f7f9c', pants: '#3a3550', earrings: '#ffd36b' },
     guest2:  { skin: '#dcae86', hair: '#1c1b22', hair2: '#2b2a33', style: 'short', shirt: '#6aa84f', collar: '#4d8044', pants: '#3a3a44', beard: true },
     guest3:  { skin: '#f4cdb0', hair: '#5a2a16', hair2: '#6e3820', style: 'ponytail', shirt: '#e98aab', collar: '#c9496f', pants: '#2f2b46' },
+    witch1:  { skin: '#f7ddd0', hair: '#f2d77e', hair2: '#dcbb55', style: 'curly', shirt: '#231a2b', collar: '#7a2d8c', pants: '#1a1420', earrings: '#b98bff' },
+    witch2:  { skin: '#f4d8c6', hair: '#f7e7a6', hair2: '#e2c66c', style: 'curly', shirt: '#1d2420', collar: '#2f7a5a', pants: '#14181a', earrings: '#7fe0b4' },
     guest4:  { skin: '#c99872', hair: '#241a14', hair2: '#33261e', style: 'side', shirt: '#e7b84a', collar: '#c9952a', pants: '#3a3550' },
   };
 
