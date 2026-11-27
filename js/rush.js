@@ -256,6 +256,7 @@
     if (cfg.mod && cfg.mod.hearts) { G.hearts = cfg.mod.hearts; G.maxHearts = cfg.mod.hearts; }
     if (cfg.mod && cfg.mod.zoom) G.zoomT = 6;
     Object.keys(hudCache).forEach((k) => delete hudCache[k]);
+    G.tabsBuilt = '';
     G.giftT = (n >= 4 && (cfg.place === 'home' || cfg.place === 'clap')) || cfg.challenge ? 22 + rnd() * 30 : null;
     G.frStart = {}; FRIENDS.forEach((f) => { G.frStart[f.id] = friendLv(f.id); });
     if (G.boosts.heart) { G.hearts++; G.maxHearts++; }
@@ -394,27 +395,51 @@
   /* ------------------------------------------------------------------ */
   /* Rooms: view and tabs                                                */
   /* ------------------------------------------------------------------ */
+  // Room navigation: floor-plan cards with live thumbnails, edge arrows, slide transitions
+  const navTabs = () => { const t = G.W.tabs.slice(); if (G.nena.room === 'street' && !t.includes('street')) t.push('street'); return t; };
   function setView(room) {
     if (!G.layers[room]) return;
+    const prev = G.view, order = navTabs();
     G.view = room;
     Object.entries(G.layers).forEach(([id, d]) => d.classList.toggle('on', id === room));
     layer(room).appendChild(G.tut);
+    if (prev && prev !== room) {
+      const l = G.layers[room], dir = order.indexOf(room) > order.indexOf(prev) ? 'slide-l' : 'slide-r';
+      l.classList.remove('slide-l', 'slide-r'); void l.offsetWidth; l.classList.add(dir);
+      const bn = $('g-roomname'); bn.textContent = `${ROOMS[room].icon} ${ROOMS[room].name}`; bn.classList.remove('show'); void bn.offsetWidth; bn.classList.add('show');
+    }
     G.tabKey = '';
     renderTabs();
   }
+  function buildTabs(tabs) {
+    G.tabsBuilt = tabs.join();
+    $('g-rooms').innerHTML = tabs.map((room, i) => {
+      const bg = G.layers[room] && G.layers[room].querySelector('svg.stage-bg');
+      return `${i ? '<i class="rdoor" aria-hidden="true"></i>' : ''}<button type="button" class="rtab" data-room="${room}" aria-label="${ROOMS[room].name}">
+        <span class="rt-thumb">${bg ? bg.outerHTML : ''}</span><span class="rt-me">${A.portrait('nena', 'happy')}</span>
+        <span class="rt-n">${ROOMS[room].icon} ${ROOMS[room].short}</span><span class="rt-b"></span></button>`;
+    }).join('');
+  }
   function renderTabs() {
-    const tabs = G.W.tabs.slice();
-    if (G.nena.room === 'street' && !tabs.includes('street')) tabs.push('street');
+    const tabs = navTabs();
+    if (G.tabsBuilt !== tabs.join()) { buildTabs(tabs); G.tabKey = ''; }
     const need = needRooms();
-    const parts = tabs.map((room) => {
-      const reqs = G.reqs.filter((r) => whoRoom(r.who) === room);
-      return { room, here: G.nena.room === room, view: G.view === room, need: need.has(room), b: reqs.map((r) => ({ i: G.reqs.indexOf(r), icon: REQ[r.type].icon, u: r.left / r.max < 0.3 })) };
-    });
+    const parts = tabs.map((room) => ({ room, here: G.nena.room === room, view: G.view === room, need: need.has(room),
+      b: G.reqs.filter((r) => whoRoom(r.who) === room).map((r) => ({ i: G.reqs.indexOf(r), icon: REQ[r.type].icon, u: r.left / r.max < 0.3 })) }));
     const key = JSON.stringify(parts);
     if (key === G.tabKey) return;
     G.tabKey = key;
-    $('g-rooms').innerHTML = parts.map((p) => `<button type="button" class="rtab${p.view ? ' view' : ''}${p.here ? ' here' : ''}${p.need ? ' need' : ''}" data-room="${p.room}">
-      <span class="rt-n">${ROOMS[p.room].icon} ${ROOMS[p.room].short}</span><span class="rt-b">${p.b.map((b) => `<span data-req="${b.i}" class="${b.u ? 'urgent' : ''}">${b.icon}</span>`).join('')}</span></button>`).join('');
+    parts.forEach((p) => {
+      const el = $('g-rooms').querySelector(`[data-room="${p.room}"]`); if (!el) return;
+      el.classList.toggle('view', p.view); el.classList.toggle('here', p.here); el.classList.toggle('need', p.need && !p.view);
+      el.querySelector('.rt-b').innerHTML = p.b.map((b) => `<span data-req="${b.i}" class="${b.u ? 'urgent' : ''}">${b.icon}</span>`).join('');
+    });
+    // edge arrows to the neighbouring rooms + "back to Nena"
+    const i = tabs.indexOf(G.view), multi = tabs.length > 1;
+    const pv = multi && i > 0 ? tabs[i - 1] : null, nx = multi && i < tabs.length - 1 ? tabs[i + 1] : null;
+    const setArrow = (id, r) => { const e = $(id); e.hidden = !r; if (r) { e.dataset.room = r; e.querySelector('b').textContent = `${ROOMS[r].icon} ${ROOMS[r].short}`; e.classList.toggle('need', need.has(r) || G.reqs.some((q) => whoRoom(q.who) === r)); } };
+    setArrow('g-prev', pv); setArrow('g-next', nx);
+    $('g-follow').hidden = !multi || G.nena.room === G.view || G.nena.el.classList.contains('gone');
   }
   function needRooms() {
     const s = new Set();
@@ -623,7 +648,7 @@
     if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5 || performance.now() - s0.t > 600) return;
     const tabs = G.W.tabs; const i = tabs.indexOf(G.view); if (i < 0 || tabs.length < 2) return;
     const j = Math.max(0, Math.min(tabs.length - 1, i + (dx < 0 ? 1 : -1)));
-    if (j !== i) { snd('tab'); G.peekAt = performance.now(); setView(tabs[j]); const l = G.layers[tabs[j]]; l.classList.remove('slide-l', 'slide-r'); void l.offsetWidth; l.classList.add(dx < 0 ? 'slide-l' : 'slide-r'); }
+    if (j !== i) { snd('tab'); G.peekAt = performance.now(); setView(tabs[j]); }
   }
   function ripple(e, hit) {
     const wrap = $('stage-wrap'), r = wrap.getBoundingClientRect();
@@ -1824,6 +1849,8 @@
   $('stage').addEventListener('pointerdown', onTap);
   window.addEventListener('pointerup', onSwipeEnd);
   $('g-rooms').addEventListener('pointerdown', onTabs);
+  ['g-prev', 'g-next'].forEach((id) => $(id).addEventListener('pointerdown', (e) => { e.stopPropagation(); if (!G || G.over || G.paused) return; snd('tab'); G.peekAt = performance.now(); setView(e.currentTarget.dataset.room); }));
+  $('g-follow').addEventListener('pointerdown', (e) => { e.stopPropagation(); if (!G || G.over) return; snd('tab'); G.peekAt = 0; setView(G.nena.room); });
   $('btn-play').addEventListener('click', () => { wake(); snd('tab'); renderMap(); });
   $('m-levels').addEventListener('click', (e) => { const b = e.target.closest('[data-level]'); if (b) { snd('click'); playStory(+b.dataset.level); } });
   $('m-shop').addEventListener('click', () => { snd('tab'); renderShop(); });
