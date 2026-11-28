@@ -1532,10 +1532,9 @@
     G.evT -= dt; if (G.evT > 0) return;
     G.evT = (mod.events || mod.blackout || c.events || 26) + rnd() * 10;
     const opts = [];
-    if (c.place === 'home') { opts.push('blackout'); if (G.st.samovar && G.n >= 4) opts.push('aunt'); }
+    if (c.place === 'home') { if (G.st.samovar && G.n >= 4) opts.push('aunt'); }
     if (c.place === 'street') opts.push('chase');
     if (c.place === 'clap') opts.push('vip', 'curse');
-    if (mod.blackout) opts.length = 0, opts.push('blackout');
     const e = pick(opts); if (!e) return;
     if (e === 'blackout') {
       if (G.blackout) return;
@@ -1991,7 +1990,6 @@
     { id: 'zoomies', name: 'Zoomies day', desc: 'Simba gets the zoomies every 10 seconds!', base: 7, mod: { zoom: 10 } },
     { id: 'calls', name: 'Baba calls all day', desc: 'Baba phones Nena again and again.', base: 8, mod: { addTypes: ['phone'] } },
     { id: 'rush', name: 'Rush day', desc: 'Requests come twice as fast, but everyone is patient.', base: 5, mod: { everyMul: 0.55, patienceMul: 1.25 } },
-    { id: 'blackout', name: 'Power cuts', desc: 'The power keeps going out in the tower.', base: 8, mod: { blackout: 15 } },
     { id: 'vipnight', name: 'VIP night at CLAP', desc: 'VIPs everywhere, and the witches are restless.', base: 13, mod: { events: 9 } },
     { id: 'glass', name: 'Glass heart', desc: 'Only 2 hearts, but every point counts double.', base: 10, mod: { hearts: 2, ptsMul: 2 } },
     { id: 'busy', name: 'Busy Tehran', desc: 'The street is packed and Simba is a thief.', base: 12, mod: { everyMul: 0.75, events: 11 } },
