@@ -184,6 +184,7 @@
   // every home day is a different random mix of real-life needs (the day's theme and objective are always in it)
   const EASY_POOL = ['water', 'walk', 'play', 'tea', 'help', 'plants', 'cuddle', 'brush', 'charger'];
   function dailyCfg(base) {
+    if (base.n < 900 && isBig(base.n)) base = Object.assign({}, base, { big: true, title: '⭐ Big day · ' + base.title, patience: (base.patience || 1) * 0.95, every: base.every.map((e) => e * 0.9) });
     if (base.place !== 'home' || base.party || base.n > 900) return Object.assign({}, base);
     const must = new Set();
     if (base.n === 1) must.add('food');
@@ -308,6 +309,7 @@
       boneT: n >= 2 ? 16 + rnd() * 8 : 999, bone: null, pkgT: n >= 2 && cfg.place === 'home' ? 28 + rnd() * 12 : 999, pkg: null,
       zoomT: n >= 3 && cfg.place === 'home' ? 22 + rnd() * 10 : 999, rushHour: false, lastTick: 99, starsShown: 0, boosts: pendingBoosts || {}, tabKey: '',
     };
+    if (n < 900 && !cfg.challenge) { const sg = streakGift(save.wstreak); if (sg) { G.boosts = Object.assign({}, G.boosts, sg[1]); setTimeout(() => { if (G && G.n === n) toast(`🔥 Win streak ×${save.wstreak}: ${sg[2]} head start!`, 'combo', 2200); }, 900); } }
     if (G.boosts.time) G.time += 15;
     G.evT = cfg.events || (cfg.mod && (cfg.mod.events || cfg.mod.blackout)) || (n >= 3 && n < 900 ? 32 + rnd() * 15 : n === 902 ? 25 : null);
     if (cfg.mod && cfg.mod.hearts) { G.hearts = cfg.mod.hearts; G.maxHearts = cfg.mod.hearts; }
@@ -1848,6 +1850,12 @@
       extra += `<li class="${j >= 45 ? 'ok' : 'ko'}"><span>🐶 Simba’s happiness ${j}% ${j >= 75 ? '😄' : j >= 45 ? '🙂' : '😕'}</span><b>+${jb} 🪙</b></li>`;
     }
     if (!lost && stars) { const evn = evGain(stars * 2 + Math.floor(G.done / 4)); if (evn) { const E = activeEvent(); extra += `<li class="ok"><span>${E.def.ico} ${E.def.name}</span><b>+${evn} ${E.def.tok}</b></li>`; } }
+    if (G.n < 900 && !c.challenge && !c.endless) {
+      if (!lost && stars) { save.wstreak++; save.mstars += stars + (c.big ? 2 : 0); const ng = STREAK_GIFTS.find((s) => s[0] > save.wstreak); extra += `<li class="ok"><span>🔥 Win streak ×${save.wstreak}</span><b>${ng ? `${ng[0] - save.wstreak} more: ${ng[2]}` : '☕💗⏱️ max!'}</b></li><li class="ok"><span>🛠️ Makeover stars</span><b>+${stars + (c.big ? 2 : 0)} ★ (${save.mstars})</b></li>`; }
+      else if (save.wstreak >= 2) { extra += `<li class="ko"><span>💔 Win streak ×${save.wstreak} lost</span><b>try again!</b></li>`; save.wstreak = 0; }
+      else save.wstreak = 0;
+      if (c.big && !lost && stars) { const got = dropStickers(2); const b = pick(BOOSTERS); save.freeB[b.id] = (save.freeB[b.id] || 0) + 1; earned += 100; extra += `<li class="ok"><span>⭐ Big day chest</span><b>+100 🪙 ${got.map((g) => g.ico).join('')} ${b.icon}</b></li>`; }
+    }
     if (G.golden && earned > 0) { extra += `<li class="ok"><span>✨ Golden hour</span><b>×2 · +${earned} 🪙</b></li>`; earned *= 2; }
     save.coins += earned;
     save.losses = save.losses || {};
@@ -1880,6 +1888,8 @@
     if (!lost && stars && !c.endless && !c.challenge) renderMyst(G.n); else $('r-myst').hidden = true;
     $('r-sub').textContent = lost ? 'The family lost patience. Try again, and watch the rings!' : stars ? `Goal: ${c.targets[0]} · ${c.targets[1]} · ${c.targets[2]}` : `You needed ${c.targets[0]} points for 1 star.`;
     $('r-next').hidden = !stars || !!c.endless || !!c.challenge;
+    $('r-retry').classList.remove('near');
+    if (!c.endless && stars < 3) { const nt = c.targets[stars], gap = nt - final; if (gap > 0 && gap <= nt * 0.2) { $('r-sub').innerHTML = `<b class="near-txt">So close! Only ${gap} points to ${'★'.repeat(stars + 1)}</b> — one more try?`; $('r-retry').classList.add('near'); } }
     $('r-title').textContent = c.endless ? 'Endless day over!' : $('r-title').textContent;
     $('r-portrait').innerHTML = A.portrait(stars >= 2 ? 'nena' : stars ? 'nena' : 'nena', stars >= 2 ? 'happy' : stars ? 'neutral' : 'sad');
     $('screen-result').hidden = false;
@@ -1975,6 +1985,9 @@
     { id: 'festival', icon: '🎉', name: 'Festival queen', desc: 'Complete a Persian festival track', test: (t) => (t.eventDone || 0) >= 1, r: 150 },
     { id: 'hokm1', icon: '🃏', name: 'Hokm champion', desc: 'Beat Haj Mohsen & Negin at Hokm', test: (t) => (t.hokmWin || 0) >= 1, r: 80 },
     { id: 'hokmkot', icon: '👑', name: 'Kot!', desc: 'Win a Hokm hand 7–0', test: (t) => (t.hokmKot || 0) >= 1, r: 80 },
+    { id: 'mk5', icon: '🛠️', name: 'Interior designer', desc: 'Complete 5 makeover upgrades', test: (t) => (t.makeover || 0) >= 5, r: 80 },
+    { id: 'mkall', icon: '🏡', name: 'Dream home', desc: 'Finish the whole makeover', test: (t) => (t.makeoverDone || 0) >= 1, r: 200 },
+    { id: 'streak7', icon: '🔥', name: 'On fire', desc: 'Win 7 days in a row', test: () => save.wstreak >= 7, r: 120 },
     { id: 'clock12', icon: '🕐', name: 'Around the clock', desc: 'Live hourly moments at 12 different hours', test: () => Object.keys(save.momHours || {}).length >= 12, r: 120 },
     { id: 'life10', icon: '🏠', name: 'Real life', desc: 'Do 10 daily chores (breakfast, groceries, laundry)', test: (t) => (t.breakfast || 0) + (t.grocery || 0) + (t.laundry || 0) >= 10, r: 100 },
     { id: 'bed7', icon: '🌙', name: 'Only in her arms', desc: 'Rock Simba to sleep on 7 nights', test: (t) => (t.bed || 0) >= 7, r: 100 },
@@ -2018,6 +2031,8 @@
     { id: 'canopy', room: 'bedroom', name: 'Bed canopy', icon: '🎀', cost: 120, svg: '<path d="M30 330 q125 -60 250 0 l-10 260 q-115 30 -230 0z" fill="#fff" opacity=".28"/><path d="M30 330 q125 -60 250 0" stroke="#f3c6d5" stroke-width="6" fill="none"/>' },
     { id: 'vanity', room: 'bedroom', name: 'Hollywood mirror lights', icon: '✨', cost: 90, svg: [...Array(10)].map((_, i) => `<circle cx="${505 + Math.cos(i * 0.628) * 64}" cy="${190 + Math.sin(i * 0.628) * 64}" r="6" fill="#fff6c4"/><circle cx="${505 + Math.cos(i * 0.628) * 64}" cy="${190 + Math.sin(i * 0.628) * 64}" r="14" fill="url(#rglow)"/>`).join('') },
     { id: 'gallery', room: 'hall', name: 'Family photo gallery', icon: '📷', cost: 80, svg: [[146, 330, '#f3c6d5'], [284, 340, '#bfe0f0'], [418, 330, '#f6e1b0']].map(([x, y, c]) => `<rect x="${x}" y="${y}" width="26" height="34" fill="#6b4632"/><rect x="${x + 3}" y="${y + 3}" width="20" height="28" fill="${c}"/><circle cx="${x + 13}" cy="${y + 14}" r="5" fill="#c9496f" opacity=".6"/>`).join('') },
+    { id: 'calli', room: 'salon', name: 'Hafez calligraphy', icon: '🖋️', cost: 0, mk: true, svg: '<rect x="12" y="82" width="80" height="64" rx="3" fill="#6b4632"/><rect x="17" y="87" width="70" height="54" fill="#f3e2b8"/><rect x="21" y="91" width="62" height="46" fill="none" stroke="#c9a24a" stroke-width="1.5"/><text x="52" y="122" text-anchor="middle" direction="rtl" font-size="20" font-family="Vazirmatn, Tahoma, sans-serif" font-weight="800" fill="#7a1f2e">عشق</text>' },
+    { id: 'lanterns', room: 'hall', name: 'Persian brass lanterns', icon: '🏮', cost: 0, mk: true, svg: [110, 490].map((x) => `<path d="M${x} 0 v40" stroke="#8a6a3a" stroke-width="2"/><path d="M${x - 14} 50 l14 -12 l14 12 v26 l-14 12 l-14 -12z" fill="#c9962e"/><path d="M${x - 9} 52 h18 v22 h-18z" fill="#ffd98a" opacity=".85"/><circle cx="${x}" cy="64" r="36" fill="#ffcf80" opacity=".25"/>`).join('') },
   ];
   const cozy = () => Object.keys(save.decor).length;
   const OUTFIT_SHOP = [
@@ -2074,6 +2089,7 @@
     ['wheel', 2, '🎡', 'Lucky wheel', 'Spin for coins, free boosters and stickers.'],
     ['stickers', 2, '🎴', 'Sticker album', 'Collect stickers and complete sets.'],
     ['bed', 2, '🌙', 'Bedtime', 'Simba only falls asleep in Nena’s arms.'],
+    ['makeover', 1, '🛠️', 'Home makeover', 'Every star you win renovates the flat: new decor appears in the rooms!'],
     ['event', 2, '🎉', 'Persian festivals', 'Yalda, Chaharshanbe Souri and Nowruz: decorations, activities and exclusive rewards.'],
     ['golden', 2, '✨', 'Golden hours', 'At 13:00 and 20:00, every day pays double coins for an hour.'],
     ['challenge', 3, '🎯', 'Daily challenge', 'A special day with a twist, every day.'],
@@ -2104,7 +2120,7 @@
   function renderHub() {
     const items = [
       ...(unlocked('event') ? [(() => { const E = activeEvent(), nx = eventList()[0]; return E ? ['event', E.def.ico, E.def.name.replace('Chaharshanbe ', '').replace('Shab-e ', ''), evState() && evState().act !== today() ? '!' : ''] : ['event', '🎉', EVENTS[nx.id].name.replace('Chaharshanbe ', '').replace('Shab-e ', ''), daysTo(nx.start) + 'd']; })()] : []),
-      ['hokm', '🃏', 'Hokm', ''], ['gift', '🐾', 'Surprise', giftState().n > 0 ? String(giftState().n) : giftMin() + 'm'], ['today', '📅', 'Today', routineNow() || ''], ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
+      ['makeover', '🛠️', 'Makeover', mkReady() ? '★' + save.mstars : ''], ['hokm', '🃏', 'Hokm', ''], ['gift', '🐾', 'Surprise', giftState().n > 0 ? String(giftState().n) : giftMin() + 'm'], ['today', '📅', 'Today', routineNow() || ''], ['daily', '🎁', 'Daily', dailyReady() ? '!' : ''], ['sort', '🧪', 'Color Sort', sortLeft() || ''], ['challenge', '🎯', 'Challenge', chalReady() ? '!' : ''],
       ['missions', '📋', 'Quests', missionsReady() ? '!' : ''], ['family', '❤️', 'Family', scenesNew() ? 'new' : ''], ['decor', '🛋️', 'Decor', ''],
       ['nails', '💅', 'Nail day', nailsReady() ? '!' : ''], ['wardrobe', '👗', 'Wardrobe', ''], ['album', '📸', 'Album', `${Object.keys(save.album).length}/${PHOTOS.length}`], ['trophies', '🏆', 'Trophies', `${Object.keys(save.ach).length}/${ACH.length}`],
       ['wheel', '🎡', 'Wheel', spinsLeft() || ''], ['stickers', '🎴', 'Stickers', `${Object.keys(save.stickers).length}/${STICKERS.length}`], ['bed', '🌙', 'Bedtime', new Date().getHours() >= 18 && save.wellness.bed !== today() ? '!' : ''], ['gym', '🏋️', 'Gym', gymDay() && save.wellness.gym !== today() ? '!' : ''], ['zen', '🧘', 'Zen', save.wellness.zen !== today() ? '!' : ''], ['games', '🎮', 'Games', ''], ['endless', '♾️', 'Endless', ''], ['settings', '⚙️', 'Settings', ''],
@@ -2126,6 +2142,7 @@
     if (kind === 'bed') { openBed(); return; }
     if (kind === 'gift') { openGift(); return; }
     if (kind === 'hokm') { openHokm(); return; }
+    if (kind === 'makeover') { openMakeover(null); return; }
     if (kind === 'breakfast' || kind === 'grocery' || kind === 'laundry') { openLife(kind); return; }
     if (kind === 'nails') { startNailDay(); return; }
     sheetKind = kind;
@@ -2202,7 +2219,7 @@
       const scenes = [1, 2, 3, 4].map((l) => `<button type="button" class="scene-b${l <= lv ? '' : ' locked'}${l <= lv && !save.scenes[f.id + l] ? ' new' : ''}" data-act="scene" data-f="${f.id}" data-l="${l}" ${l <= lv ? '' : 'disabled'}>${l <= lv ? '▶' : '🔒'} ${l}</button>`).join('');
       return `<div class="fam"><span class="fam-p">${A.portrait(f.pic, 'happy')}</span><span class="fam-t"><b>${f.name} <small>${FR_TITLES[lv]}</small></b><span class="hearts-s">${'❤️'.repeat(lv)}${'🤍'.repeat(4 - lv)}</span>${next ? bar(pts - FR_LV[lv], next - FR_LV[lv]) : '<small>Max friendship!</small>'}<span class="scenes">${scenes}</span></span></div>`;
     }).join('') + '<p class="sh-lede small">Help someone to grow your friendship. Each level unlocks a little scene and makes them a bit more patient.</p>',
-    decor: () => ['salon', 'kitchen', 'tv', 'hall', 'bedroom'].map((room) => `<h4 class="sh-h">${ROOMS[room].icon} ${ROOMS[room].name}</h4>` + DECOR.filter((d) => d.room === room).map((d) => { const own = save.decor[d.id]; return `<div class="row-card${own ? ' done' : ''}"><span class="rc-i">${d.icon}</span><span class="rc-t"><b>${d.name}</b><small>+1% patience for everyone</small></span>${own ? '<b class="ok">✓</b>' : `<button type="button" class="btn btn-primary" data-act="buy-decor" data-id="${d.id}" ${save.coins < d.cost ? 'disabled' : ''}>${d.cost} 🪙</button>`}</div>`; }).join('')).join(''),
+    decor: () => ['salon', 'kitchen', 'tv', 'hall', 'bedroom'].map((room) => `<h4 class="sh-h">${ROOMS[room].icon} ${ROOMS[room].name}</h4>` + DECOR.filter((d) => d.room === room && !d.mk).map((d) => { const own = save.decor[d.id]; return `<div class="row-card${own ? ' done' : ''}"><span class="rc-i">${d.icon}</span><span class="rc-t"><b>${d.name}</b><small>+1% patience for everyone</small></span>${own ? '<b class="ok">✓</b>' : `<button type="button" class="btn btn-primary" data-act="buy-decor" data-id="${d.id}" ${save.coins < d.cost ? 'disabled' : ''}>${d.cost} 🪙</button>`}</div>`; }).join('')).join(''),
     wardrobe: () => `<h4 class="sh-h">Nena’s outfits</h4><div class="wardrobe">${OUTFIT_SHOP.map((o) => { const own = save.owned[o.id], on = save.outfit === o.id; return `<button type="button" class="ward${on ? ' on' : ''}" data-act="outfit" data-id="${o.id}" ${!own && (o.reward || save.coins < o.cost) ? 'disabled' : ''}><span class="ward-p">${A.nena({ dressed: true, outfit: o.id, eyes: 'open' })}</span><small>${o.name}</small><b>${on ? 'Wearing' : own ? 'Wear' : o.reward ? (o.reward === true ? '🔒 30-min journey' : '🔒 ' + o.reward) : o.cost + ' 🪙'}</b></button>`; }).join('')}</div>
       <h4 class="sh-h">Simba’s collars</h4><div class="wardrobe">${COLLAR_SHOP.map((o) => { const k = 'c_' + o.id, own = o.cost === 0 || save.owned[k], on = save.collar === o.id; return `<button type="button" class="ward dog${on ? ' on' : ''}" data-act="collar" data-id="${o.id}" ${!own && save.coins < o.cost ? 'disabled' : ''}><span class="ward-p">${A.simba({ collar: o.id, eyes: 'open' })}</span><small>${o.name}</small><b>${on ? 'Wearing' : own ? 'Wear' : o.cost + ' 🪙'}</b></button>`; }).join('')}</div>`,
     album: () => `<p class="sh-lede">When Simba does something cute, a 📸 appears next to him. Tap it fast!</p><div class="album">${PHOTOS.map((p) => save.album[p.id] ? `<div class="photo"><span class="ph-pic ${p.cls || ''}">${A.simba({ collar: save.collar, eyes: p.cls === 'lying' ? 'closed' : 'open' })}<em>${p.ico}</em></span><small>${p.name}</small></div>` : '<div class="photo locked"><span class="ph-pic">?</span><small>???</small></div>').join('')}</div>`,
@@ -3421,6 +3438,78 @@
     if (st.length) setTimeout(() => { if (G && G.fam === F) toast('🏠 Today: ' + st.join(' · '), 'hint', 2600); }, 1600);
   }
 
+  /* ---- Home makeover: stars earned every won day renovate the flat, one visible change at a time ---- */
+  save.mstars = save.mstars ?? Object.values(save.stars).reduce((a, b) => a + b, 0) - Object.keys(save.decor).length;
+  if (save.mstars < 0) save.mstars = 0;
+  save.wstreak = save.wstreak || 0;
+  const MAKEOVER = [
+    ['gallery', 1, 'fariba', 'Our family photos in the hallway… I could cry. 🥹'], ['tulips', 1, 'fariba', 'Tulips on my kitchen island! Merci azizam.'],
+    ['calli', 1, 'mohsen', 'A Hafez calligraphy in the living room. Now THAT is a Persian home.'], ['monstera', 2, 'nasim', '…Okay, the plant is nice. Don’t tell anyone I said that.'],
+    ['espresso', 2, 'negin', 'REAL coffee?! Nena, I love you. I’ll wake up on time. Maybe.'], ['vanity', 2, 'nena', 'Hollywood lights on my mirror! I feel like a star ✨'],
+    ['miniature', 2, 'mohsen', 'A real Persian miniature. Very classy, Nena jan.'], ['lanterns', 2, 'fariba', 'Brass lanterns in the hallway, like in Isfahan!'],
+    ['ambilight', 2, 'mohsen', 'Persepolis looks even better with the lights! GOOOAL!'], ['canopy', 2, 'sepitak', 'A canopy over your bed?! Our next sleepover will be legendary!'],
+    ['neon', 2, 'negin', '“Nena ♥ Simba”… cute. Jesus will be jealous. 😏'], ['aquarium', 3, 'mohsen', 'An aquarium! Simba, don’t even think about it.'],
+    ['goldbed', 3, 'simba', '*jumps in the golden bed… then sleeps in Nena’s arms anyway* 🐾'], ['silkrug', 3, 'fariba', 'A silk rug from Qom! Shoes OFF, everyone!'],
+    ['chandelier', 3, 'fariba', 'A crystal chandelier… our living room is a palace now! 💎'],
+  ];
+  const mkNext = () => MAKEOVER.find(([id]) => !save.decor[id]);
+  const mkCost = () => { const t = mkNext(); return t ? t[1] : 3; };
+  const mkReady = () => unlocked('makeover') && save.mstars >= mkCost();
+  let MK = null;
+  function mkEl() {
+    let e = document.getElementById('mk');
+    if (!e) { e = document.createElement('div'); e.className = 'unlock'; e.id = 'mk'; e.hidden = true; e.innerHTML = '<div class="ul-card mk-card"><div class="mk-top"><span>🛠️ Home makeover</span><b id="mk-stars"></b></div><h3 id="mk-title"></h3><div class="mk-view" id="mk-view"></div><div class="mk-who"><span id="mk-pic"></span><p class="say mk-say" id="mk-say"></p></div><div class="mk-prog" id="mk-prog"></div><div class="row"><button type="button" class="btn btn-primary btn-big" id="mk-go"></button><button type="button" class="btn" id="mk-later">Later</button></div></div>'; document.querySelector('.app').appendChild(e);
+      e.querySelector('#mk-go').addEventListener('click', mkDo); e.querySelector('#mk-later').addEventListener('click', () => mkClose()); }
+    return e;
+  }
+  function mkProg() { const doneN = MAKEOVER.filter(([id]) => save.decor[id]).length; $('mk-prog').innerHTML = `<i style="width:${(doneN / MAKEOVER.length) * 100}%"></i><span>${doneN}/${MAKEOVER.length} upgrades done</span>`; }
+  function openMakeover(after) {
+    const e = mkEl(), t = mkNext(); MK = { after, done: false };
+    $('mk-stars').textContent = `★ ${save.mstars}`;
+    mkProg();
+    if (t) {
+      const d = DECOR.find((x) => x.id === t[0]), room = d.room;
+      $('mk-title').textContent = `${d.icon} ${d.name}`;
+      $('mk-view').innerHTML = `<svg width="0" height="0" style="position:absolute">${RA.defs({ n: 1 })}</svg>${RA.ART[room]({ n: 1 })}<svg viewBox="0 0 600 800" class="mk-new" id="mk-new">${d.svg}</svg><span class="mk-room">${ROOMS[room].icon} ${ROOMS[room].name}</span>`;
+      $('mk-pic').innerHTML = A.portrait(t[2] === 'simba' ? 'simba' : t[2], 'happy');
+      $('mk-say').textContent = { fariba: 'Maman', mohsen: 'Baba', nasim: 'Nasim', negin: 'Negin', nena: 'Nena', simba: 'Simba', sepitak: 'Sepitak' }[t[2]] + ': “' + pick(['Nena jan, what if we redo this corner?', 'This room needs something… don’t you think?', 'Let’s make the house even cosier!']) + '”';
+      $('mk-go').textContent = `Renovate · ★ ${t[1]}`; $('mk-go').disabled = save.mstars < t[1];
+    } else {
+      $('mk-title').textContent = '⭐ Star chest'; $('mk-view').innerHTML = '<div class="mk-chest">🎁</div>';
+      $('mk-pic').innerHTML = A.portrait('nena', 'happy'); $('mk-say').textContent = 'The whole flat is renovated! Turn your stars into rewards.';
+      $('mk-go').textContent = 'Open · ★ 3'; $('mk-go').disabled = save.mstars < 3;
+    }
+    e.hidden = false; snd('chime');
+  }
+  function mkDo() {
+    if (!MK) return;
+    if (MK.done) { mkClose(); return; }
+    const t = mkNext();
+    if (t) {
+      if (save.mstars < t[1]) return;
+      save.mstars -= t[1]; save.decor[t[0]] = 1; track('makeover');
+      $('mk-new').classList.add('in'); confettiOn($('mk')); snd('fanfare'); haptic('star');
+      setTimeout(() => { $('mk-say').textContent = `${{ fariba: 'Maman', mohsen: 'Baba', nasim: 'Nasim', negin: 'Negin', nena: 'Nena', simba: 'Simba', sepitak: 'Sepitak' }[t[2]]}: “${t[3]}”`; }, 500);
+      if (!mkNext()) track('makeoverDone');
+    } else {
+      if (save.mstars < 3) return;
+      save.mstars -= 3; save.coins += 100; const [s] = dropStickers(1); const b = pick(BOOSTERS); save.freeB[b.id] = (save.freeB[b.id] || 0) + 1;
+      $('mk-view').innerHTML = `<div class="mk-chest open">✨</div><p class="mk-loot">+100 🪙 · ${s.ico} ${s.name} · ${b.icon} free ${b.name}</p>`; confettiOn($('mk')); snd('fanfare');
+    }
+    persist(); checkAch(); MK.done = true; mkProg();
+    $('mk-stars').textContent = `★ ${save.mstars}`; $('mk-go').disabled = false; $('mk-go').textContent = mkReady() ? 'Next renovation ›' : 'Continue ›'; $('mk-later').hidden = true;
+    if (mkReady()) MK.again = true;
+  }
+  function mkClose() {
+    const e = document.getElementById('mk'); if (!e) return;
+    if (MK && MK.again && MK.done) { const a = MK.after; MK = null; $('mk-later').hidden = false; openMakeover(a); return; }
+    e.hidden = true; $('mk-later').hidden = false; const a = MK && MK.after; MK = null; if (a) a(); else if (!$('screen-map').hidden) renderMap();
+  }
+  // win streak: every won day in a row gives a head start; a lost day resets it
+  const STREAK_GIFTS = [[2, { coffee: true }, '☕'], [3, { coffee: true, heart: true }, '☕💗'], [5, { coffee: true, heart: true, time: true }, '☕💗⏱️']];
+  const streakGift = (k) => { let g = null; STREAK_GIFTS.forEach((s) => { if (k >= s[0]) g = s; }); return g; };
+  const isBig = (n) => n >= 16 && n % 5 === 0 && levelCfg(n).place === 'home';
+
   /* ---- daily chores mini-games: breakfast (orders), groceries (memory), laundry (pairs) ---- */
   const BF_ITEMS = { bread: ['🫓', 'Sangak'], panir: ['🧀', 'Panir'], walnut: ['🌰', 'Walnuts'], honey: ['🍯', 'Honey'], butter: ['🧈', 'Butter'], egg: ['🍳', 'Fried egg'], tomato: ['🍅', 'Tomato'], cucumber: ['🥒', 'Cucumber'], sabzi: ['🌿', 'Sabzi'], tea: ['🍵', 'Chai'], jam: ['🍓', 'Morabba'], haleem: ['🥣', 'Haleem'] };
   const BF_WHO = [
@@ -3700,6 +3789,7 @@
     renderNow();
     $('m-prog').textContent = `Day ${save.level}`;
     $('m-stars').textContent = total;
+    $('m-streak').hidden = save.wstreak < 1; $('m-streak').innerHTML = `🔥 <b>${save.wstreak}</b>`;
     const max = Math.max(save.level + 2, LEVELS.length);
     // winding path: chapter banners, then level nodes zig-zagging down the page
     const ZONES = ['#f6ead6', '#e4f0dc', '#e6def4', '#fbeac2', '#f3e3ea'];
@@ -3708,7 +3798,7 @@
     const xAt = (n) => 50 + Math.sin(n * 1.15) * 27;
     for (let n = 1; n <= max; n++) {
       const cfg = levelCfg(n), locked = n > save.level, st = save.stars[n] || 0;
-      const chap = CHAPTERS.find((x) => x.from === n) || (n === LEVELS.length + 1 ? { title: 'Bonus days' } : null);
+      const chap = CHAPTERS.find((x) => x.from === n) || (n === LEVELS.length + 1 ? { title: 'Chapter 5 · Every day in Tehran' } : null);
       if (chap) {
         zone++; zones.push(y);
         html += `<div class="chap-banner z${zone}" style="top:${y}px"><span>${chap.title.replace(' · ', '<br><b>')}</b></span></div>`;
@@ -3719,7 +3809,7 @@
       const right = x < 50;
       const icon = { home: '🏠', street: '🌳', clap: '🏮' }[cfg.place];
       html += `<button type="button" class="node${locked ? ' locked' : ''}${n === save.level ? ' current' : ''}${st ? ' done' : ''}${cfg.boss ? ' boss' : ''}" data-level="${n}" ${locked ? 'disabled' : ''} style="left:${x}%;top:${y}px">
-        <span class="node-n">${locked ? '🔒' : cfg.boss ? '👑' : n}</span><span class="node-s">${[0, 1, 2].map((i) => `<i class="${i < st ? 'on' : ''}">★</i>`).join('')}</span>
+        <span class="node-n">${locked ? '🔒' : cfg.boss ? '👑' : n}</span>${isBig(n) && !st ? '<em class="node-big">🎁</em>' : ''}<span class="node-s">${[0, 1, 2].map((i) => `<i class="${i < st ? 'on' : ''}">★</i>`).join('')}</span>
         <span class="node-l ${right ? 'r' : 'l'}"><b>${cfg.title}</b><small>${icon} ${cfg.day}${save.medals[n] ? ' · 🏅' : ''}</small></span></button>`;
       if (n === save.level) html += `<div class="me" style="left:${x}%;top:${y - 46}px">${A.nena({ dressed: true, outfit: save.outfit, eyes: 'open' })}</div>`;
       if (n % 2 === 0) deco += `<span class="deco" style="left:${right ? 2 + (n % 3) * 2 : 84 + (n % 3) * 3}%;top:${y + 16}px">${DECO[Math.max(0, zone)][n % 4]}</span>`;
@@ -3865,7 +3955,7 @@
     L.push(['simba', 'happy', '*yawns* … zzz … 🐾']);
     playScene(L, `🌙 Night · Day ${n}`, fn, 'bedroom');
   }
-  function goNextDay() { clearInterval(autoNext); autoNext = 0; if (!G) return; const n = G.n + 1, home = levelCfg(G.n).place === 'home' && !G.cfg.party; afterScene(() => (home ? nightScene(G.n, () => playStory(n)) : playStory(n))); }
+  function goNextDay() { clearInterval(autoNext); autoNext = 0; if (!G) return; const n = G.n + 1, home = levelCfg(G.n).place === 'home' && !G.cfg.party; const cont = () => afterScene(() => (home ? nightScene(G.n, () => playStory(n)) : playStory(n))); if (mkReady()) openMakeover(cont); else cont(); }
   function armAutoNext() {
     clearInterval(autoNext); if ($('r-next').hidden) return;
     const pend = () => !$('r-myst').hidden && $('r-myst').querySelector('[data-g]');
