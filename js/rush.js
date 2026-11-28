@@ -8,6 +8,8 @@
   const $ = (id) => document.getElementById(id);
   const A = window.Art;
   const RA = window.RoomArt;
+  const IC = (e, c) => (window.Icons ? window.Icons.ic(e, c) : e);
+  const ICs = (s) => String(s).split(' ').map((w) => IC(w)).join(' ');
   const snd = (n, a) => { if (save.sound !== false && window.Sound) window.Sound.play(n, a); };
   const music = (name, night) => { if (!window.Sound) return; window.Sound.setTrack(name); window.Sound.setNight(!!night); window.Sound.setIntensity(0); };
   const HAPTIC = { tap: 6, deliver: 12, perfect: [10, 30, 16], combo: (n) => [8, 24, 8 + n * 3], star: [16, 40, 16, 40, 40], fail: [60, 40, 60], tick: 5, phew: [10, 50, 10] };
@@ -361,7 +363,7 @@
       b.type = 'button'; b.className = 'hit station' + (s.enter ? ' room' : '') + (s.search ? ' search' : ''); b.dataset.target = id;
       b.setAttribute('aria-label', s.label);
       b.style.left = (s.x - s.r) + 'px'; b.style.top = (s.y - s.r) + 'px'; b.style.width = b.style.height = (s.r * 2) + 'px';
-      b.innerHTML = `<span class="st-ico">${s.chip || ''}</span>`;
+      b.innerHTML = `<span class="st-ico">${IC(s.chip || '')}</span>`;
       layer(s.room).appendChild(b);
     });
     // characters
@@ -518,7 +520,7 @@
     parts.forEach((p) => {
       const el = $('g-rooms').querySelector(`[data-room="${p.room}"]`); if (!el) return;
       el.classList.toggle('view', p.view); el.classList.toggle('here', p.here); el.classList.toggle('need', p.need && !p.view);
-      el.querySelector('.rt-b').innerHTML = p.b.map((b) => `<span data-req="${b.i}" class="${b.u ? 'urgent' : ''}">${b.icon}</span>`).join('');
+      el.querySelector('.rt-b').innerHTML = p.b.map((b) => `<span data-req="${b.i}" class="${b.u ? 'urgent' : ''}">${IC(b.icon)}</span>`).join('');
     });
     // edge arrows to the neighbouring rooms + "back to Nena"
     const i = tabs.indexOf(G.view), multi = tabs.length > 1;
@@ -774,7 +776,7 @@
     const el = document.createElement('div');
     el.className = 'req';
     el.dataset.target = R.who;
-    el.innerHTML = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" class="ring-bg"/><circle cx="20" cy="20" r="17" class="ring"/></svg><span>${R.icon}</span><i class="need-chip" hidden></i>`;
+    el.innerHTML = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" class="ring-bg"/><circle cx="20" cy="20" r="17" class="ring"/></svg><span>${IC(R.icon)}</span><i class="need-chip" hidden></i>`;
     layer(whoRoom(R.who)).appendChild(el);
     const r = { type: t, who: R.who, left: max, max, el };
     if (R.vip) el.classList.add('vip');
@@ -818,7 +820,7 @@
       }
       const k = txt + cls;
       if (r.chipK === k) return; r.chipK = k;
-      chip.hidden = !txt; chip.textContent = txt; chip.className = 'need-chip ' + cls;
+      chip.hidden = !txt; chip.innerHTML = ICs(txt); chip.className = 'need-chip ' + cls;
     });
   }
   function removeReq(r) {
@@ -995,7 +997,7 @@
   // juicy delivery: the item flies from Nena's hands to where it goes
   function flyItem(icon, to, room) {
     if (!G || room !== G.view) return;
-    const el = document.createElement('div'); el.className = 'fly'; el.textContent = icon;
+    const el = document.createElement('div'); el.className = 'fly'; el.innerHTML = IC(icon);
     layer(room).appendChild(el);
     const x0 = G.nena.x + 22, y0 = G.nena.y - 84, [x1, y1] = to;
     el.animate([{ transform: `translate(${x0}px, ${y0}px) scale(1)` }, { transform: `translate(${(x0 + x1) / 2}px, ${Math.min(y0, y1) - 70}px) scale(1.4)` }, { transform: `translate(${x1}px, ${y1}px) scale(.6)`, opacity: 0.2 }], { duration: 380, easing: 'ease-in-out' });
@@ -1113,8 +1115,8 @@
     G.hand.push(it); renderHand(); snd('pop'); return true;
   }
   function renderHand() {
-    $('g-hand').innerHTML = G.hand.length ? G.hand.map((h) => `<span>${ITEMS[h]}</span>`).join('') : '<em>✋</em>';
-    G.handEl.innerHTML = G.hand.map((h) => `<span>${ITEMS[h]}</span>`).join('');
+    $('g-hand').innerHTML = G.hand.length ? G.hand.map((h) => `<span>${IC(ITEMS[h])}</span>`).join('') : `<em>${IC('✋')}</em>`;
+    G.handEl.innerHTML = G.hand.map((h) => `<span>${IC(ITEMS[h])}</span>`).join('');
   }
 
   /* ------------------------------------------------------------------ */
@@ -2132,7 +2134,7 @@
     const vis = items.filter(([id]) => unlocked(id)).map(([id, ico, name, b]) => [id, ico, name, b === '' && save.newF[id] ? 'new' : b]);
     const next = UNLOCKS.find((u) => !unlocked(u[0]));
     if (next) vis.push(['locked', '🔒', next[3], 'Soon']);
-    $('m-hub').innerHTML = vis.map(([id, ico, name, b]) => `<button type="button" class="hub-btn${id === 'locked' ? ' locked' : ''}" data-hub="${id}"><span class="hub-i">${ico}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^(\d+\/\d+|Soon|\d+m|\d+d)$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
+    $('m-hub').innerHTML = vis.map(([id, ico, name, b]) => `<button type="button" class="hub-btn${id === 'locked' ? ' locked' : ''}" data-hub="${id}"><span class="hub-i">${IC(ico)}</span><span class="hub-n">${name}</span>${b !== '' ? `<em class="${/^(\d+\/\d+|Soon|\d+m|\d+d)$/.test(String(b)) ? 'soft' : ''}">${b}</em>` : ''}</button>`).join('');
   }
   let dailyShown = false;
 

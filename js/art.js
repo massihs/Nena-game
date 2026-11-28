@@ -196,8 +196,8 @@ window.Art = (function () {
     const P = PALETTES[o.palette] || PALETTES.chow;
     const ns = o.standalone ? ' xmlns="http://www.w3.org/2000/svg" width="340" height="270"' : '';
     const open = `<g class="dog-eyes-open">
-        <ellipse cx="41" cy="60.5" rx="4.6" ry="4" fill="#2a2130"/><ellipse cx="63" cy="60.5" rx="4.6" ry="4" fill="#2a2130"/>
-        <circle cx="42.6" cy="59" r="1.6" fill="#fff"/><circle cx="64.6" cy="59" r="1.6" fill="#fff"/>
+        <path d="M35.5 61 q5.5 -5.2 11 0 q-5.5 4 -11 0z" fill="#2a2130"/><path d="M57.5 61 q5.5 -5.2 11 0 q-5.5 4 -11 0z" fill="#2a2130"/>
+        <circle cx="42.6" cy="59.6" r="1.5" fill="#fff"/><circle cx="64.6" cy="59.6" r="1.5" fill="#fff"/>
         <circle cx="39.8" cy="62" r=".8" fill="#fff" opacity=".8"/><circle cx="61.8" cy="62" r=".8" fill="#fff" opacity=".8"/>
 </g>`;
     const closed = `<g class="dog-eyes-closed">
@@ -230,8 +230,8 @@ window.Art = (function () {
       <g fill="${P.mane}"><circle cx="40" cy="100" r="15"/><circle cx="62" cy="102" r="15"/></g>
       <path d="M30 98 q6 8 14 8 M58 108 q8 2 14 -4" stroke="${furStroke}" stroke-width="2" fill="none" stroke-linecap="round"/>
       ${collarSvg(o.collar)}
-      <circle cx="30" cy="38" r="10.5" fill="${P.ear}"/><circle cx="30" cy="38.5" r="6" fill="${P.earIn}"/>
-      <circle cx="74" cy="38" r="10.5" fill="${P.ear}"/><circle cx="74" cy="38.5" r="6" fill="${P.earIn}"/>
+      <path d="M17 47 L24 26 Q27 21 31 25 L40 40 Z" fill="${P.ear}"/><path d="M22 42 L26 30 Q27.5 28 29.5 30 L34 39 Z" fill="${P.earIn}"/>
+      <path d="M87 47 L80 26 Q77 21 73 25 L64 40 Z" fill="${P.ear}"/><path d="M82 42 L78 30 Q76.5 28 74.5 30 L70 39 Z" fill="${P.earIn}"/>
       <path d="${RUFF}" fill="${P.muzzle}" opacity=".85"/>
       <circle cx="52" cy="67" r="31" fill="${P.face}"/>
       <circle cx="52" cy="67" r="31" fill="url(#ag-fur)"/>
