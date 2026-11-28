@@ -1367,3 +1367,6 @@ h1, h2, h3, .bar h2, .card h2, .ul-card h3 { font-family: var(--font-display); f
 .hk-ov-card h3 { margin: 6px 0 2px; font-family: var(--font-display); color: var(--pink-deep); font-size: 1.6rem; }
 .hk-ov-card p { margin: 2px 0; font-weight: 800; } .hk-rew { font-family: var(--font-display); color: #a8761b; font-size: 1.15rem; } .hk-quote { font-size: .85rem; color: var(--cocoa-soft); font-weight: 700 !important; margin: 6px 0 10px !important; }
 .hk-ov-card .row { display: flex; gap: 8px; } .hk-ov-card .row .btn { flex: 1; }
+
+.daytint { position: absolute; inset: 0; z-index: 28; pointer-events: none; transition: background 1.5s linear; }
+.daytint::after { content: attr(data-t); position: absolute; left: 8px; top: 8px; padding: 3px 9px; border-radius: 99px; background: rgba(30,25,50,.6); color: #fff; font-family: var(--font-display); font-weight: 600; font-size: .78rem; }

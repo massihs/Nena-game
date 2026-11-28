@@ -98,13 +98,13 @@
   };
   // where each character lives, per place
   const HOMES = {
-    home: { courier: ['salon', 470, 470], aunt: ['salon', 470, 525], nena: ['salon', 300, 670], simba: ['salon', 330, 600], baba: ['tv', 250, 560], fariba: ['kitchen', 160, 470], nasim: ['salon', 545, 470] },
+    home: { sepitak: ['salon', 476, 500], courier: ['salon', 470, 470], aunt: ['salon', 470, 525], nena: ['salon', 300, 670], simba: ['salon', 330, 600], baba: ['tv', 250, 560], fariba: ['kitchen', 160, 470], nasim: ['salon', 545, 470] },
     street: { nena: ['street', 250, 545], simba: ['street', 330, 535], nasim: ['street', 520, 600], kids: ['street', 70, 548], biscuit: ['street', 470, 548] },
     clap: { courier: ['clap', 334, 470], nena: ['clap', 250, 646], negin: ['clap', 400, 646], pourya: ['clap', 176, 452] },
   };
   const FUR_ZONE = { x0: 270, x1: 560, y0: 600, y1: 780 };
   const FRONT = [548, 430];
-  const NPC_ART = { baba: ['mohsen', 'happy', 84, 147], fariba: ['fariba', 'happy', 80, 140], nasim: ['nasim', 'angry', 80, 140], negin: ['negin', 'happy', 80, 140], kids: ['mia', 'happy', 64, 112], pourya: ['pourya', 'happy', 84, 147], aunt: ['aunt', 'happy', 84, 147], courier: ['courier', 'happy', 80, 140] };
+  const NPC_ART = { sepitak: ['sepitak', 'happy', 80, 140], baba: ['mohsen', 'happy', 84, 147], fariba: ['fariba', 'happy', 80, 140], nasim: ['nasim', 'angry', 80, 140], negin: ['negin', 'happy', 80, 140], kids: ['mia', 'happy', 64, 112], pourya: ['pourya', 'happy', 84, 147], aunt: ['aunt', 'happy', 84, 147], courier: ['courier', 'happy', 80, 140] };
   const GUESTS = [['guest1', 40, 552, 'happy'], ['guest2', 112, 554, 'happy'], ['guest3', 42, 742, 'happy'], ['guest4', 112, 744, 'neutral'], ['witch1', 490, 552, 'angry'], ['witch2', 562, 554, 'angry']];
   const TRANSIENT = { nasim: 1, kids: 1, aunt: 1, courier: 1, biscuit: 1 };
   const ELEV = { mall: [40, 228, 112, 192], parking: [436, 214, 112, 186] };
@@ -121,6 +121,9 @@
     tea:     { who: 'baba', icon: '☕', pts: 120, pat: 26, item: 'tea', src: 'samovar', at: 'baba', dur: 0.5, hint: 'Baba wants tea in the TV room: Nena brews it at the samovar in the kitchen.' },
     charger: { who: 'baba', icon: '🔌', pts: 150, pat: 28, item: 'charger', src: 'parentsroom', at: 'baba', dur: 0.6, hint: 'Baba’s phone is dead (he must call the girls!). Nena gets the charger in the parents’ room.' },
     cuddle:  { who: 'baba', icon: '🐶', pts: 140, pat: 28, item: 'pup', src: 'simba', at: 'baba', dur: 0.6, hint: 'Baba wants Simba on his belly: Nena carries Simba to the TV room.' },
+    sepitea: { who: 'sepitak', icon: '🍵', pts: 150, pat: 28, item: 'tea', src: 'samovar', at: 'sepitak', dur: 0.6, hint: 'Sepitak is here! Bring her a glass of tea from the samovar.' },
+    sepitalk: { who: 'sepitak', icon: '💬', pts: 140, pat: 26, at: 'sepitak', dur: 1.8, hint: 'Sepitak wants to gossip with Nena. Tap her!' },
+    sepiselfie: { who: 'sepitak', icon: '🤳', pts: 130, pat: 24, at: 'sepitak', dur: 1.2, hint: 'Selfie time with Sepitak and Simba!' },
     brekky:  { who: 'fariba', icon: '🍳', pts: 170, pat: 32, at: 'fariba', dur: 2.4, hint: 'Breakfast time! Help Maman set the sofreh: sangak, panir, walnuts and tea for everyone.' },
     help:    { who: 'fariba', icon: '🍲', pts: 150, pat: 26, at: 'fariba', dur: 2.2, hint: 'Maman needs help in the kitchen: tap her.' },
     laundry: { who: 'fariba', icon: '🧺', pts: 150, pat: 28, item: 'laundry', src: 'nasimroom', at: 'fariba', dur: 0.8, hint: 'Maman wants the laundry: Nena collects it in Nasim’s messy room.' },
@@ -551,7 +554,7 @@
     if (ms) a.emoT = setTimeout(() => a.emoEl && a.emoEl.classList.remove('on'), ms);
   }
   const actorOf = (who) => (who === 'simba' ? G.simba : who === 'nena' ? G.nena : G.npcs[who]);
-  const WHO_NAME = { baba: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin', pourya: 'Pourya', aunt: 'Aunt Mahin', courier: 'Delivery', guest2: 'VIP', witch1: 'Witch', kids: 'Kids', nena: 'Nena' };
+  const WHO_NAME = { sepitak: 'Sepitak', baba: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin', pourya: 'Pourya', aunt: 'Aunt Mahin', courier: 'Delivery', guest2: 'VIP', witch1: 'Witch', kids: 'Kids', nena: 'Nena' };
   function talkAs(who, text, kind) {
     const a = actorOf(who);
     if (a && a.el.isConnected && !a.el.classList.contains('gone') && a.room === G.view) speak(a, text, kind || (who === 'simba' ? 'dog' : ''), 2400, true);
@@ -569,7 +572,7 @@
   };
   const THANKS = {
     baba: ['Merci azizam! ❤️', 'That’s my girl!', 'Ahh, perfect!'], fariba: ['Khasteh nabashi, Nena jan!', 'You’re an angel!', 'Merci, my daughter!'],
-    nasim: ['…Thanks.', 'Fine. Good. Whatever.'], negin: ['Mmm, merci!', 'You’re the best!'], pourya: ['Merci, Nena!'],
+    sepitak: ['Merci azizam! 😘', 'You’re the best, Nena!', 'Ahh, I love your house!'], nasim: ['…Thanks.', 'Fine. Good. Whatever.'], negin: ['Mmm, merci!', 'You’re the best!'], pourya: ['Merci, Nena!'],
     guest2: ['Excellent service! Here, a big tip.', 'Bravo!'], courier: ['Have a nice day!'], kids: ['Yaaay!'],
   };
   const FAILS = {
@@ -710,7 +713,7 @@
   const NEED = {
     food: { cap: 2, cool: 'half', ph: [2.2, 0, 2.2] }, water: { cap: 3, cool: 30, ph: [1, 1, 1] }, walk: { cap: 2, cool: 45, ph: [1.6, 0.8, 1.3] },
     brush: { cap: 1, ph: [0.6, 1, 1] }, play: { cap: 2, cool: 30, ph: [0.8, 1.5, 0.8] }, blanket: { cap: 1, ph: [0, 0.2, 2.5] }, bath: { cap: 1, ph: [0.3, 1, 1.4] },
-    tea: { cap: 3, cool: 28, ph: [0.8, 1.3, 1.5] }, charger: { cap: 1, ph: [0.5, 1, 1] }, cuddle: { cap: 2, cool: 35, ph: [0.3, 1, 1.6] }, help: { cap: 2, cool: 30, ph: [0.8, 2, 1.2] }, brekky: { cap: 1, ph: [0, 0, 0] },
+    tea: { cap: 3, cool: 28, ph: [0.8, 1.3, 1.5] }, charger: { cap: 1, ph: [0.5, 1, 1] }, cuddle: { cap: 2, cool: 35, ph: [0.3, 1, 1.6] }, help: { cap: 2, cool: 30, ph: [0.8, 2, 1.2] }, brekky: { cap: 1, ph: [0, 0, 0] }, sepitea: { cap: 2, cool: 35 }, sepitalk: { cap: 2, cool: 30 }, sepiselfie: { cap: 1 },
     laundry: { cap: 1, ph: [0.6, 1.4, 0.6] }, talk: { cap: 2, cool: 35, ph: [0.5, 1.2, 1.2] }, wake: { cap: 1, ph: [3, 0.2, 0] }, ready: { cap: 1, ph: [2.2, 0.6, 0.3] },
     study: { cap: 2, cool: 40, ph: [0.6, 2, 0.6] }, remote: { cap: 1, ph: [0.2, 1, 1.8] }, plants: { cap: 1, ph: [1.4, 1, 0.5] },
     poop: { cap: 2, cool: 30 }, thirst: { cap: 2, cool: 30 }, bread: { cap: 2, cool: 35 }, calm: { cap: 2, cool: 30 }, kids: { cap: 2, cool: 30 }, juice: { cap: 1 }, dogfriend: { cap: 1 },
@@ -1330,6 +1333,7 @@
   /* Life: everybody moves, talks and walks around on their own          */
   /* ------------------------------------------------------------------ */
   const LINES = {
+    sepitak: ['Nena, look at this video! 😂', 'Simba is SO fluffy today!', 'Your Maman’s tahdig is the best.', 'Tonight: face masks and a movie? 🎬', 'Did Jesus text you again? 🙄'],
     simba: ['Woof!', 'Woof woof!', '*sniff sniff*', 'Grrr…', '*yawns*', '🎾?', '❤️', '*wags*', 'Arf!'],
     baba: ['Goooal!! ⚽', 'Nasim, where are you?! 📞', 'Negin! Wake up!', 'Is there tea?', 'In my day…', 'Persepolis!!', 'My lion, come here!', 'Who changed the channel?!'],
     fariba: ['Who ate the tahdig?!', 'Nena jan, taste this!', 'Ghormeh sabzi is almost ready', 'Don’t walk on my clean floor!', 'Ay, my back…', 'Simba, out of my kitchen!', 'Where is my saffron?'],
@@ -1540,7 +1544,7 @@
       Object.keys(G.npcs).forEach((w) => { const a = G.npcs[w]; if (a.room === G.view && rnd() < 0.7) { emo(a, '😱', 2000); speak(a, pick(['Aaah!', 'Who turned off the lights?!', 'I can’t see anything!', 'Nena?!']), w.startsWith('witch') ? 'witch' : '', 1800, true); } });
       if (simbaIdle()) { const s = G.simba; G.simbaTask = true; walkActor(s, 250, 548, () => { if (!G || !G.simba) return; s.el.classList.add('lying'); emo(s, '😨', 7000); speak(s, '*hides behind the sofa*', 'dog', 2000); }, 170); G.blackout.simba = true; }
       setTimeout(() => G && !G.over && speak(G.nena, pick(['Don’t worry Simba, I’m here!', 'Where are the candles?!', 'Not again!']), '', 1800, true), 900);
-      toast('⚡ Blackout in the tower! Baba: “Who touched the fuses?!”', 'bad', 2200); snd('fail');
+      toast(G.npcs.baba ? '⚡ Blackout in the tower! Baba: “Who touched the fuses?!”' : '⚡ Blackout in the tower! Where are the candles?!', 'bad', 2200); snd('fail');
     } else if (e === 'chase') {
       if (!G.simba || G.simbaAway || G.simbaTask || findReq('simba')) return;
       walkActor(G.simba, 540, 548, null, 160); addReq('chase');
@@ -1682,6 +1686,7 @@
     lifeTick(dt);
     ambientTick(dt);
     famTick(dt);
+    dayLight();
     talkTick(dt);
     highlights();
     G.tabT = (G.tabT || 0) - dt; if (G.tabT <= 0) { G.tabT = 0.14; renderTabs(); updateChips(); }
@@ -1879,6 +1884,7 @@
     for (let i = 0; i < stars; i++) setTimeout(() => snd('star', i), 450 + i * 220);
     if (stars === 3) confetti();
     checkAch();
+    $('r-next').textContent = 'Next day'; armAutoNext();
   }
 
   function confetti() {
@@ -3288,6 +3294,7 @@
     const r = Math.random, early = n <= 2;
     const F = { home: true, neginSleep: n >= 2 && r() < 0.45, nasimOut: !early && r() < 0.35, mamanOut: !early && r() < 0.28, babaOut: !early && r() < 0.3 };
     if (F.mamanOut && F.babaOut && r() < 0.6) F.babaOut = false;
+    F.sepitak = n >= 2 && n % 2 === 0;
     F.mamanBack = F.mamanOut && r() < 0.65; F.babaBack = F.babaOut && r() < 0.6;
     F.babaErrand = !F.babaOut && !early && r() < 0.3;
     F.mamanFriends = pick(['Shirin', 'Parvin', 'Mina', 'Roya', 'Mahnaz']); F.babaFriend = pick(['Agha Jalal', 'Hamid', 'Agha Bahram', 'Agha Karim']);
@@ -3305,6 +3312,7 @@
     if (F.mamanOut) L.push(['fariba', 'happy', pick([`I’m going to ${F.mamanFriends}’s for tea with the girls${F.mamanBack ? ', back this afternoon' : ''}, azizam!`, `${F.mamanFriends} invited me for lunch. ${F.mamanBack ? 'I’ll be back later.' : 'Don’t wait for me for dinner!'} Be good!`, `I’m off to the bazaar with ${F.mamanFriends}. Don’t let Baba eat all the sweets!`])]);
     else L.push(['fariba', 'happy', pick(['Sobh bekheir! Come help me with breakfast, Nena jan.', 'Breakfast in ten minutes! Who’s awake?', 'The samovar is on. Help me set the sofreh, azizam.'])]);
     if (F.babaOut) L.push(['mohsen', 'happy', pick([`I’m going to play backgammon with ${F.babaFriend}. ${F.babaBack ? 'Back later!' : 'Don’t wait up!'}`, `Lunch with ${F.babaFriend} today. Take care of the house, Nena jan!`, `Off to the bank, then tea with ${F.babaFriend}. Khodahafez!`])]);
+    if (F.sepitak) L.push(['sepitak', 'happy', pick(['Salam Nena! I’m coming over this afternoon… and I’m sleeping at yours tonight! 🎒', 'Nena jaaan! Tonight is our sleepover, I’m bringing face masks! 💆‍♀️', 'I’ll be there after class. Tell Simba I’m coming! 🐶'])]);
     if (F.neginSleep) L.push(['negin', 'sleepy', pick(['Zzz… five more minutes… no breakfast for me…', '*from her room* Nobody wake me up before noon!', 'Zzz… mmh… Simba, go away…'])]);
     else L.push(['negin', 'happy', pick(['Morning! Nena, did Jesus text you again? Ignore him. Seriously.', 'Who made tea? I want tea.', 'I’m up! A miracle, I know.'])]);
     L.push(F.nasimOut ? ['nasim', 'neutral', pick(['I’m at university all day. Don’t touch my room.', 'Going out with my friends. Don’t wait for me.', 'Library day. Don’t call me.'])] : ['nasim', 'angry', pick(['I’m home today. Don’t talk to me before my coffee.', 'Ugh, I have an exam tomorrow. Keep Simba quiet.', 'I’m staying home. Nobody touches the TV remote.'])]);
@@ -3312,6 +3320,10 @@
   }
   // little conversations between family members during the day
   const FAM_TALK = [
+    [['sepitak', 'Khaleh Fariba, your ghormeh sabzi is the best in Tehran!'], ['fariba', 'Ah, merci azizam! Stay for dinner!']],
+    [['negin', 'Sepitak, tell Nena to stop answering Jesus!'], ['sepitak', 'Nena… Negin is right. 🙄'], ['nena', 'You two!']],
+    [['baba', 'Sepitak jan, how are your parents?'], ['sepitak', 'Very well, Amoo Mohsen, they say salam!']],
+    [['sepitak', 'Simba, come here! Who’s a fluffy lion?'], ['simba', '*rolls on his back* Woof!']],
     [['baba', 'Fariba jan, is there any more tea?'], ['fariba', 'Mohsen, it’s your fourth glass!']],
     [['fariba', 'Mohsen, take your feet off the table!'], ['baba', 'Persepolis is playing, khanoom!']],
     [['nasim', 'Who took my charger?!'], ['negin', 'Not me! …Okay, maybe me.']],
@@ -3335,7 +3347,7 @@
     if (w === 'simba') return !!G.simba && !G.simbaAway;
     if (G.away.has(w)) return false;
     if (w === 'negin') return !G.neginAsleep;
-    if (w === 'baba' || w === 'fariba') return !!G.npcs[w];
+    if (w === 'baba' || w === 'fariba' || w === 'sepitak') return !!G.npcs[w];
     return true;
   }
   function famLeave(who, msg) {
@@ -3360,6 +3372,15 @@
     const d = pick(ok); G.famUsed.add(d);
     d.forEach(([w, t], i) => setTimeout(() => { if (G && !G.over && famAvail(w)) talkAs(w, t, w === 'simba' ? 'dog' : ''); }, i * 1900));
   }
+  function dayLight() {
+    if (!G.fam) return;
+    const k = Math.min(1, dayClock() / G.cfg.dur), h = 7 + k * 15.5, el = G.tint || (G.tint = (() => { const e = document.createElement('div'); e.className = 'daytint'; $('stage-wrap').appendChild(e); return e; })());
+    const step = Math.round(k * 40); if (G.tintS === step) return; G.tintS = step;
+    const c = k < 0.18 ? [255, 200, 120, 0.16 * (1 - k / 0.18)] : k < 0.6 ? [255, 255, 255, 0] : k < 0.85 ? [255, 140, 60, ((k - 0.6) / 0.25) * 0.2] : [30, 30, 90, 0.18 + ((k - 0.85) / 0.15) * 0.22];
+    el.style.background = `rgba(${c[0]},${c[1]},${c[2]},${c[3].toFixed(3)})`;
+    const hh = Math.floor(h), mm = Math.floor((h - hh) * 60 / 10) * 10;
+    el.dataset.t = `${hh < 12 ? '🌅' : hh < 17 ? '☀️' : hh < 20 ? '🌇' : '🌙'} ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  }
   function famAfter(t) {
     const later = (w, s, ms) => setTimeout(() => { if (G && !G.over && famAvail(w)) talkAs(w, s); }, ms || 1300);
     if (t === 'brekky' && G.fam) {
@@ -3375,6 +3396,11 @@
     G.away = new Set(); G.famEv = []; G.famT = 12; G.famUsed = new Set(); G.seq = [];
     if (!G.fam) return;
     const F = G.fam, dur = cfg.dur;
+    if (F.sepitak) {
+      G.away.add('sepitak'); G.cfg.types.push('sepitea', 'sepitalk', 'sepiselfie');
+      G.famEv.push({ at: dur * (0.28 + rnd() * 0.1), fn: () => famReturn('sepitak', '🔔 Ding-dong! Sepitak is here! “Salam everyone! Simbaaa!” 🎒') });
+      G.famEv.push({ at: dur * 0.82, fn: () => { if (G.reqs.some((r) => r.who === 'sepitak')) return false; const a = G.npcs.sepitak; if (a) { moveRoom(a, 'bedroom'); place(a, 330, 650); const L = G.life.find((x) => x.a === a); if (L) L.home = ['bedroom', 330, 650]; } G.cfg.types = G.cfg.types.filter((t) => !t.startsWith('sepi')); toast('🛏️ Sepitak puts her mattress in Nena’s room for the night', 'hint', 2200); } });
+    }
     if (F.mamanOut) G.away.add('fariba');
     if (F.babaOut) G.away.add('baba');
     if (F.nasimOut) G.away.add('nasim');
@@ -3719,7 +3745,7 @@
     if (cur) cur.scrollIntoView({ block: 'center' });
   }
   const PLACE_LABEL = { home: '🏠 Home', street: '🌳 Tehran street', clap: '🏮 CLAP' };
-  const NAMES = { leila: 'Leila', courier: 'Delivery', aunt: 'Aunt Mahin', pourya: 'Pourya', nena: 'Nena', simba: 'Simba', mohsen: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin' };
+  const NAMES = { sepitak: 'Sepitak', leila: 'Leila', courier: 'Delivery', aunt: 'Aunt Mahin', pourya: 'Pourya', nena: 'Nena', simba: 'Simba', mohsen: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin' };
   let storyLines = [], storyLevel = 1;
   function playStory(n) {
     CUSTOM = null; storyAfter = null; storyTitle = ''; storyPlace = null;
@@ -3741,7 +3767,7 @@
     const l = storyLines.shift();
     if (!l) {
       if (storyAfter) { const f = storyAfter; storyAfter = null; storyTitle = ''; f(); }
-      else if (storyLevel <= 2 && ((save.losses || {})[storyLevel] || 0) < 2) { save.seen._howto = 1; pendingBoosts = {}; prepPick = {}; show('screen-game'); startLevel(storyLevel); }
+      else if (((save.losses || {})[storyLevel] || 0) < 2) { save.seen._howto = 1; pendingBoosts = {}; BOOSTERS.forEach((b) => { if ((save.freeB[b.id] || 0) > 0) { save.freeB[b.id]--; pendingBoosts[b.id] = true; } }); prepPick = {}; persist(); show('screen-game'); startLevel(storyLevel); }
       else renderPrep(storyLevel);
       return;
     }
@@ -3750,7 +3776,7 @@
     $('s-name').textContent = NAMES[who] || who;
     $('s-text').textContent = text;
     const place = storyPlace || storyTitle ? (storyPlace || (storyTitle.includes('Nail') ? 'bedroom' : 'salon')) : ({ home: 'salon', street: 'street', clap: 'clap' }[levelCfg(storyLevel).place] || 'salon');
-    if ($('s-bg').dataset.p !== place) { $('s-bg').dataset.p = place; const c = levelCfg(storyLevel); $('s-bg').innerHTML = `<svg width="0" height="0" style="position:absolute">${RA.defs(c)}</svg>` + RA.ART[place](c); }
+    const nightBg = storyTitle.startsWith('🌙'); if ($('s-bg').dataset.p !== place + nightBg) { $('s-bg').dataset.p = place + nightBg; const c = Object.assign({}, levelCfg(storyLevel), nightBg ? { night: true } : {}); $('s-bg').innerHTML = `<svg width="0" height="0" style="position:absolute">${RA.defs(c)}</svg>` + RA.ART[place](c); }
     $('s-day').textContent = storyTitle || `Day ${storyLevel} · ${levelCfg(storyLevel).day}`;
     snd('talk', 600);
   }
@@ -3826,7 +3852,29 @@
   });
   $('c-no').addEventListener('click', () => { if (!G || G.over) return; G.paused = false; show('screen-game'); endLevel(true); });
   const afterScene = (fn) => { if (G.pendingScene) { const ch = G.pendingScene; G.pendingScene = null; playScene(ch.end, ch.title, fn, { home: 'salon', street: 'street', clap: 'clap' }[levelCfg(ch.to).place]); } else fn(); };
-  $('r-next').addEventListener('click', () => { const n = G.n + 1; afterScene(() => playStory(n)); });
+  let autoNext = 0;
+  function nightScene(n, fn) {
+    const sepi = G && G.fam && G.fam.sepitak;
+    const L = [['nena', 'sleepy', pick(['🌙 22:30… The house is finally quiet. Simba jumps on the bed and curls up in my arms.', '🌙 23:00… Teeth brushed, lights off. Simba snores softly against me.', '🌙 22:45… What a day! Simba puts his big fluffy head on my shoulder. Good night, little lion.'])]];
+    if (sepi) L.push(['sepitak', 'sleepy', pick(['*from her mattress* Nena… are you asleep? …Okay, good night! 😴', 'Psst, Nena… Simba is snoring louder than Amoo Mohsen! 😂', 'Good night, you two. Best sleepover ever. 💛'])]);
+    L.push(['simba', 'happy', '*yawns* … zzz … 🐾']);
+    playScene(L, `🌙 Night · Day ${n}`, fn, 'bedroom');
+  }
+  function goNextDay() { clearInterval(autoNext); autoNext = 0; if (!G) return; const n = G.n + 1, home = levelCfg(G.n).place === 'home' && !G.cfg.party; afterScene(() => (home ? nightScene(G.n, () => playStory(n)) : playStory(n))); }
+  function armAutoNext() {
+    clearInterval(autoNext); if ($('r-next').hidden) return;
+    const pend = () => !$('r-myst').hidden && $('r-myst').querySelector('[data-g]');
+    let left = 6; const lab = 'Next day';
+    autoNext = setInterval(() => {
+      if ($('screen-result').hidden) { clearInterval(autoNext); return; }
+      if (pend()) { $('r-next').textContent = '🔍 Guess, then next day'; return; }
+      left--; $('r-next').textContent = `${lab} › ${Math.max(0, left)}`;
+      if (left <= 0) goNextDay();
+    }, 1000);
+  }
+  $('r-next').addEventListener('click', goNextDay);
+  $('r-retry').addEventListener('click', () => { clearInterval(autoNext); }, true);
+  $('r-map').addEventListener('click', () => { clearInterval(autoNext); }, true);
   $('r-retry').addEventListener('click', () => { if (G.cfg.n > 900) playCustom(G.cfg); else renderPrep(G.n); });
   $('r-map').addEventListener('click', () => afterScene(renderMap));
   $('na-body').addEventListener('click', (e) => { if (ND && ND.i < 99) nailsClick(e); });
