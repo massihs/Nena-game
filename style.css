@@ -1423,3 +1423,4 @@ h1, h2, h3, .bar h2, .card h2, .ul-card h3 { font-family: var(--font-display); f
 .fly .ic { width: 30px; height: 30px; }
 #g-hand span .ic { width: 30px; height: 30px; } .hand span .ic { width: 28px; height: 28px; }
 #g-hand em .ic { width: 26px; height: 26px; }
+.bh-card { align-items: center; text-align: center; } .bh-pic { width: 110px; height: 116px; margin: 0 auto; } .bh-pic svg { width: 100%; height: 100%; } .bh-say { position: relative; margin: 0; } .bh-card .row { display: flex; gap: 8px; width: 100%; } .bh-card .row .btn-primary { flex: 1; }

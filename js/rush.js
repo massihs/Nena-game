@@ -4080,6 +4080,16 @@
     L.push(['simba', 'happy', '*yawns* … zzz … 🐾']);
     playScene(L, `🌙 Night · Day ${n}`, fn, 'bedroom');
   }
+  let HK_AFTER = null;
+  // back home from CLAP, Baba is still up with the cards
+  function babaHokm(d, next) {
+    let e = document.getElementById('bh');
+    if (!e) { e = document.createElement('div'); e.className = 'unlock'; e.id = 'bh'; document.querySelector('.app').appendChild(e); }
+    e.innerHTML = `<div class="ul-card bh-card"><div class="bh-pic">${A.portrait('mohsen', 'happy')}</div><h3>🃏 A game of Hokm?</h3><p class="say bh-say">Baba: “${pick(['Nena jan, you’re home! A quick Hokm before bed? Negin, you’re with me!', 'Ah, the girls are back! Who wants to lose at Hokm? 😎', 'Sit down, sit down! One game of Hokm, then bed. Nasim, wake up, you’re with Nena!'])}”</p><div class="row"><button type="button" class="btn btn-primary btn-big" id="bh-yes">Let’s play! 🃏</button><button type="button" class="btn" id="bh-no">Too tired 😴</button></div></div>`;
+    e.hidden = false; snd('chime');
+    e.querySelector('#bh-yes').onclick = () => { e.hidden = true; snd('click'); HK_AFTER = next; openHokm(); };
+    e.querySelector('#bh-no').onclick = () => { e.hidden = true; snd('click'); toast('Baba: “Tomorrow then! I’ll be waiting… 😏”', '', 1800); next(); };
+  }
   let EVE = null;
   function eveningAtClap(n) {
     const sepiDay = n >= 2 && n % 2 === 0, r = Math.random();
@@ -4094,7 +4104,7 @@
     playScene(L, '🏮 Evening at CLAP · 19:00', () => playCustom(cfg), 'clap');
   }
   function goNextDay() { clearInterval(autoNext); autoNext = 0; if (!G) return;
-    if (G.cfg.evening) { const d = G.cfg.dayN; afterScene(() => nightScene(d, () => playStory(d + 1))); return; }
+    if (G.cfg.evening) { const d = G.cfg.dayN; afterScene(() => babaHokm(d, () => nightScene(d, () => playStory(d + 1)))); return; }
     const n = G.n + 1, home = levelCfg(G.n).place === 'home' && !G.cfg.party, out = G.n < 900 && !G.cfg.party && levelCfg(G.n).place !== 'clap';
     if (out) { const d = G.n; const go = () => afterScene(() => eveningAtClap(d)); if (mkReady()) openMakeover(go); else go(); return; } const cont = () => afterScene(() => (home ? nightScene(G.n, () => playStory(n)) : playStory(n))); if (mkReady()) openMakeover(cont); else cont(); }
   function armAutoNext() {
@@ -4191,8 +4201,9 @@
     const c = HK.H[0].find((x) => hkKey(x) === +el.dataset.k); if (c && HK.playRes) { const r = HK.playRes; HK.playRes = null; r(c); }
   });
   $('hk-pick').addEventListener('click', (e) => { const b = e.target.closest('[data-s]'); if (b && HK && HK.pickRes) { const r = HK.pickRes; HK.pickRes = null; snd('click'); r(+b.dataset.s); } });
-  $('hk-over').addEventListener('click', (e) => { const b = e.target.closest('[data-hk]'); if (!b) return; snd('click'); if (b.dataset.hk === 'again') openHokm(); else { HK = null; renderMap(); } });
-  $('hk-back').addEventListener('click', () => { HK = null; renderMap(); });
+  $('hk-over').addEventListener('click', (e) => { const b = e.target.closest('[data-hk]'); if (!b) return; snd('click'); if (b.dataset.hk === 'again') openHokm(); else { HK = null; hkLeave(); } });
+  $('hk-back').addEventListener('click', () => { HK = null; hkLeave(); });
+  function hkLeave() { const a = HK_AFTER; HK_AFTER = null; if (a) a(); else renderMap(); }
   $('ul-ok').addEventListener('click', () => { snd('click'); $('unlock').hidden = true; renderHub(); if (dailyReady() && !dailyShown && daysDone() >= 1) { dailyShown = true; setTimeout(() => openSheet('daily'), 300); } });
   $('m-play').addEventListener('click', () => { snd('click'); playStory(save.level); });
   $('sh2-body').addEventListener('click', sheetAction);
