@@ -1370,3 +1370,6 @@ h1, h2, h3, .bar h2, .card h2, .ul-card h3 { font-family: var(--font-display); f
 
 .daytint { position: absolute; inset: 0; z-index: 28; pointer-events: none; transition: background 1.5s linear; }
 .daytint::after { content: attr(data-t); position: absolute; left: 8px; top: 8px; padding: 3px 9px; border-radius: 99px; background: rgba(30,25,50,.6); color: #fff; font-family: var(--font-display); font-weight: 600; font-size: .78rem; }
+
+.grain { position: absolute; inset: 0; z-index: 27; pointer-events: none; background-size: 96px 96px; mix-blend-mode: soft-light; opacity: .16; }
+.grain::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 60%, rgba(40,25,30,.22) 100%); }

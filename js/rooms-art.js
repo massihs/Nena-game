@@ -45,6 +45,19 @@
       <radialGradient id="rwarm"><stop offset="0" stop-color="#ffcf80" stop-opacity=".5"/><stop offset="1" stop-color="#ffcf80" stop-opacity="0"/></radialGradient>
       <radialGradient id="rcold"><stop offset="0" stop-color="#e8f4ff" stop-opacity=".45"/><stop offset="1" stop-color="#e8f4ff" stop-opacity="0"/></radialGradient>
       <linearGradient id="rsteel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b8bec4"/><stop offset=".5" stop-color="#e3e6e9"/><stop offset="1" stop-color="#aab0b6"/></linearGradient>
+      <linearGradient id="rshV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#1a0a00" stop-opacity=".26"/></linearGradient>
+      <linearGradient id="rshH" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#1a0a00" stop-opacity=".22"/></linearGradient>
+      <linearGradient id="rbrass" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a5a14"/><stop offset=".3" stop-color="#e3b856"/><stop offset=".48" stop-color="#fff2c0"/><stop offset=".66" stop-color="#c9962e"/><stop offset="1" stop-color="#6e420c"/></linearGradient>
+      <linearGradient id="rchrome" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7d858c"/><stop offset=".35" stop-color="#e9edf0"/><stop offset=".55" stop-color="#ffffff"/><stop offset=".75" stop-color="#b9c0c6"/><stop offset="1" stop-color="#6d757c"/></linearGradient>
+      <radialGradient id="rporc" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#eef1f3"/><stop offset="1" stop-color="#c9d1d6"/></radialGradient>
+      <linearGradient id="rleaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cc063"/><stop offset="1" stop-color="#2c6a2a"/></linearGradient>
+      <linearGradient id="rpot" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b0573a"/><stop offset=".4" stop-color="#e08a62"/><stop offset="1" stop-color="#8a3e26"/></linearGradient>
+      <pattern id="rwoodP" width="80" height="16" patternUnits="userSpaceOnUse"><path d="M0 4 q20 -3 40 0 t40 0 M0 11 q26 3 52 0 t28 0" stroke="#2a1205" stroke-opacity=".16" stroke-width="1.2" fill="none"/><ellipse cx="58" cy="8" rx="5" ry="2" fill="none" stroke="#2a1205" stroke-opacity=".12"/></pattern>
+      <pattern id="rfab" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M0 0 l5 5 M5 0 l-5 5" stroke="#000" stroke-opacity=".05" stroke-width=".7"/></pattern>
+      <linearGradient id="rfloorAO" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1a14" stop-opacity=".26"/><stop offset="1" stop-color="#2a1a14" stop-opacity="0"/></linearGradient>
+      <radialGradient id="rday"><stop offset="0" stop-color="#fff9e8" stop-opacity=".38"/><stop offset="1" stop-color="#fff9e8" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rhaze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1e4cf" stop-opacity="0"/><stop offset="1" stop-color="#f1e4cf" stop-opacity=".55"/></linearGradient>
+      <linearGradient id="rcar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient>
       <linearGradient id="rtv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f8f4a"/><stop offset="1" stop-color="#2d6e38"/></linearGradient></defs>`;
   }
   const win = (x, y, w, h, ox, panes) => {
@@ -168,6 +181,62 @@
   }
 
 
+
+  /* ---- light and materials: daylight, floor occlusion, wood grain, fabric, brass, chrome, porcelain ---- */
+  const ov = (x, y, w, h, rx, id, op) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="url(#${id})"${op != null ? ` opacity="${op}"` : ''}/>`;
+  const floorAO = (y, x0, x1) => `<rect x="${x0 || 0}" y="${y}" width="${(x1 || 600) - (x0 || 0)}" height="46" fill="url(#rfloorAO)"/>`;
+  const daylight = (cx, cy, rx, ry, c) => (c.night ? '' : `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#rday)"/>`);
+  const lushPlant = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s || 1})"><ellipse cx="0" cy="2" rx="22" ry="5" fill="rgba(0,0,0,.18)"/><path d="M-18 0 h36 l-4 -34 h-28z" fill="url(#rpot)"/><rect x="-20" y="-38" width="40" height="7" rx="3" fill="#c96a48"/>${[[-30, -70, -40], [28, -76, 35], [-6, -98, -8], [-38, -46, -70], [36, -52, 65], [12, -60, 20], [-18, -82, -25]].map(([lx, ly, r]) => `<g transform="translate(${lx} ${ly}) rotate(${r})"><path d="M0 0 q14 -20 0 -40 q-14 20 0 40z" fill="url(#rleaf)"/><path d="M0 -2 v-34" stroke="#2a5a24" stroke-width="1.2"/></g><path d="M0 -36 q${lx * 0.4} ${(ly + 36) * 0.4} ${lx} ${ly + 4}" stroke="#3f7d3a" stroke-width="2" fill="none"/>`).join('')}</g>`;
+  const MAT = {
+    salon: (c) => `
+      ${daylight(303, 700, 280, 80, c)}${floorAO(392)}
+      ${ov(132, 408, 222, 62, 24, 'rshV')}${ov(118, 438, 250, 96, 28, 'rshV')}${ov(106, 452, 36, 84, 16, 'rshH')}${ov(344, 452, 36, 84, 16, 'rshH')}
+      ${ov(118, 408, 262, 128, 26, 'rfab')}
+      ${ov(518, 192, 82, 200, 0, 'rwoodP')}${ov(518, 192, 82, 200, 0, 'rshH', 0.8)}
+      ${ov(492, 650, 80, 70, 4, 'rwoodP')}${ov(492, 650, 80, 70, 4, 'rshV')}
+      <path d="M48 300 h36 l-8 -26 h-20z" fill="url(#rshH)"/>
+      <path d="M74 704 h52 l-6 18 h-40z" fill="url(#rshV)"/><path d="M158 708 h52 l-6 18 h-40z" fill="url(#rshV)"/>
+      <path d="M118 596 l20 -2 h-10z M150 597 l40 -2 h-20z" fill="#fff" opacity=".7"/>
+      ${lushPlant(468, 392, 0.78)}`,
+    kitchen: (c) => `
+      ${daylight(300, 740, 220, 60, c)}${floorAO(392)}
+      ${ov(0, 12, 142, 380, 0, 'rshH', 0.75)}${ov(458, 12, 82, 380, 0, 'rshH', 0.6)}${ov(142, 292, 316, 100, 0, 'rshV', 0.8)}${ov(162, 558, 276, 96, 0, 'rshV')}
+      <g><ellipse cx="300" cy="283" rx="24" ry="4" fill="rgba(0,0,0,.18)"/><path d="M284 282 l5 -9 h22 l5 9z" fill="url(#rbrass)"/><path d="M284 274 q-7 -20 1 -36 q15 -7 30 0 q8 16 1 36z" fill="url(#rbrass)"/><path d="M286 250 q14 4 28 0 M285 264 q15 4 30 0" stroke="#7a4a10" stroke-width="1.4" fill="none" opacity=".7"/>
+        <path d="M285 246 q-9 0 -9 8 q0 6 8 6" stroke="#6e420c" stroke-width="3" fill="none"/><path d="M315 246 q9 0 9 8 q0 6 -8 6" stroke="#6e420c" stroke-width="3" fill="none"/>
+        <path d="M313 262 h11 v4 h-4 v7 h-3 v-7 h-4z" fill="#b8862a"/><rect x="292" y="231" width="16" height="7" rx="2" fill="url(#rbrass)"/>
+        <ellipse cx="300" cy="222" rx="12" ry="9" fill="url(#rporc)"/><path d="M311 220 q8 -2 10 -8" stroke="#e8eef1" stroke-width="3" fill="none"/><path d="M289 218 q-6 2 -5 8" stroke="#e8eef1" stroke-width="2.4" fill="none"/><ellipse cx="300" cy="213" rx="6" ry="2" fill="#dfe6ea"/><circle cx="300" cy="210" r="2" fill="#c0392b"/><circle cx="296" cy="223" r="2.2" fill="#c0392b"/><circle cx="304" cy="225" r="1.8" fill="#2f6b8a"/></g>
+      <g><path d="M386 283 l3 -37 h30 l3 37z" fill="#c9a27a"/><path d="M389 246 l3 -6 3 6 3 -6 3 6 3 -6 3 6 3 -6 3 6 3 -6 3 6" fill="#b88e62" stroke="#9a7048" stroke-width=".8"/><rect x="392" y="256" width="24" height="20" rx="4" fill="#fff8ee"/><circle cx="404" cy="263" r="4" fill="#e8952f"/><circle cx="401" cy="260" r="1.6" fill="#c96f1c"/><circle cx="407" cy="260" r="1.6" fill="#c96f1c"/><text x="404" y="273" text-anchor="middle" font-size="5" font-family="Nunito, sans-serif" font-weight="900" fill="#7a4a22">KIBBLE</text><path d="M386 283 l3 -37 h30 l3 37z" fill="url(#rshH)"/></g>
+      ${[200, 300, 400].map((x) => `<rect x="${x - 2}" y="690" width="4" height="40" fill="url(#rchrome)"/>`).join('')}`,
+    tv: (c) => `
+      ${daylight(200, 720, 220, 70, c)}${floorAO(392)}
+      ${ov(164, 402, 172, 64, 22, 'rshV')}${ov(150, 430, 200, 100, 26, 'rshV')}${ov(138, 446, 34, 88, 16, 'rshH')}${ov(328, 446, 34, 88, 16, 'rshH')}
+      <path d="M190 412 q60 -8 120 0" stroke="#fff" stroke-width="3" opacity=".25" fill="none"/><path d="M168 448 q20 30 0 70" stroke="#fff" stroke-width="2" opacity=".2" fill="none"/>
+      ${ov(300, 300, 290, 70, 6, 'rwoodP')}${ov(300, 300, 290, 70, 6, 'rshV')}${ov(370, 600, 170, 14, 4, 'rwoodP')}
+      <polygon points="340,104 400,104 352,238 328,238 328,150" fill="#fff" opacity=".07"/>`,
+    hall: (c) => `
+      ${floorAO(432)}
+      ${[...Array(10)].map((_, i) => `<path d="M${i * 60 + 30} 306 v120" stroke="#cdb99c" stroke-width="1.4" opacity=".6"/>`).join('')}
+      ${[[40, 96], [178, 96], [316, 96], [450, 124]].map(([x, w]) => ov(x, 232, w, 200, 0, 'rshV', 0.7) + (x === 450 ? ov(x, 232, w, 200, 0, 'rwoodP', 0.7) : '')).join('')}`,
+    bedroom: (c) => `
+      ${daylight(155, 700, 180, 70, c)}${floorAO(430, 0, 410)}
+      ${ov(30, 330, 250, 110, 18, 'rfab')}${ov(30, 330, 250, 110, 18, 'rshV')}${ov(22, 420, 268, 170, 24, 'rshV')}
+      ${ov(276, 282, 120, 10, 2, 'rwoodP')}
+      <path d="M416 600 h178 v50 q0 46 -46 46 h-86 q-46 0 -46 -46z" fill="url(#rshH)"/>
+      <path d="M470 150 l22 -12 -26 64 -16 6z" fill="#fff" opacity=".18"/>`,
+    street: (c) => {
+      const night = !!c.night;
+      let o = night ? '' : '<rect x="0" y="150" width="600" height="110" fill="url(#rhaze)"/>';
+      [[0, 90, 120], [120, 60, 130], [450, 80, 150]].forEach(([x, y, w]) => { o += ov(x, y, w, 260 - y, 0, 'rshH', 0.7) + `<rect x="${x}" y="${y}" width="${w}" height="6" fill="rgba(0,0,0,.12)"/>`; });
+      [[228, 308, 144, 86], [400, 308, 190, 64]].forEach(([x, y, w, h]) => { o += `<path d="M${x + w * 0.15} ${y} h18 l-${h * 0.5} ${h} h-18z M${x + w * 0.55} ${y} h10 l-${h * 0.5} ${h} h-10z" fill="#fff" opacity="${night ? 0.08 : 0.22}"/>`; });
+      [-14, 400, 590].forEach((x, i) => { o += `<g fill="#2a2a20" opacity="${night ? 0.1 : 0.14}">${[...Array(6)].map((_, k) => `<ellipse cx="${x - 40 + k * 16 + (k % 2) * 6}" cy="${500 + (k % 3) * 18}" rx="${18 - (k % 3) * 3}" ry="6"/>`).join('')}</g><circle cx="${x - 14}" cy="276" r="26" fill="#fff" opacity=".08"/>`; });
+      o += '<ellipse cx="173" cy="712" rx="104" ry="7" fill="rgba(0,0,0,.28)"/><ellipse cx="458" cy="714" rx="104" ry="7" fill="rgba(0,0,0,.28)"/>';
+      o += ov(78, 618, 190, 66, 14, 'rcar') + ov(360, 642, 196, 46, 12, 'rcar');
+      o += '<path d="M132 614 l10 -24 h12 l-10 24z M190 614 v-24 h8 v24z" fill="#fff" opacity=".35"/><path d="M410 638 l10 -20 h8 l-10 20z M462 638 v-20 h6 v20z" fill="#fff" opacity=".35"/>';
+      o += '<g fill="url(#rchrome)"><circle cx="118" cy="688" r="9"/><circle cx="230" cy="688" r="9"/><circle cx="398" cy="692" r="8"/><circle cx="514" cy="692" r="8"/></g>';
+      return o;
+    },
+  };
+
   /* ---- finer objects and accessories, drawn over each room ---- */
   const ACunit = (x, y, w) => `<g><rect x="${x}" y="${y}" width="${w}" height="34" rx="8" fill="#fbfbfa" stroke="#d9d9d6"/><rect x="${x + 8}" y="${y + 22}" width="${w - 16}" height="6" rx="3" fill="#e6e6e3"/>${[...Array(6)].map((_, i) => `<path d="M${x + 12 + i * ((w - 24) / 5)} ${y + 24} v4" stroke="#cfcfcb"/>`).join('')}<circle cx="${x + w - 12}" cy="${y + 10}" r="2" fill="#5fd38a"/><text x="${x + 10}" y="${y + 13}" font-size="6" font-family="Nunito, sans-serif" font-weight="900" fill="#9aa2a8">LG</text></g>`;
   const plate = (x, y, txt) => `<g><rect x="${x}" y="${y}" width="40" height="11" rx="2" fill="#fff" stroke="#333" stroke-width=".8"/><rect x="${x}" y="${y}" width="7" height="11" rx="1.5" fill="#1f4f9a"/><text x="${x + 23}" y="${y + 8.5}" text-anchor="middle" font-size="6.5" font-family="Nunito, sans-serif" font-weight="900" fill="#222">${txt}</text></g>`;
@@ -277,6 +346,7 @@
     <path d="M74 704 h52 l-6 18 h-40z" fill="#e98aab"/><path d="M158 708 h52 l-6 18 h-40z" fill="#7aa6c2"/>
     ${label(142, 754, 'SIMBA', '#7a5c4e', 13)}
     ${plant(470, 392, 1.1)}
+    ${MAT.salon(c)}
     ${DET.salon(c)}
   `, c);
 
@@ -304,6 +374,7 @@
     <rect x="196" y="532" width="80" height="8" rx="3" fill="#2a2a2e"/><circle cx="216" cy="536" r="2.5" fill="#ff8a3a"/><circle cx="256" cy="536" r="2.5" fill="#555"/>
     <g><ellipse cx="370" cy="538" rx="22" ry="5" fill="#f3efe9"/><circle cx="362" cy="530" r="7" fill="#e05b3b"/><circle cx="376" cy="530" r="6" fill="#f2b33a"/></g>
     ${[200, 300, 400].map((x) => `<ellipse cx="${x}" cy="690" rx="24" ry="8" fill="#2a2a2e"/><rect x="${x - 2}" y="690" width="4" height="40" fill="#9aa2a8"/><ellipse cx="${x}" cy="732" rx="16" ry="4" fill="#9aa2a8"/>`).join('')}
+    ${MAT.kitchen(c)}
     ${DET.kitchen(c)}
   `, c);
 
@@ -326,6 +397,7 @@
     <g><path d="M420 594 q12 -10 24 0 q-12 8 -24 0z" fill="none" stroke="#3a6b4a" stroke-width="2.4" stroke-dasharray="1.5 2.4"/><path d="M432 597 v8" stroke="#3a6b4a" stroke-width="2"/><path d="M486 590 q6 -4 12 0 M498 590 q6 -4 12 0 M498 590 h-0" stroke="#3a3550" stroke-width="2" fill="none"/><circle cx="492" cy="591" r="5" fill="none" stroke="#3a3550" stroke-width="1.6"/><circle cx="504" cy="591" r="5" fill="none" stroke="#3a3550" stroke-width="1.6"/></g>
     <g><rect x="398" y="580" width="12" height="20" rx="2" fill="#f8e3c2" opacity=".9"/><rect x="400" y="586" width="8" height="12" fill="#b4472a"/><ellipse cx="470" cy="596" rx="24" ry="6" fill="#e9e1d4"/><circle cx="462" cy="588" r="7" fill="#e05b3b"/><circle cx="476" cy="588" r="6" fill="#9b59b6"/><circle cx="512" cy="594" r="10" fill="#c9a24a" opacity=".6"/></g>
     ${plant(560, 392, 1.1)}
+    ${MAT.tv(c)}
     ${DET.tv(c)}
   `, c);
 
@@ -346,6 +418,7 @@
     ${famPhoto(140, 330, 34, 44)}${famPhoto(280, 340, 30, 38)}${famPhoto(574, 320, 22, 60)}
     <g stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M150 742 H450 M150 778 H450"/>${[...Array(13)].map((_, i) => `<path d="M${156 + i * 24} 738 v48"/>`).join('')}</g>
     <rect x="232" y="700" width="136" height="30" rx="6" fill="#2f4a3e"/>${label(300, 715, 'BEDROOMS', '#ffd98a', 11)}<text x="300" y="726" text-anchor="middle" font-size="9" font-family="Nunito, sans-serif" font-weight="800" fill="#fff">🔑 Nena only</text>
+    ${MAT.hall(c)}
     ${DET.hall(c)}
   `, c);
   };
@@ -377,6 +450,7 @@
     ${win(426, 376, 162, 196, 220, 2)}
     <rect x="440" y="730" width="120" height="40" rx="12" fill="#86d1ff" opacity=".6"/>
     <rect x="0" y="560" width="14" height="200" fill="#8a5a3a"/><rect x="0" y="560" width="10" height="200" fill="#c7b499"/>
+    ${MAT.bedroom(c)}
     ${DET.bedroom(c)}
   `, c);
 
@@ -403,6 +477,7 @@
     ${label(172, 716, 'FAMILY 4×4', '#e9e1c8', 10)}
     ${streetReal(c)}
     ${c.rain ? [...Array(60)].map((_, k) => `<path d="M${hash(k) * 600} ${hash(k + 2) * 800} l-5 16" stroke="#e6eef7" stroke-width="1.4" opacity=".6"/>`).join('') : ''}
+    ${MAT.street(c)}
     ${DET.street(c)}
   `, c);
   };

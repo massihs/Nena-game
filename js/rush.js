@@ -285,8 +285,15 @@
     return a;
   }
 
+  let GRAIN = '';
+  function grainLayer() {
+    if (!GRAIN) { try { const cv = document.createElement('canvas'); cv.width = cv.height = 96; const x = cv.getContext('2d'), im = x.createImageData(96, 96); for (let i = 0; i < im.data.length; i += 4) { const v = 110 + Math.random() * 90; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; } x.putImageData(im, 0, 0); GRAIN = cv.toDataURL(); } catch (e) { GRAIN = 'none'; } }
+    const w = $('stage-wrap'); if (w.querySelector('.grain')) return;
+    const g = document.createElement('div'); g.className = 'grain'; if (GRAIN !== 'none') g.style.backgroundImage = `url(${GRAIN})`; w.appendChild(g);
+  }
   function startLevel(n) {
     const cfg = dailyCfg(levelCfg(n));
+    grainLayer();
     cancelAnimationFrame(raf);
     music({ home: 'home', street: 'street', clap: 'clap' }[cfg.place] || 'home', cfg.night);
     $('s-bg').innerHTML = ''; $('s-bg').dataset.p = '';  // its gradients would shadow the room's
