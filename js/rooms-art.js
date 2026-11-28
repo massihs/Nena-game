@@ -167,6 +167,92 @@
     return o;
   }
 
+
+  /* ---- finer objects and accessories, drawn over each room ---- */
+  const ACunit = (x, y, w) => `<g><rect x="${x}" y="${y}" width="${w}" height="34" rx="8" fill="#fbfbfa" stroke="#d9d9d6"/><rect x="${x + 8}" y="${y + 22}" width="${w - 16}" height="6" rx="3" fill="#e6e6e3"/>${[...Array(6)].map((_, i) => `<path d="M${x + 12 + i * ((w - 24) / 5)} ${y + 24} v4" stroke="#cfcfcb"/>`).join('')}<circle cx="${x + w - 12}" cy="${y + 10}" r="2" fill="#5fd38a"/><text x="${x + 10}" y="${y + 13}" font-size="6" font-family="Nunito, sans-serif" font-weight="900" fill="#9aa2a8">LG</text></g>`;
+  const plate = (x, y, txt) => `<g><rect x="${x}" y="${y}" width="40" height="11" rx="2" fill="#fff" stroke="#333" stroke-width=".8"/><rect x="${x}" y="${y}" width="7" height="11" rx="1.5" fill="#1f4f9a"/><text x="${x + 23}" y="${y + 8.5}" text-anchor="middle" font-size="6.5" font-family="Nunito, sans-serif" font-weight="900" fill="#222">${txt}</text></g>`;
+  const person = (who, x, y, w, h, mood) => (window.Art ? window.Art.person(who, { mood: mood || 'happy' }).replace('<svg ', `<svg x="${x}" y="${y}" width="${w}" height="${h}" `) : '');
+  const DET = {
+    salon: (c) => `
+      ${[0, 1, 2, 3, 4].map((i) => `<circle cx="${160 + i * 42}" cy="436" r="2" fill="#d9cdbd"/><circle cx="${181 + i * 42}" cy="452" r="2" fill="#d9cdbd"/>`).join('')}
+      <path d="M132 470 H354" stroke="#e1d5c5" stroke-width="2"/><path d="M243 470 v62" stroke="#e1d5c5" stroke-width="2"/>
+      <rect x="118" y="534" width="8" height="12" rx="2" fill="#7a5032"/><rect x="360" y="534" width="8" height="12" rx="2" fill="#7a5032"/>
+      <path d="M104 456 q-10 40 6 78 h30 q-10 -36 4 -76z" fill="#c9785a" opacity=".9"/>${[0, 1, 2, 3].map((i) => `<path d="M${112 + i * 7} 506 v30" stroke="#f3e0c9" stroke-width="1.6" opacity=".7"/>`).join('')}
+      <path d="M156 432 h44 M286 432 h44" stroke="#fff" stroke-width="1.2" opacity=".35"/>
+      <path d="M52 284 h28 M50 292 h32" stroke="#e6b85a" stroke-width="1.2"/><ellipse cx="66" cy="300" rx="22" ry="5" fill="#ffe6a8" opacity=".6"/>
+      <g><path d="M78 706 q24 -12 44 0" fill="#7a4a22"/>${[...Array(9)].map((_, i) => `<circle cx="${84 + (i % 5) * 8}" cy="${703 - Math.floor(i / 5) * 4}" r="3" fill="${i % 2 ? '#8a5a2a' : '#a8743a'}"/>`).join('')}<path d="M77 706 h48" stroke="#fff" stroke-width="2" opacity=".55"/><g fill="#fff" opacity=".8"><circle cx="100" cy="716" r="2.6"/><circle cx="95" cy="712" r="1.2"/><circle cx="100" cy="710.5" r="1.2"/><circle cx="105" cy="712" r="1.2"/></g></g>
+      <g><ellipse cx="184" cy="710" rx="22" ry="4" fill="#5fb8e8"/><path d="M172 709 q6 -2 12 0" stroke="#fff" stroke-width="1.6" opacity=".8"/><path d="M161 710 h46" stroke="#fff" stroke-width="2" opacity=".5"/></g>
+      ${[...Array(5)].map((_, i) => `<path d="M${428 + i * 10} 530 v26" stroke="#a88456" stroke-width="1.2"/>`).join('')}<path d="M426 528 h52" stroke="#8a6a3a" stroke-width="3"/>
+      <path d="M468 520 q10 -6 14 4 q-4 6 -10 2" stroke="#e8577f" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M492 676 h80 M492 698 h80" stroke="#5a3a22" stroke-width="1.6"/><circle cx="532" cy="666" r="2.5" fill="#c9a24a"/><circle cx="532" cy="688" r="2.5" fill="#c9a24a"/><rect x="494" y="720" width="6" height="8" fill="#4a2e1c"/><rect x="564" y="720" width="6" height="8" fill="#4a2e1c"/>
+      <g><rect x="556" y="616" width="12" height="30" rx="5" fill="#2f6b8a"/><path d="M560 616 q-6 -14 -2 -24 M564 616 q4 -12 10 -18" stroke="#5a9150" stroke-width="2" fill="none"/><circle cx="574" cy="598" r="3" fill="#ef8fb0"/><circle cx="558" cy="592" r="3" fill="#ffd36b"/></g>
+      <g><rect x="514" y="396" width="86" height="10" rx="2" fill="#8e1f2c"/><path d="M520 401 h74" stroke="#e8c98a" stroke-width="1" stroke-dasharray="3 2"/></g>
+      <circle cx="560" cy="226" r="3" fill="#2a2a2e"/><circle cx="560" cy="226" r="1.6" fill="#9fc4da"/>`,
+    kitchen: (c) => `
+      <rect x="0" y="12" width="142" height="380" fill="url(#rsteel)" opacity=".18"/>
+      <rect x="40" y="250" width="22" height="40" rx="4" fill="#e9ecef" stroke="#c9ccd0"/><rect x="45" y="262" width="12" height="14" rx="2" fill="#3a3f46"/><circle cx="51" cy="284" r="2" fill="#7fb2ff"/>
+      ${[[478, 120], [520, 120], [478, 300], [520, 300]].map(([x, y]) => `<rect x="${x}" y="${y}" width="3" height="28" rx="1.5" fill="#c9ccd0"/>`).join('')}
+      <g><rect x="152" y="252" width="40" height="22" rx="3" fill="#c9a27a"/><path d="M156 256 h32" stroke="#a87e54" stroke-width="1"/><path d="M160 262 q6 -8 12 0 q6 -8 12 0" stroke="#4d8044" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M186 270 l14 -8" stroke="#9aa2a8" stroke-width="2.5"/></g>
+      <g><path d="M206 534 q-2 -22 8 -26 h44 q10 4 8 26z" fill="#9aa2a8"/><ellipse cx="236" cy="508" rx="30" ry="5" fill="#b8bec4"/><rect x="230" y="500" width="12" height="5" rx="2" fill="#2a2a2e"/><path d="M228 496 q4 -12 -2 -22 M244 494 q4 -10 0 -18" stroke="#fff" stroke-width="2.5" fill="none" opacity=".6"/></g>
+      <g><path d="M300 540 q-30 0 -30 -8 h60 q0 8 -30 8z" fill="#e9e1d4"/><path d="M288 532 q4 -14 12 -16 q8 2 12 16z" fill="#d9a35a"/><path d="M296 520 h8" stroke="#a87e54" stroke-width="2"/></g>
+      <g><ellipse cx="410" cy="538" rx="14" ry="3" fill="#2f6b8a"/><path d="M402 538 v-14 h16 v14" fill="#2f6b8a"/><path d="M400 524 q10 -18 20 0" stroke="#4d8044" stroke-width="4" fill="none"/><path d="M404 520 q6 -14 12 0" stroke="#5a9150" stroke-width="4" fill="none"/></g>
+      ${[208, 300, 392].map((x) => `<rect x="${x - 20}" y="600" width="40" height="3" rx="1.5" fill="#c9ccd0"/>`).join('')}
+      ${[200, 300, 400].map((x) => `<ellipse cx="${x}" cy="687" rx="24" ry="6" fill="#8a5a3a"/><ellipse cx="${x}" cy="712" rx="12" ry="3" fill="none" stroke="#9aa2a8" stroke-width="2"/>`).join('')}
+      <g><rect x="470" y="160" width="62" height="40" rx="3" fill="#7a5032"/><rect x="474" y="164" width="54" height="32" fill="#f3e8d2"/>${FA(501, 185, 'نوش جان', 11, '#8e1f2c')}</g>`,
+    tv: (c) => `
+      <rect x="328" y="104" width="234" height="134" fill="url(#rglass)"/><text x="445" y="249" text-anchor="middle" font-size="6" font-family="Nunito, sans-serif" font-weight="900" fill="#666">SAMSUNG</text>
+      ${[350, 440, 535].map((x) => `<rect x="${x - 8}" y="334" width="16" height="3" rx="1.5" fill="#c9a24a"/>`).join('')}
+      <g><path d="M318 300 q2 -20 10 -26 q8 6 10 26z" fill="#2f6b8a"/><path d="M328 274 q-6 -16 -2 -28 M330 274 q6 -14 2 -26" stroke="#5a9150" stroke-width="2" fill="none"/><rect x="540" y="276" width="34" height="24" rx="2" fill="#c9a24a"/><rect x="544" y="280" width="26" height="16" fill="#bcd3e0"/><circle cx="557" cy="288" r="4" fill="#e8b48c"/></g>
+      <g><path d="M206 404 q24 -10 48 0 l-4 22 q-20 6 -40 0z" fill="#fff" opacity=".85"/>${[...Array(7)].map((_, i) => `<circle cx="${212 + i * 6}" cy="${426 + (i % 2)}" r="2" fill="#fff"/>`).join('')}</g>
+      ${[0, 1, 2, 3, 4, 5].map((i) => `<circle cx="${180 + i * 28}" cy="440" r="2" fill="#5a3422"/>`).join('')}
+      <rect x="154" y="528" width="8" height="12" rx="2" fill="#4a2e1c"/><rect x="338" y="528" width="8" height="12" rx="2" fill="#4a2e1c"/>
+      ${ACunit(470, 36, 110)}
+      <g><rect x="76" y="600" width="44" height="40" rx="3" fill="#6b4632"/><rect x="72" y="596" width="52" height="6" rx="2" fill="#7a5032"/><path d="M90 596 l-6 -40 h28 l-6 40z" fill="#f4e2b8" opacity=".95"/><circle cx="98" cy="580" r="34" fill="url(#rwarm)"/><rect x="84" y="610" width="28" height="12" rx="2" fill="#5a3a22"/></g>`,
+    hall: (c) => `
+      <g><ellipse cx="300" cy="18" rx="44" ry="6" fill="#fff"/><path d="M300 18 v14" stroke="#c9a24a" stroke-width="2"/><path d="M284 32 h32 l-6 12 h-20z" fill="#f4e2b8" stroke="#c9a24a"/><circle cx="300" cy="60" r="60" fill="url(#rwarm)" opacity=".6"/></g>
+      ${[124, 262, 400, 560].map((x) => `<rect x="${x - 4}" y="330" width="8" height="16" rx="3" fill="#c9a24a"/>`).join('')}
+      <g><rect x="560" y="420" width="38" height="10" rx="2" fill="#7a5032"/><rect x="564" y="430" width="4" height="40" fill="#5a3a22"/><rect x="590" y="430" width="4" height="40" fill="#5a3a22"/><path d="M570 420 q4 -16 18 -14 v14z" fill="#2a2a2e"/><path d="M574 408 q-4 -10 6 -10" stroke="#2a2a2e" stroke-width="2" fill="none"/></g>`,
+    bedroom: (c) => `
+      ${[0, 1, 2, 3, 4].map((i) => `<circle cx="${70 + i * 44}" cy="360" r="2.4" fill="#a87a84"/><circle cx="${92 + i * 44}" cy="388" r="2.4" fill="#a87a84"/>`).join('')}
+      <path d="M40 530 q60 -10 120 6 t110 -6 M40 556 q70 -8 130 6 t100 -4" stroke="#e59ab0" stroke-width="2" fill="none"/>
+      <path d="M200 560 h80 v26 q-40 8 -80 0z" fill="#c9a0a8" opacity=".85"/>${[0, 1, 2].map((i) => `<path d="M206 ${566 + i * 7} h68" stroke="#fff" stroke-width="1.2" opacity=".5"/>`).join('')}
+      <g><circle cx="74" cy="452" r="14" fill="#c98f4f"/><circle cx="64" cy="440" r="6" fill="#c98f4f"/><circle cx="84" cy="440" r="6" fill="#c98f4f"/><circle cx="74" cy="456" r="6" fill="#e8c09a"/><circle cx="69" cy="449" r="1.6" fill="#2a2130"/><circle cx="79" cy="449" r="1.6" fill="#2a2130"/><path d="M60 466 q14 10 28 0 v14 q-14 6 -28 0z" fill="#c98f4f"/></g>
+      <rect x="306" y="126" width="78" height="108" fill="#ffe9d6"/><circle cx="345" cy="172" r="26" fill="#e8952f"/><circle cx="345" cy="176" r="18" fill="#f2a94e"/><circle cx="338" cy="172" r="2.4" fill="#2a2130"/><circle cx="352" cy="172" r="2.4" fill="#2a2130"/><ellipse cx="345" cy="181" rx="4" ry="3" fill="#2a2130"/><circle cx="327" cy="150" r="6" fill="#c96f1c"/><circle cx="363" cy="150" r="6" fill="#c96f1c"/>${label(345, 222, 'SIMBA ♥', '#c9496f', 11)}
+      <rect x="328" y="254" width="36" height="22" fill="#fff" opacity=".85"/><rect x="331" y="257" width="30" height="5" fill="#ef8fb0"/>${[0, 1, 2].map((k) => `<rect x="${332 + k * 10}" y="264" width="8" height="8" fill="${['#ffd36b', '#7fb2ff', '#e98aab'][k]}"/>`).join('')}
+      <g><path d="M372 282 v-30 l14 -12" stroke="#3a3550" stroke-width="3" fill="none"/><path d="M378 236 l18 -6 4 12 -18 6z" fill="#ef8fb0"/><rect x="364" y="279" width="16" height="4" rx="2" fill="#3a3550"/></g>
+      <g><rect x="284" y="270" width="10" height="12" rx="2" fill="#7fb2ff"/><path d="M286 270 l-2 -10 M290 270 l1 -12 M292 270 l3 -9" stroke="#e05b3b" stroke-width="1.6"/></g>
+      <g><rect x="312" y="330" width="56" height="10" rx="4" fill="#f2b7c8"/><rect x="314" y="340" width="52" height="40" rx="6" fill="#f2b7c8"/><rect x="318" y="380" width="4" height="40" fill="#bfbfc4"/><rect x="358" y="380" width="4" height="40" fill="#bfbfc4"/><ellipse cx="340" cy="420" rx="26" ry="4" fill="#bfbfc4"/></g>
+      <g><path d="M488 252 v-16 h22" stroke="#c9ccd0" stroke-width="3" fill="none"/><rect x="530" y="244" width="10" height="16" rx="2" fill="#7fe0b4"/><path d="M533 244 v-8 M537 244 v-10" stroke="#ef8fb0" stroke-width="1.6"/></g>
+      <g><path d="M584 606 v-30 q0 -10 -12 -10 h-14" stroke="#c9ccd0" stroke-width="4" fill="none"/><ellipse cx="556" cy="566" rx="10" ry="4" fill="#c9ccd0"/><path d="M574 598 h14" stroke="#c9ccd0" stroke-width="5"/></g>
+      <g fill="#fff" opacity=".85"><circle cx="470" cy="598" r="5"/><circle cx="482" cy="594" r="4"/><circle cx="530" cy="597" r="6"/><circle cx="545" cy="600" r="3.5"/></g>`,
+    street: (c) => {
+      const night = !!c.night;
+      let o = '';
+      // striped awnings and shop doors
+      [[30, 180, '#1f6b3a', '#f4efe2'], [220, 160, '#e98a2b', '#fff6e8'], [390, 210, '#1f5aa6', '#eef3f6']].forEach(([x, w, a, b]) => {
+        o += `<g>${[...Array(Math.ceil(w / 20))].map((_, i) => `<path d="M${x + i * 20} 294 h20 v12 q-10 8 -20 0z" fill="${i % 2 ? a : b}"/>`).join('')}<path d="M${x} 294 h${w}" stroke="rgba(0,0,0,.2)" stroke-width="2"/></g>`;
+      });
+      o += `<rect x="168" y="326" width="36" height="70" fill="${night ? '#ffd98a' : '#9fc4da'}" opacity=".7" stroke="#5a3a22" stroke-width="3"/><circle cx="196" cy="364" r="2" fill="#c9a24a"/>`;
+      o += `<rect x="534" y="326" width="40" height="70" fill="${night ? '#ffe2a6' : '#cfe3ea'}" stroke="#7a8a96" stroke-width="3"/><rect x="540" y="340" width="28" height="12" rx="2" fill="#fff"/>${FA(554, 349, 'باز است', 7, '#2f8a54')}`;
+      // shopkeepers behind the counters
+      o += person('guest4', 128, 330, 34, 60) + person('guest2', 352, 330, 32, 56);
+      // juice stand chairs
+      o += `<g><path d="M232 520 h26 v-4 h-26z M234 520 v22 M256 520 v22 M236 516 v-24 h20 v24" stroke="#e8577f" stroke-width="3" fill="none"/></g>`;
+      // street lamp + wires
+      o += `<g><rect x="380" y="300" width="7" height="270" fill="#4a4a52"/><path d="M383 304 q0 -24 30 -24" stroke="#4a4a52" stroke-width="6" fill="none"/><path d="M406 280 h24 l-4 10 h-16z" fill="#3a3a42"/><ellipse cx="418" cy="292" rx="10" ry="3" fill="${night ? '#ffe9a8' : '#fff6dc'}"/>${night ? '<circle cx="418" cy="300" r="60" fill="url(#rwarm)"/>' : ''}</g>`;
+      o += `<path d="M0 120 q180 30 383 6 t217 10 M0 132 q200 26 383 2" stroke="#2a2a2e" stroke-width="1.4" fill="none" opacity=".6"/>`;
+      // sidewalk paving and kerb
+      o += `<g opacity=".35">${[...Array(15)].map((_, i) => `<path d="M${i * 40 + 20} 400 v170" stroke="#9a9288" stroke-width=".8"/>`).join('')}${[430, 460, 515, 545].map((y) => `<path d="M0 ${y} H600" stroke="#9a9288" stroke-width=".8"/>`).join('')}</g><rect x="0" y="566" width="600" height="5" fill="#d9d2c6"/>${[...Array(15)].map((_, i) => `<rect x="${i * 40}" y="566" width="20" height="5" fill="#2a2a2e" opacity=".55"/>`).join('')}`;
+      // parked motorbike (Tehran's Honda 125)
+      o += `<g transform="translate(40 486)"><circle cx="10" cy="44" r="13" fill="#2a2a2e"/><circle cx="10" cy="44" r="5" fill="#9aa2a8"/><circle cx="76" cy="44" r="13" fill="#2a2a2e"/><circle cx="76" cy="44" r="5" fill="#9aa2a8"/><path d="M10 44 l18 -24 h30 l18 24" stroke="#555" stroke-width="4" fill="none"/><path d="M26 22 q14 -10 34 0 v8 h-34z" fill="#c0392b"/><path d="M58 18 h18 l8 -8" stroke="#2a2a2e" stroke-width="4" fill="none" stroke-linecap="round"/><rect x="28" y="16" width="26" height="6" rx="3" fill="#2a2a2e"/><circle cx="84" cy="12" r="4" fill="#ffd98a"/></g>`;
+      // zebra crossing + manhole
+      o += `${[...Array(7)].map((_, i) => `<rect x="284" y="${598 + i * 28}" width="64" height="14" fill="#f2efe6" opacity=".9"/>`).join('')}<ellipse cx="320" cy="772" rx="18" ry="6" fill="#3a3a42" stroke="#5a5a62" stroke-width="2"/>`;
+      // car details: plates, mirrors, handles, hubcaps
+      o += plate(148, 668, '۲۲ ج ۴۸۶') + plate(428, 672, '۱۱ ت ۳۵۷') + `<rect x="228" y="626" width="14" height="4" rx="2" fill="#9aa2a8"/><path d="M180 622 v54" stroke="#d6d6d4" stroke-width="2"/><rect x="190" y="640" width="12" height="3" rx="1.5" fill="#9aa2a8"/><path d="M458 642 v44" stroke="#d9a820" stroke-width="2"/><rect x="466" y="656" width="12" height="3" rx="1.5" fill="#8a6a10"/>`;
+      return o;
+    },
+  };
+
   /* ----------------------------------------------------------------- */
   const ART = {};
 
@@ -191,6 +277,7 @@
     <path d="M74 704 h52 l-6 18 h-40z" fill="#e98aab"/><path d="M158 708 h52 l-6 18 h-40z" fill="#7aa6c2"/>
     ${label(142, 754, 'SIMBA', '#7a5c4e', 13)}
     ${plant(470, 392, 1.1)}
+    ${DET.salon(c)}
   `, c);
 
   ART.kitchen = (c) => svg(`
@@ -217,6 +304,7 @@
     <rect x="196" y="532" width="80" height="8" rx="3" fill="#2a2a2e"/><circle cx="216" cy="536" r="2.5" fill="#ff8a3a"/><circle cx="256" cy="536" r="2.5" fill="#555"/>
     <g><ellipse cx="370" cy="538" rx="22" ry="5" fill="#f3efe9"/><circle cx="362" cy="530" r="7" fill="#e05b3b"/><circle cx="376" cy="530" r="6" fill="#f2b33a"/></g>
     ${[200, 300, 400].map((x) => `<ellipse cx="${x}" cy="690" rx="24" ry="8" fill="#2a2a2e"/><rect x="${x - 2}" y="690" width="4" height="40" fill="#9aa2a8"/><ellipse cx="${x}" cy="732" rx="16" ry="4" fill="#9aa2a8"/>`).join('')}
+    ${DET.kitchen(c)}
   `, c);
 
   ART.tv = (c) => svg(`
@@ -238,6 +326,7 @@
     <g><path d="M420 594 q12 -10 24 0 q-12 8 -24 0z" fill="none" stroke="#3a6b4a" stroke-width="2.4" stroke-dasharray="1.5 2.4"/><path d="M432 597 v8" stroke="#3a6b4a" stroke-width="2"/><path d="M486 590 q6 -4 12 0 M498 590 q6 -4 12 0 M498 590 h-0" stroke="#3a3550" stroke-width="2" fill="none"/><circle cx="492" cy="591" r="5" fill="none" stroke="#3a3550" stroke-width="1.6"/><circle cx="504" cy="591" r="5" fill="none" stroke="#3a3550" stroke-width="1.6"/></g>
     <g><rect x="398" y="580" width="12" height="20" rx="2" fill="#f8e3c2" opacity=".9"/><rect x="400" y="586" width="8" height="12" fill="#b4472a"/><ellipse cx="470" cy="596" rx="24" ry="6" fill="#e9e1d4"/><circle cx="462" cy="588" r="7" fill="#e05b3b"/><circle cx="476" cy="588" r="6" fill="#9b59b6"/><circle cx="512" cy="594" r="10" fill="#c9a24a" opacity=".6"/></g>
     ${plant(560, 392, 1.1)}
+    ${DET.tv(c)}
   `, c);
 
   ART.hall = (c) => {
@@ -257,6 +346,7 @@
     ${famPhoto(140, 330, 34, 44)}${famPhoto(280, 340, 30, 38)}${famPhoto(574, 320, 22, 60)}
     <g stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M150 742 H450 M150 778 H450"/>${[...Array(13)].map((_, i) => `<path d="M${156 + i * 24} 738 v48"/>`).join('')}</g>
     <rect x="232" y="700" width="136" height="30" rx="6" fill="#2f4a3e"/>${label(300, 715, 'BEDROOMS', '#ffd98a', 11)}<text x="300" y="726" text-anchor="middle" font-size="9" font-family="Nunito, sans-serif" font-weight="800" fill="#fff">🔑 Nena only</text>
+    ${DET.hall(c)}
   `, c);
   };
 
@@ -287,6 +377,7 @@
     ${win(426, 376, 162, 196, 220, 2)}
     <rect x="440" y="730" width="120" height="40" rx="12" fill="#86d1ff" opacity=".6"/>
     <rect x="0" y="560" width="14" height="200" fill="#8a5a3a"/><rect x="0" y="560" width="10" height="200" fill="#c7b499"/>
+    ${DET.bedroom(c)}
   `, c);
 
   ART.street = (c) => {
@@ -312,6 +403,7 @@
     ${label(172, 716, 'FAMILY 4×4', '#e9e1c8', 10)}
     ${streetReal(c)}
     ${c.rain ? [...Array(60)].map((_, k) => `<path d="M${hash(k) * 600} ${hash(k + 2) * 800} l-5 16" stroke="#e6eef7" stroke-width="1.4" opacity=".6"/>`).join('') : ''}
+    ${DET.street(c)}
   `, c);
   };
 
