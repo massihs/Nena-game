@@ -39,8 +39,8 @@
     }
     return dfs(start.map((t) => t.slice()));
   }
-  function generate(seed, lv) {
-    const L = LEVELS[lv];
+  function generate(seed, lv, custom) {
+    const L = custom || LEVELS[lv];
     for (let attempt = 0; attempt < 60; attempt++) {
       const r = rng(seed * 7 + attempt * 101 + lv * 13);
       const units = [];
@@ -61,7 +61,7 @@
   /* ---- UI ---- */
   let S = null;
   function start(opts) {
-    const tubes = generate(opts.seed, opts.level);
+    const tubes = generate(opts.seed, opts.level, opts.custom);
     S = { tubes, initial: tubes.map((t) => t.slice()), sel: -1, moves: 0, hist: [], opts, done: false };
     render();
   }
