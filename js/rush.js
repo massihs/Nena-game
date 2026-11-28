@@ -155,7 +155,9 @@
     flowers: { who: 'courier', icon: '💐', pts: 200, pat: 20, at: 'courier', dur: 0.8, special: true, vip: true, hint: 'Ding-dong! Flowers for Nena… from Jesus. Oh no. 💐' },
     choco:   { who: 'courier', icon: '🍫', pts: 200, pat: 20, at: 'courier', dur: 0.8, special: true, vip: true, hint: 'Chocolates for Nena… from Jesus. AGAIN. 🍫' },
     jtext:   { who: 'nena', icon: '📱', pts: 120, pat: 14, at: 'phone', dur: 1.2, special: true, hint: 'Jesus is texting Nena AGAIN. Tap 📱 to answer him…' },
-    aunt:    { who: 'aunt', icon: '🎁', pts: 260, pat: 26, item: 'tea', src: 'samovar', at: 'aunt', dur: 0.8, special: true, vip: true, hint: 'Surprise! Aunt Mahin is visiting. Bring her tea, quick!' },
+    aunt:    { who: 'aunt', icon: '🎁', pts: 260, pat: 26, item: 'tea', src: 'samovar', at: 'aunt', dur: 0.8, special: true, vip: true, hint: 'Surprise! Old Aunt Tayebeh dropped by unannounced. Bring her tea, quick!' },
+    snoop:   { who: 'nasimroom', icon: '🔍', pts: 190, pat: 16, at: 'nasimroom', dur: 1.2, hint: 'Aunt Tayebeh is snooping in Nasim’s room! Get her out!' },
+    snoop2:  { who: 'negin', icon: '🔍', pts: 190, pat: 16, at: 'negin', dur: 1.2, hint: 'Aunt Tayebeh is going through Negin’s things! Stop her!' },
     vip:     { who: 'guest2', icon: '👑', pts: 240, pat: 22, item: 'mochi', src: 'sushi', at: 'guest2', dur: 0.6, special: true, vip: true, hint: 'A VIP at CLAP! Serve him mochi for a big tip.' },
     curse:   { who: 'witch1', icon: '🔮', pts: 160, pat: 16, at: 'witch1', dur: 1.2, special: true, hint: 'The witches are cursing your hookah! Ask them (nicely) to stop.' },
     chase:   { who: 'simba', icon: '🫓', pts: 150, pat: 14, at: 'simba', dur: 1, special: true, hint: 'Simba stole a sangak! Catch him!' },
@@ -573,7 +575,7 @@
     if (ms) a.emoT = setTimeout(() => a.emoEl && a.emoEl.classList.remove('on'), ms);
   }
   const actorOf = (who) => (who === 'simba' ? G.simba : who === 'nena' ? G.nena : G.npcs[who]);
-  const WHO_NAME = { neighbor: 'Khanoom Karimi', sepitak: 'Sepitak', baba: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin', pourya: 'Pourya', aunt: 'Aunt Mahin', courier: 'Delivery', guest2: 'VIP', witch1: 'Witch', kids: 'Kids', nena: 'Nena' };
+  const WHO_NAME = { neighbor: 'Khanoom Karimi', sepitak: 'Sepitak', baba: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin', pourya: 'Pourya', aunt: 'Aunt Tayebeh', courier: 'Delivery', guest2: 'VIP', witch1: 'Witch', kids: 'Kids', nena: 'Nena' };
   function talkAs(who, text, kind) {
     const a = actorOf(who);
     if (a && a.el.isConnected && !a.el.classList.contains('gone') && a.room === G.view) speak(a, text, kind || (who === 'simba' ? 'dog' : ''), 2400, true);
@@ -732,7 +734,7 @@
   const NEED = {
     food: { cap: 2, cool: 'half', ph: [2.2, 0, 2.2] }, water: { cap: 3, cool: 30, ph: [1, 1, 1] }, walk: { cap: 2, cool: 45, ph: [1.6, 0.8, 1.3] },
     brush: { cap: 1, ph: [0.6, 1, 1] }, play: { cap: 2, cool: 30, ph: [0.8, 1.5, 0.8] }, blanket: { cap: 1, ph: [0, 0.2, 2.5] }, bath: { cap: 1, ph: [0.3, 1, 1.4] },
-    tea: { cap: 3, cool: 28, ph: [0.8, 1.3, 1.5] }, charger: { cap: 1, ph: [0.5, 1, 1] }, cuddle: { cap: 2, cool: 35, ph: [0.3, 1, 1.6] }, help: { cap: 2, cool: 30, ph: [0.8, 2, 1.2] }, brekky: { cap: 1, ph: [0, 0, 0] }, alarm: { cap: 1, ph: [0, 0, 0] }, lunch: { cap: 1, ph: [0, 0, 0] }, dinner: { cap: 1, ph: [0, 0, 0] }, nshower: { cap: 1, ph: [0, 0, 0] }, nteeth: { cap: 1, ph: [0, 0, 0] }, boil: { cap: 1, ph: [0, 0, 0] }, leak: { cap: 1, ph: [0, 0, 0] }, neighbor: { cap: 1, ph: [0, 0, 0] }, sepitea: { cap: 2, cool: 35 }, sepitalk: { cap: 2, cool: 30 }, sepiselfie: { cap: 1 },
+    tea: { cap: 3, cool: 28, ph: [0.8, 1.3, 1.5] }, charger: { cap: 1, ph: [0.5, 1, 1] }, cuddle: { cap: 2, cool: 35, ph: [0.3, 1, 1.6] }, help: { cap: 2, cool: 30, ph: [0.8, 2, 1.2] }, brekky: { cap: 1, ph: [0, 0, 0] }, alarm: { cap: 1, ph: [0, 0, 0] }, lunch: { cap: 1, ph: [0, 0, 0] }, dinner: { cap: 1, ph: [0, 0, 0] }, nshower: { cap: 1, ph: [0, 0, 0] }, nteeth: { cap: 1, ph: [0, 0, 0] }, boil: { cap: 1, ph: [0, 0, 0] }, snoop: { cap: 1, ph: [0, 0, 0] }, snoop2: { cap: 1, ph: [0, 0, 0] }, leak: { cap: 1, ph: [0, 0, 0] }, neighbor: { cap: 1, ph: [0, 0, 0] }, sepitea: { cap: 2, cool: 35 }, sepitalk: { cap: 2, cool: 30 }, sepiselfie: { cap: 1 },
     laundry: { cap: 1, ph: [0.6, 1.4, 0.6] }, talk: { cap: 2, cool: 35, ph: [0.5, 1.2, 1.2] }, wake: { cap: 1, ph: [3, 0.2, 0] }, ready: { cap: 1, ph: [2.2, 0.6, 0.3] },
     study: { cap: 2, cool: 40, ph: [0.6, 2, 0.6] }, remote: { cap: 1, ph: [0.2, 1, 1.8] }, plants: { cap: 1, ph: [1.4, 1, 0.5] },
     poop: { cap: 2, cool: 30 }, thirst: { cap: 2, cool: 30 }, bread: { cap: 2, cool: 35 }, calm: { cap: 2, cool: 30 }, kids: { cap: 2, cool: 30 }, juice: { cap: 1 }, dogfriend: { cap: 1 },
@@ -792,6 +794,7 @@
     if (R.vip) el.classList.add('vip');
     G.reqs.push(r);
     if (R.who === 'courier' || R.who === 'aunt') simbaDoorbell();
+    if (t === 'aunt') { auntArrives(); if (G.supDone) G.supDone.add('aunt'); }
     if (t === 'bath') { G.muddy = true; refreshSimba(); }
     if (t === 'remote') { G.remoteSpot = pick(R.search.filter((x) => G.st[x])); G.searched = new Set(); searchSpots(true); }
     posReq(r);
@@ -842,6 +845,7 @@
     markQueue();
   }
   function fail(r) {
+    if (r.type === 'snoop' || r.type === 'snoop2') setTimeout(() => G && auntBack(false), 50);
     if (r.opt) { removeReq(r); toast(SKIP_LINES[r.type] || 'Skipped — no problem.', '', 1800); snd('pop'); return; }
     if (r.type === 'jtext') { removeReq(r); toast('Jesus: “…You’re ignoring me? 🥺”', '', 1500); return; }
     if (r.type === 'insta') { removeReq(r); toast('Pourya: “Okay… I’ll ask next time!” 😏', '', 1500); return; }
@@ -1186,7 +1190,7 @@
     return null;
   }
   // per-request flavour: sounds, little scenes and family one-liners
-  const SPEAKER = { 'Aunt Mahin': 'aunt', Baba: 'baba', Maman: 'fariba', Nasim: 'nasim', Negin: 'negin', Pourya: 'pourya', Nena: 'nena', 'The kids': 'kids', Simba: 'simba' };
+  const SPEAKER = { 'Aunt Tayebeh': 'aunt', Baba: 'baba', Maman: 'fariba', Nasim: 'nasim', Negin: 'negin', Pourya: 'pourya', Nena: 'nena', 'The kids': 'kids', Simba: 'simba' };
   const say = (t) => {
     const m = /^([^:“]+):\s*“?(.+?)”?(\s*[^\w\s]*)$/u.exec(t);
     const id = m && SPEAKER[m[1].trim()];
@@ -1229,7 +1233,8 @@
     flowers: { snd: 'fanfare', after: () => giftFrom('flowers') },
     jtext: { snd: 'fail', start: () => G.nena.el.classList.add('talking'), end: () => G.nena.el.classList.remove('talking'), after: () => { track('gift'); toast('📱 Jesus: “' + pick(['Did you like the flowers? 🌹', 'Good morning beautiful ☀️', 'Can I call you? 🥺', 'Coffee tomorrow?']) + '”', '', 1800); speak(G.nena, pick(['Don’t call me, don’t text me EVER again!', 'Stop texting me or I’ll block you!', 'Jesus, NO. Leave me alone!', 'Blocked. …Okay, almost blocked. 😤']), '', 2600, true); } },
     choco: { snd: 'fanfare', after: () => giftFrom('choco') },
-    aunt: { after: () => say('Aunt Mahin: “Such a good girl! When is YOUR wedding?” 😅') },
+    aunt: { after: () => { say(pick(['Aunt Tayebeh: “Such a good girl! When is YOUR wedding?” 😅', 'Aunt Tayebeh: “In my day, girls were married at your age!”', 'Aunt Tayebeh: “Too much sugar in this tea. Who taught you?”'])); setTimeout(() => auntSnoop(), 5500); } },
+    snoop: { snd: 'talk', after: () => auntBack(true) }, snoop2: { snd: 'talk', after: () => auntBack(true) },
     vip: { after: () => { G.coins += 15; floatText(112, 400, '+15 🪙 VIP tip!', 'coin', 'clap'); } },
     curse: { snd: 'talk', after: () => toast('The witches giggle… and stop. For now. 🔮', '', 1800) },
     chase: { snd: 'happy', after: () => { G.photoHint = 'thief'; say('Simba: “*gives back the sangak… mostly*”'); } },
@@ -1541,7 +1546,7 @@
     G.mc = null; G.miniT = 26 + rnd() * 14;
     setTimeout(() => { if (!G || G.mc) return; el.hidden = true; el.classList.remove('in', 'win', 'lose'); }, 1300);
   }
-  // surprise events: blackout, Aunt Mahin, VIPs, the witches, Simba the thief
+  // surprise events: blackout, Aunt Tayebeh, VIPs, the witches, Simba the thief
   function eventTick(dt) {
     const c = G.cfg, mod = c.mod || {};
     if (G.blackout) {
@@ -1557,7 +1562,7 @@
     G.evT -= dt; if (G.evT > 0) return;
     G.evT = (mod.events || mod.blackout || c.events || 26) + rnd() * 10;
     const opts = [];
-    if (c.place === 'home') { if (G.st.samovar && G.n >= 4) opts.push('aunt'); }
+    if (c.place === 'home') { if (G.st.samovar && G.n >= 4 && !(G.supDone && G.supDone.has('aunt'))) opts.push('aunt'); }
     if (c.place === 'street') opts.push('chase');
     if (c.place === 'clap') opts.push('vip', 'curse');
     const e = pick(opts); if (!e) return;
@@ -2708,7 +2713,7 @@
   const dqProg = (q) => (save.tot[q.k] || 0) - (save.dq.base[q.k] || 0);
   /* ---- Stickers ---- */
   const STICKER_SETS = [
-    { id: 'family', ico: '👨‍👩‍👧', name: 'The family', items: [['s_nena', '👧', 'Nena'], ['s_baba', '👴', 'Baba'], ['s_maman', '👩‍🍳', 'Maman'], ['s_nasim', '😤', 'Nasim'], ['s_negin', '😴', 'Negin'], ['s_aunt', '🎁', 'Aunt Mahin']] },
+    { id: 'family', ico: '👨‍👩‍👧', name: 'The family', items: [['s_nena', '👧', 'Nena'], ['s_baba', '👴', 'Baba'], ['s_maman', '👩‍🍳', 'Maman'], ['s_nasim', '😤', 'Nasim'], ['s_negin', '😴', 'Negin'], ['s_aunt', '🎁', 'Aunt Tayebeh']] },
     { id: 'simba', ico: '🦁', name: 'Simba', items: [['s_lion', '🦁', 'Little lion'], ['s_ball', '🎾', 'Ball'], ['s_bone', '🦴', 'Golden bone'], ['s_blankie', '🧸', 'Blankie'], ['s_bath', '🛁', 'Bath time'], ['s_biscuit', '🐕', 'Biscuit']] },
     { id: 'tehran', ico: '🏙️', name: 'Tehran', items: [['s_milad', '🗼', 'Milad tower'], ['s_alborz', '🏔️', 'Alborz'], ['s_sangak', '🫓', 'Sangak'], ['s_juice', '🧃', 'Juice'], ['s_car', '🚙', 'White 4×4'], ['s_tea', '🍵', 'Chai']] },
     { id: 'clap', ico: '🏮', name: 'CLAP', items: [['s_lantern', '🏮', 'Lantern'], ['s_hookah', '💨', 'Hookah'], ['s_mochi', '🍡', 'Mochi'], ['s_pourya', '📸', 'Pourya'], ['s_witch', '🔮', 'The witches'], ['s_bamboo', '🎋', 'Bamboo']] },
@@ -3545,7 +3550,7 @@
     [18.5, 'walk', 0, '🦮 Evening walk'], [19.2, 'food', 0, '🐶 Simba’s dinner'], [20.0, 'dinner', 1, '🍽️ Dinner'], [21.0, 'nshower', 1, '🛁 Shower'],
     [21.6, 'blanket', 1, '🧸 Simba’s blankie'], [22.0, 'nteeth', 1, '🪥 Teeth'],
   ];
-  const RTYPES = new Set(['alarm', 'lunch', 'dinner', 'nshower', 'nteeth', 'brekky', 'boil', 'leak', 'neighbor']);
+  const RTYPES = new Set(['snoop', 'snoop2', 'aunt', 'alarm', 'lunch', 'dinner', 'nshower', 'nteeth', 'brekky', 'boil', 'leak', 'neighbor']);
   const hourAt = (h, dur) => ((h - 7) / 15.5) * dur;
   function planDay(F, dur) {
     const plan = [];
@@ -3563,14 +3568,15 @@
     ['leak', '🔧 Surprise! The bathtub tap is leaking!'],
     ['neighbor', '🔔 Surprise! Khanoom Karimi from upstairs is at the door!'],
     ['spill', '💦 Surprise! Simba knocked over his water bowl!'],
-    ['phone', '📞 Surprise! Aunt Mahin is calling from Shiraz!'],
+    ['phone', '📞 Surprise! Aunt Tayebeh is calling: “Are you home? I’m in the neighbourhood…”'],
+    ['aunt', '🔔 Oh no… Aunt Tayebeh is at the door, unannounced!'],
     ['cat', '🐈 Surprise! A cat on the balcony — Simba is going crazy!'],
   ];
   function surpriseTick(dt) {
     if (!G.fam || G.cfg.party) return;
     G.supT -= dt; if (G.supT > 0) return;
     G.supT = 24 + rnd() * 18;
-    const opts = SURPRISES.filter(([k]) => !G.supDone.has(k) && (k !== 'boil' || G.st.samovar) && (k !== 'neighbor' || G.st.samovar) && (k !== 'leak' || G.st.tub) && (k !== 'spill' || G.simba));
+    const opts = SURPRISES.filter(([k]) => !G.supDone.has(k) && (k !== 'boil' || G.st.samovar) && (k !== 'neighbor' || G.st.samovar) && (k !== 'leak' || G.st.tub) && (k !== 'aunt' || (G.st.samovar && !G.npcs.aunt)) && (k !== 'spill' || G.simba));
     if (!opts.length) return;
     const [k, msg] = pick(opts);
     if (k === 'spill') { G.supDone.add(k); addFur(true); toast(msg, 'bad', 2000); snd('splash'); if (!findReq('simba')) addReq('water'); return; }
@@ -3599,6 +3605,26 @@
     alarm: 'Nena overslept… 😴 (no big deal)', ready: 'Nena skipped her toilette… 🙈', brekky: 'No breakfast today — straight to work!', lunch: 'Lunch was a quick sandwich. 🥪',
     dinner: 'Maman served dinner without Nena. 😅', nshower: 'No shower tonight… tomorrow morning then!', nteeth: 'Teeth not brushed… Maman would not approve! 🪥', blanket: 'Simba found his blankie by himself. 🐾', wake: 'Negin slept until noon. Classic.', tea: 'Baba made his own tea. Grumbling.',
   };
+
+  // Aunt Tayebeh: very old, very curious — she goes through the girls' things, and they hate it
+  const GIRLS_UPSET = ['Negin: “Noooo, not Aunt Tayebeh… hide my phone!” 😩', 'Nasim: “Great. I’m locking my room.” 😤', 'Negin: “She’s going to ask about boyfriends again…”', 'Nasim: “Last time she read my diary!”', 'Negin: “Can I pretend I’m asleep?” 😴'];
+  function auntArrives() { setTimeout(() => { if (G && !G.over) toast(pick(GIRLS_UPSET), '', 2200); }, 1400); setTimeout(() => { if (G && !G.over) toast(pick(GIRLS_UPSET), '', 2200); }, 4200); }
+  function auntSnoop() {
+    if (!G || G.over || !G.layers.hall) return;
+    const a = G.npcs.aunt, t = rnd() < 0.5 ? 'snoop' : 'snoop2', st = STATIONS[REQ[t].at];
+    if (!st || G.reqs.some((r) => r.who === REQ[t].who)) return;
+    if (a) { moveRoom(a, 'hall'); place(a, st.stand[0] + 40, st.stand[1] + 10); emo(a, '🔍', 4000); }
+    addReq(t);
+    toast(t === 'snoop' ? '🔍 Aunt Tayebeh sneaked into Nasim’s room and opens her drawers!' : '🔍 Aunt Tayebeh is going through Negin’s things!', 'bad', 2400);
+    setTimeout(() => { if (G && !G.over) toast(t === 'snoop' ? 'Nasim: “WHAT IS SHE DOING IN MY ROOM?!” 😡' : 'Negin: “Khaleh! That’s my makeup bag!!” 😱', '', 2200); }, 1800);
+  }
+  function auntBack(ok) {
+    const a = G.npcs.aunt;
+    if (ok) say(pick(['Nena: “Khaleh Tayebeh, come, your tea is getting cold!” (She follows… grumbling.)', 'Nena: “Khaleh jan, let me show you Simba’s new trick!” (Phew.)']));
+    else toast(pick(['😱 Aunt Tayebeh found Negin’s diary and read it OUT LOUD at dinner.', '😱 Aunt Tayebeh told Maman what she found in Nasim’s drawer…']), 'bad', 2600);
+    setTimeout(() => { if (G && !G.over) toast(ok ? pick(['Nasim: “…Thanks, Nena. I owe you.”', 'Negin: “You saved my life. Again.”']) : pick(['Nasim: “I’m NEVER coming out of my room again.”', 'Negin: “I want to move out. Today.”']), '', 2200); }, 1500);
+    if (a) { const h = HOMES.home.aunt; moveRoom(a, h[0]); place(a, h[1], h[2]); emo(a, ok ? '😤' : '😏', 2000); }
+  }
 
   /* ---- daily chores mini-games: breakfast (orders), groceries (memory), laundry (pairs) ---- */
   const BF_ITEMS = { bread: ['🫓', 'Sangak'], panir: ['🧀', 'Panir'], walnut: ['🌰', 'Walnuts'], honey: ['🍯', 'Honey'], butter: ['🧈', 'Butter'], egg: ['🍳', 'Fried egg'], tomato: ['🍅', 'Tomato'], cucumber: ['🥒', 'Cucumber'], sabzi: ['🌿', 'Sabzi'], tea: ['🍵', 'Chai'], jam: ['🍓', 'Morabba'], haleem: ['🥣', 'Haleem'] };
@@ -3932,7 +3958,7 @@
     if (cur) cur.scrollIntoView({ block: 'center' });
   }
   const PLACE_LABEL = { home: '🏠 Home', street: '🌳 Tehran street', clap: '🏮 CLAP' };
-  const NAMES = { sepitak: 'Sepitak', leila: 'Leila', courier: 'Delivery', aunt: 'Aunt Mahin', pourya: 'Pourya', nena: 'Nena', simba: 'Simba', mohsen: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin' };
+  const NAMES = { sepitak: 'Sepitak', leila: 'Leila', courier: 'Delivery', aunt: 'Aunt Tayebeh', pourya: 'Pourya', nena: 'Nena', simba: 'Simba', mohsen: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin' };
   let storyLines = [], storyLevel = 1;
   function playStory(n) {
     CUSTOM = null; storyAfter = null; storyTitle = ''; storyPlace = null;

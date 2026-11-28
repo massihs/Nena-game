@@ -271,7 +271,7 @@ window.Art = (function () {
     leila:   { skin: '#eec3a0', hair: '#1c1612', hair2: '#3a2a22', style: 'ponytail', shirt: '#ef8fb0', collar: '#ffffff', pants: '#2b2b30', earrings: '#ffd36b' },
     courier: { skin: '#e6b68e', hair: '#2b1d16', hair2: '#3e2a20', style: 'short', shirt: '#e05b3b', collar: '#ffd36b', pants: '#2f3a4a' },
     sepitak: { skin: '#e8b48c', hair: '#e6c46e', hair2: '#f3dc96', style: 'mid', shirt: '#2fa39a', collar: '#ffffff', pants: '#3a4a6b', earrings: '#ffffff', scale: 0.96 },
-    aunt:    { skin: '#efc39e', hair: '#5a3a2a', hair2: '#a89a90', style: 'bob', shirt: '#7a2d8c', collar: '#e0c27a', pants: '#3a2a44', earrings: '#ffd36b', belly: true },
+    aunt:    { skin: '#e9bf9e', hair: '#e4e1e6', hair2: '#c9c4cc', style: 'bun', shirt: '#4a2f45', collar: '#c9a24a', pants: '#2e2430', earrings: '#ffd36b', belly: true, glasses: true, scale: 0.9 },
     witch1:  { skin: '#f7ddd0', hair: '#f2d77e', hair2: '#dcbb55', style: 'curly', shirt: '#231a2b', collar: '#7a2d8c', pants: '#1a1420', earrings: '#b98bff' },
     witch2:  { skin: '#f4d8c6', hair: '#f7e7a6', hair2: '#e2c66c', style: 'curly', shirt: '#1d2420', collar: '#2f7a5a', pants: '#14181a', earrings: '#7fe0b4' },
     shadi:   { skin: '#eec09a', hair: '#1c1410', hair2: '#33241b', style: 'ponytail', shirt: '#17a589', collar: '#ffffff', pants: '#22252e', earrings: '#ffffff' },
