@@ -147,5 +147,6 @@ window.Sound = (function () {
     night = v;
     if (filter) filter.frequency.setTargetAtTime(v ? 900 : 2400, ctx.currentTime, 2);
   }
+  document.addEventListener('visibilitychange', () => { if (!ctx) return; try { if (document.hidden) ctx.suspend(); else if (enabled) ctx.resume(); } catch (e) { /* */ } });
   return { init, play, setEnabled, setMusic, setNight, setTrack, setIntensity, get enabled() { return enabled; }, get musicOn() { return musicOn; } };
 })();

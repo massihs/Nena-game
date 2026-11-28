@@ -1394,3 +1394,21 @@ h1, h2, h3, .bar h2, .card h2, .ul-card h3 { font-family: var(--font-display); f
 .near-txt { color: #e8577f; }
 .node-big { position: absolute; right: -6px; top: -8px; font-style: normal; font-size: 1.3rem; animation: boxWiggle 1.6s ease-in-out infinite; }
 .stage-wrap { isolation: isolate; }
+
+/* ---- performance & polish ---- */
+.hk-hand { flex-wrap: wrap; gap: 6px 4px; align-content: center; }
+.hk-hand .hk-card + .hk-card { margin-left: 0; }
+.hk-hand .hk-br { flex-basis: 100%; height: 0; }
+.hk-hand.two .hk-card { width: 48px; height: 68px; } .hk-hand.two .hk-card > span { font-size: 1.5rem; } .hk-hand.two .hk-card > b { font-size: .82rem; }
+.hk-hand.two .hk-card.ok { transform: translateY(-4px); }
+/* GPU-friendly glows: animate opacity/transform instead of box-shadow, no blend modes over the moving scene */
+.grain { mix-blend-mode: normal; opacity: .05; }
+.actor > svg { filter: none; }
+.mo-banner { animation: none; position: relative; }
+.mo-banner:not(.done)::after { content: ""; position: absolute; inset: -3px; border-radius: 18px; box-shadow: 0 0 18px rgba(232,87,127,.55); opacity: 0; animation: glowO 2s ease-in-out infinite; pointer-events: none; }
+@keyframes glowO { 50% { opacity: 1; } }
+.stage-wrap.fever::after { animation: feverO .7s ease-in-out infinite alternate; box-shadow: inset 0 0 44px 12px rgba(255,170,65,.7), inset 0 0 100px 14px rgba(255,90,140,.3); }
+@keyframes feverO { from { opacity: .6; } to { opacity: 1; } }
+#btn-play { animation: none; } #btn-play::after { content: ""; position: absolute; inset: -6px; border-radius: 22px; box-shadow: 0 0 0 8px rgba(239,143,176,.25), 0 10px 26px -6px rgba(201,73,111,.8); opacity: 0; animation: glowO 2.2s ease-in-out infinite; pointer-events: none; }
+.rtab.need:not(.view) { animation: none; box-shadow: 0 0 0 3px #ffd36b, 0 3px 0 #17152e; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-iteration-count: 1 !important; } }

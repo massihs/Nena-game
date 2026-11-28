@@ -752,7 +752,10 @@
     let ws = types.map((t) => [t, weight(t)]).filter((x) => x[1] > 0);
     if (G.n === 1 && !G.cnt.food && types.includes('food')) ws = [['food', 1]];
     if (!ws.length) {
-      const ok = types.filter((t) => t !== G.lastType && now - (G.last[t] ?? -999) > 14 && (NEED[t] || {}).cool !== 'half' && (!(NEED[t] || {}).ph || NEED[t].ph[ph] > 0));
+      const ONCE = { ready: 1, wake: 1, brekky: 1, blanket: 1, bath: 1, juice: 1, dogfriend: 1 };
+      let ok = types.filter((t) => t !== G.lastType && !(ONCE[t] && G.cnt[t]) && now - (G.last[t] ?? -999) > 14 && (NEED[t] || {}).cool !== 'half' && (!(NEED[t] || {}).ph || NEED[t].ph[ph] > 0));
+      const under = ok.filter((t) => (G.cnt[t] || 0) < Math.round(((NEED[t] || {}).cap || 2) * scale) + 1);
+      if (under.length) ok = under;
       const min = Math.min(...ok.map((t) => G.cnt[t] || 0)); ws = ok.filter((t) => (G.cnt[t] || 0) === min).map((t) => [t, 1]);
     }
     if (!ws.length) return;
@@ -1536,7 +1539,7 @@
       el.style.background = `radial-gradient(circle at ${x.toFixed(0)}px ${y.toFixed(0)}px, rgba(10,8,24,0) 0, rgba(10,8,24,0) 95px, rgba(10,8,24,.9) 175px)`;
       if (G.blackout.t <= 0) { const hid = G.blackout.simba; el.remove(); G.blackout = null; toast('💡 The power is back!', '', 1200); if (hid && G.simba) { G.simba.el.classList.remove('lying'); emo(G.simba, ''); const h = HOMES.home.simba; walkActor(G.simba, h[1], h[2], () => { if (G) G.simbaTask = false; }, 120); } }
     }
-    if (G.giftT != null) { G.giftT -= dt; if (G.giftT <= 0) { G.giftT = 45 + rnd() * 30; if (c.place === 'home' || c.place === 'clap') addReq(pick(['flowers', 'choco', 'jtext'])); } }
+    if (G.giftT != null) { G.giftT -= dt; if (G.giftT <= 0) { G.giftT = 45 + rnd() * 30; if (c.place === 'home' || c.place === 'clap') { const g = pick(['flowers', 'choco', 'jtext'].filter((x) => x !== G.lastGift)); G.lastGift = g; addReq(g); } } }
     if (G.evT == null) return;
     G.evT -= dt; if (G.evT > 0) return;
     G.evT = (mod.events || mod.blackout || c.events || 26) + rnd() * 10;
@@ -2880,7 +2883,12 @@
     if (h >= 17 && h < 21) return { k: 'evening', ico: '🌇', name: 'Evening', hello: 'Asr bekheir! The family is coming home.' };
     return { k: 'night', ico: '🌙', name: 'Night', hello: 'Shab bekheir… Simba is yawning.' };
   }
+  let PD = null;
   function persianDate() {
+    const k = today(); if (PD && PD[0] === k) return PD[1];
+    PD = [k, persianDate0()]; return PD[1];
+  }
+  function persianDate0() {
     try { return new Intl.DateTimeFormat('en-u-ca-persian', { day: 'numeric', month: 'long' }).format(new Date()); } catch (e) { return new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); }
   }
   const TEH_HI = [8, 11, 16, 22, 28, 34, 37, 36, 32, 24, 16, 10];
@@ -3170,8 +3178,9 @@
   }
   function hkRenderHand() {
     const h = HK.H[0], legal = HK.waiting ? new Set(hkLegal(0).map(hkKey)) : null;
-    const el = $('hk-hand'); el.innerHTML = h.map((c) => hkCard(c, legal ? (legal.has(hkKey(c)) ? 'ok' : 'no') : '')).join('');
-    const W = el.clientWidth || 360, n = h.length, cw = 58; el.style.setProperty('--ov', n > 1 ? Math.min(4, (W - 8 - cw * n) / (n - 1)) + 'px' : '0px');
+    const el = $('hk-hand'), n = h.length, cut = n > 7 ? Math.ceil(n / 2) : 99;
+    el.innerHTML = h.map((c, i) => (i === cut ? '<i class="hk-br"></i>' : '') + hkCard(c, legal ? (legal.has(hkKey(c)) ? 'ok' : 'no') : '')).join('');
+    el.classList.toggle('two', n > 7);
   }
   function hkRenderTrick() { $('hk-trick').innerHTML = HK.trick.map((t) => hkCard(t.c, 'in p' + t.p)).join(''); }
   function hkBest(trick) { let b = trick[0]; for (const t of trick.slice(1)) { if (t.c.s === b.c.s ? t.c.r > b.c.r : t.c.s === HK.T) b = t; } return b; }

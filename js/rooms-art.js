@@ -32,7 +32,7 @@
     const night = !!c.night, rain = !!c.rain;
     const sky = night ? ['#151838', '#3a3466'] : rain ? ['#8b97a8', '#c3cbd6'] : c.n % 3 === 2 ? ['#f2a07a', '#fde3c3'] : ['#8fcbee', '#d7eefa'];
     VIEW = skyline(night, rain);
-    return `<defs><linearGradient id="rsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient>
+    return `<defs><g id="rview">${VIEW}</g><linearGradient id="rsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient>
       <linearGradient id="rglass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".08"/></linearGradient>
       <radialGradient id="rglow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".55"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient>
       <radialGradient id="rneon"><stop offset="0" stop-color="#ff5fa2" stop-opacity=".55"/><stop offset="1" stop-color="#ff5fa2" stop-opacity="0"/></radialGradient>
@@ -66,7 +66,7 @@
     for (let i = 1; i < n; i++) m += `<rect x="${(x + (w * i) / n - 2).toFixed(1)}" y="${y}" width="4" height="${h}" fill="#1e1d22"/>`;
     const W = (w * 300) / h;
     const vb = W > 400 ? `<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">` : `<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${Math.min(ox, 400 - W).toFixed(1)} 0 ${W.toFixed(1)} 300" preserveAspectRatio="none">`;
-    return `<rect x="${x - 6}" y="${y - 6}" width="${w + 12}" height="${h + 12}" fill="#1e1d22"/>${vb}${VIEW}</svg><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#rglass)"/>${m}`;
+    return `<rect x="${x - 6}" y="${y - 6}" width="${w + 12}" height="${h + 12}" fill="#1e1d22"/>${vb}<use href="#rview"/></svg><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#rglass)"/>${m}`;
   };
   // floor-to-ceiling bay window (the flat has glass everywhere)
   const bay = (x, y, w, h, ox, panes) => win(x, y, w, h, ox, panes) + `<rect x="${x - 8}" y="${y + h}" width="${w + 16}" height="6" fill="#d8dadc"/>`;
@@ -459,7 +459,7 @@
     const shop = (x, w, col, sign, sub) => `<rect x="${x}" y="250" width="${w}" height="150" fill="${col}"/><rect x="${x + 8}" y="300" width="${w - 16}" height="90" fill="${night ? '#ffd98a' : '#cfe3ea'}" opacity="${night ? 0.85 : 0.9}"/><rect x="${x}" y="258" width="${w}" height="34" fill="#2f4a3e"/>${label(x + w / 2, 276, sign, '#ffd98a', 13)}<text x="${x + w / 2}" y="288" text-anchor="middle" font-size="9" font-family="Nunito, sans-serif" font-weight="800" fill="#fff">${sub}</text>`;
     return svg(`
     <rect width="600" height="400" fill="url(#rsky)"/>
-    <svg x="0" y="0" width="600" height="300" viewBox="0 0 400 200" preserveAspectRatio="none">${VIEW}</svg>
+    <svg x="0" y="0" width="600" height="300" viewBox="0 0 400 200" preserveAspectRatio="none"><use href="#rview"/></svg>
     ${[[0, 90, 120], [120, 60, 130], [450, 80, 150]].map(([x, y, w]) => `<rect x="${x}" y="${y}" width="${w}" height="320" fill="${night ? '#2b2a48' : '#d8c6ae'}"/>${[...Array(6)].map((_, r) => [...Array(Math.floor(w / 26))].map((_, k) => `<rect x="${x + 8 + k * 26}" y="${y + 12 + r * 28}" width="14" height="18" fill="${night ? (hash(x + r * 7 + k) < 0.5 ? '#ffcf73' : '#3b3a5c') : '#9fb6c8'}"/>`).join('')).join('')}`).join('')}
     ${shop(30, 180, '#c9785a', 'NANVAYI · BAKERY', 'fresh sangak bread')}
     <g>${[0, 1, 2].map((i) => `<path d="M${54 + i * 46} 340 q20 -16 40 0 v30 q-20 10 -40 0z" fill="#d9a35a"/>`).join('')}</g>
