@@ -102,11 +102,11 @@
   const HOMES = {
     home: { sepitak: ['salon', 476, 500], neighbor: ['salon', 462, 516], courier: ['salon', 470, 470], aunt: ['salon', 470, 525], nena: ['salon', 300, 670], simba: ['salon', 330, 600], baba: ['tv', 250, 560], fariba: ['kitchen', 160, 470], nasim: ['salon', 545, 470] },
     street: { nena: ['street', 250, 545], simba: ['street', 330, 535], nasim: ['street', 520, 600], kids: ['street', 70, 548], biscuit: ['street', 470, 548] },
-    clap: { courier: ['clap', 334, 470], nena: ['clap', 250, 646], negin: ['clap', 400, 646], pourya: ['clap', 176, 452] },
+    clap: { courier: ['clap', 334, 470], nena: ['clap', 250, 646], negin: ['clap', 400, 646], pourya: ['clap', 176, 452], sepitak: ['clap', 486, 652], sofia: ['clap', 486, 652] },
   };
   const FUR_ZONE = { x0: 270, x1: 560, y0: 600, y1: 780 };
   const FRONT = [548, 430];
-  const NPC_ART = { neighbor: ['guest1', 'happy', 80, 140], sepitak: ['sepitak', 'happy', 80, 140], baba: ['mohsen', 'happy', 84, 147], fariba: ['fariba', 'happy', 80, 140], nasim: ['nasim', 'angry', 80, 140], negin: ['negin', 'happy', 80, 140], kids: ['mia', 'happy', 64, 112], pourya: ['pourya', 'happy', 84, 147], aunt: ['aunt', 'happy', 84, 147], courier: ['courier', 'happy', 80, 140] };
+  const NPC_ART = { sofia: ['sofia', 'happy', 80, 140], neighbor: ['guest1', 'happy', 80, 140], sepitak: ['sepitak', 'happy', 80, 140], baba: ['mohsen', 'happy', 84, 147], fariba: ['fariba', 'happy', 80, 140], nasim: ['nasim', 'angry', 80, 140], negin: ['negin', 'happy', 80, 140], kids: ['mia', 'happy', 64, 112], pourya: ['pourya', 'happy', 84, 147], aunt: ['aunt', 'happy', 84, 147], courier: ['courier', 'happy', 80, 140] };
   const GUESTS = [['guest1', 40, 552, 'happy'], ['guest2', 112, 554, 'happy'], ['guest3', 42, 742, 'happy'], ['guest4', 112, 744, 'neutral'], ['witch1', 490, 552, 'angry'], ['witch2', 562, 554, 'angry']];
   const TRANSIENT = { nasim: 1, kids: 1, aunt: 1, courier: 1, biscuit: 1, neighbor: 1 };
   const ELEV = { mall: [40, 228, 112, 192], parking: [436, 214, 112, 186] };
@@ -134,6 +134,10 @@
     boil:    { who: 'samovar', icon: '♨️', pts: 160, pat: 11, at: 'samovar', dur: 0.8, hint: 'The samovar is boiling over! Quick, turn it down.' },
     leak:    { who: 'tub', icon: '🔧', pts: 150, pat: 18, at: 'tub', dur: 1.8, hint: 'The bathtub tap is leaking! Tighten it before it floods.' },
     neighbor: { who: 'neighbor', icon: '🫖', pts: 200, pat: 24, item: 'tea', src: 'samovar', at: 'neighbor', dur: 0.8, special: true, vip: true, hint: 'Khanoom Karimi from upstairs dropped by. Offer her a glass of tea!' },
+    matcha:  { who: 'negin', icon: '🍵', pts: 130, pat: 26, item: 'teapot', src: 'teabar', at: 'negin', dur: 0.6, hint: 'Negin wants an iced matcha from the tea bar.' },
+    sepimatcha: { who: 'sepitak', icon: '🍵', pts: 140, pat: 26, item: 'teapot', src: 'teabar', at: 'sepitak', dur: 0.6, hint: 'Sepitak wants a matcha latte from the tea bar.' },
+    sofimatcha: { who: 'sofia', icon: '🍵', pts: 140, pat: 26, item: 'teapot', src: 'teabar', at: 'sofia', dur: 0.6, hint: 'Sofia wants a matcha from the tea bar.' },
+    sofichat: { who: 'sofia', icon: '💬', pts: 130, pat: 24, at: 'sofia', dur: 1.6, hint: 'Sofia has gossip. Of course she does.' },
     brekky:  { who: 'fariba', icon: '🍳', pts: 170, pat: 32, at: 'fariba', dur: 2.4, hint: 'Breakfast time! Help Maman set the sofreh: sangak, panir, walnuts and tea for everyone.' },
     help:    { who: 'fariba', icon: '🍲', pts: 150, pat: 26, at: 'fariba', dur: 2.2, hint: 'Maman needs help in the kitchen: tap her.' },
     laundry: { who: 'fariba', icon: '🧺', pts: 150, pat: 28, item: 'laundry', src: 'nasimroom', at: 'fariba', dur: 0.8, hint: 'Maman wants the laundry: Nena collects it in Nasim’s messy room.' },
@@ -306,7 +310,7 @@
   }
   function startLevel(n) {
     const cfg = dailyCfg(levelCfg(n));
-    grainLayer();
+    grainLayer(); document.querySelectorAll('#stage-wrap .daytint').forEach((e) => e.remove());
     cancelAnimationFrame(raf);
     music({ home: 'home', street: 'street', clap: 'clap' }[cfg.place] || 'home', cfg.night);
     $('s-bg').innerHTML = ''; $('s-bg').dataset.p = '';  // its gradients would shadow the room's
@@ -388,7 +392,7 @@
       G.simba.el.dataset.target = 'simba';
       place(G.simba, H.simba[1], H.simba[2]);
     }
-    ['baba', 'fariba', 'negin', 'pourya'].forEach((w) => { if ((W.who.has(w) || (w === 'pourya' && cfg.place === 'clap')) && H[w] && !G.away.has(w)) spawnNpc(w); });
+    ['baba', 'fariba', 'negin', 'pourya', 'sepitak', 'sofia'].forEach((w) => { if ((W.who.has(w) || (w === 'pourya' && cfg.place === 'clap')) && H[w] && !G.away.has(w)) spawnNpc(w); });
     G.guests = [];
     if (cfg.place === 'clap') { GUESTS.forEach(([id, x, y, mood]) => { const g = makeActor(id, A.person(id, { mood }), 72, 126, 'npc guest' + (id.startsWith('witch') ? ' witch' : ''), 'clap'); g.mood = mood; place(g, x, y); G.guests.push([id, g]); G.npcs[id] = g; g.el.dataset.target = id; }); G.witchT = 14 + rnd() * 8; }
     G.life = []; G.talk = new Set(); G.amb = []; G.ambT = 2;
@@ -575,7 +579,7 @@
     if (ms) a.emoT = setTimeout(() => a.emoEl && a.emoEl.classList.remove('on'), ms);
   }
   const actorOf = (who) => (who === 'simba' ? G.simba : who === 'nena' ? G.nena : G.npcs[who]);
-  const WHO_NAME = { neighbor: 'Khanoom Karimi', sepitak: 'Sepitak', baba: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin', pourya: 'Pourya', aunt: 'Aunt Tayebeh', courier: 'Delivery', guest2: 'VIP', witch1: 'Witch', kids: 'Kids', nena: 'Nena' };
+  const WHO_NAME = { sofia: 'Sofia', neighbor: 'Khanoom Karimi', sepitak: 'Sepitak', baba: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin', pourya: 'Pourya', aunt: 'Aunt Tayebeh', courier: 'Delivery', guest2: 'VIP', witch1: 'Witch', kids: 'Kids', nena: 'Nena' };
   function talkAs(who, text, kind) {
     const a = actorOf(who);
     if (a && a.el.isConnected && !a.el.classList.contains('gone') && a.room === G.view) speak(a, text, kind || (who === 'simba' ? 'dog' : ''), 2400, true);
@@ -593,7 +597,7 @@
   };
   const THANKS = {
     baba: ['Merci azizam! ❤️', 'That’s my girl!', 'Ahh, perfect!'], fariba: ['Khasteh nabashi, Nena jan!', 'You’re an angel!', 'Merci, my daughter!'],
-    neighbor: ['Merci azizam, say salam to your Maman!', 'Such a polite girl!'], sepitak: ['Merci azizam! 😘', 'You’re the best, Nena!', 'Ahh, I love your house!'], nasim: ['…Thanks.', 'Fine. Good. Whatever.'], negin: ['Mmm, merci!', 'You’re the best!'], pourya: ['Merci, Nena!'],
+    neighbor: ['Merci azizam, say salam to your Maman!', 'Such a polite girl!'], sofia: ['Merci Nena jan! 💛', 'Perfect, just how I like it!'], sepitak: ['Merci azizam! 😘', 'You’re the best, Nena!', 'Ahh, I love your house!'], nasim: ['…Thanks.', 'Fine. Good. Whatever.'], negin: ['Mmm, merci!', 'You’re the best!'], pourya: ['Merci, Nena!'],
     guest2: ['Excellent service! Here, a big tip.', 'Bravo!'], courier: ['Have a nice day!'], kids: ['Yaaay!'],
   };
   const FAILS = {
@@ -1363,6 +1367,7 @@
   /* Life: everybody moves, talks and walks around on their own          */
   /* ------------------------------------------------------------------ */
   const LINES = {
+    sofia: ['This matcha is SO good.', 'Negin, show me that video again!', 'Pourya is staring at you, Nena… 😏', 'One more hookah?'],
     sepitak: ['Nena, look at this video! 😂', 'Simba is SO fluffy today!', 'Your Maman’s tahdig is the best.', 'Tonight: face masks and a movie? 🎬', 'Did Jesus text you again? 🙄'],
     simba: ['Woof!', 'Woof woof!', '*sniff sniff*', 'Grrr…', '*yawns*', '🎾?', '❤️', '*wags*', 'Arf!'],
     baba: ['Goooal!! ⚽', 'Nasim, where are you?! 📞', 'Negin! Wake up!', 'Is there tea?', 'In my day…', 'Persepolis!!', 'My lion, come here!', 'Who changed the channel?!'],
@@ -1896,7 +1901,7 @@
     if (stars > 0 && !c.endless) { const got = dropStickers(stars === 3 ? 2 : 1); chips += `<span class="rc">🎴 ${got.map((g) => `<i class="stk mini${g.dup ? ' dup' : ''}">${g.ico}</i>`).join('')}</span>`; }
     $('r-rewards').innerHTML = chips; $('r-rewards').hidden = !chips;
     if (stars > 0 && !c.endless && !c.challenge) {
-      save.stars[G.n] = Math.max(save.stars[G.n] || 0, stars);
+      if (G.n < 900) save.stars[G.n] = Math.max(save.stars[G.n] || 0, stars);
       save.best[G.n] = Math.max(save.best[G.n] || 0, final);
       if (G.n === save.level) save.level = G.n + 1;
     }
@@ -1908,7 +1913,7 @@
     const fresh = nxt ? nxt.types.filter((t) => !c.types.includes(t)).map((t) => REQ[t].icon) : [];
     $('r-tease').innerHTML = nxt ? `<b>Tomorrow · ${nxt.title}</b>${fresh.length ? `<span>New: ${fresh.join(' ')}</span>` : `<span>${{ home: '🏠 At home', street: '🌳 Out in Tehran', clap: '🏮 At CLAP' }[nxt.place]}</span>`}` : '';
     $('r-tease').hidden = !nxt;
-    if (!lost && stars && !c.endless && !c.challenge) renderMyst(G.n); else $('r-myst').hidden = true;
+    if (!lost && stars && !c.endless && !c.challenge && G.n < 900) renderMyst(G.n); else $('r-myst').hidden = true;
     $('r-sub').textContent = lost ? 'The family lost patience. Try again, and watch the rings!' : stars ? `Goal: ${c.targets[0]} · ${c.targets[1]} · ${c.targets[2]}` : `You needed ${c.targets[0]} points for 1 star.`;
     $('r-next').hidden = !stars || !!c.endless || !!c.challenge;
     $('r-retry').classList.remove('near');
@@ -3426,10 +3431,11 @@
     d.forEach(([w, t], i) => setTimeout(() => { if (G && !G.over && famAvail(w)) talkAs(w, t, w === 'simba' ? 'dog' : ''); }, i * 1900));
   }
   function dayLight() {
-    if (!G.fam) return;
-    const k = Math.min(1, dayClock() / G.cfg.dur), h = 7 + k * 15.5, el = G.tint || (G.tint = (() => { const e = document.createElement('div'); e.className = 'daytint'; $('stage-wrap').appendChild(e); return e; })());
+    if (!G.fam && !G.cfg.evening) return;
+    const k = Math.min(1, dayClock() / G.cfg.dur), h = (G.cfg.evening ? 19 + k * 3 : 7 + k * 12), el = G.tint || (G.tint = (() => { const e = document.createElement('div'); e.className = 'daytint'; $('stage-wrap').appendChild(e); return e; })());
     const step = Math.round(k * 40); if (G.tintS === step) return; G.tintS = step;
-    const c = k < 0.18 ? [255, 200, 120, 0.16 * (1 - k / 0.18)] : k < 0.6 ? [255, 255, 255, 0] : k < 0.85 ? [255, 140, 60, ((k - 0.6) / 0.25) * 0.2] : [30, 30, 90, 0.18 + ((k - 0.85) / 0.15) * 0.22];
+    const c = k < 0.18 ? [255, 200, 120, 0.16 * (1 - k / 0.18)] : k < 0.6 ? [255, 255, 255, 0] : k < 0.85 ? [255, 140, 60, ((k - 0.6) / 0.25) * 0.2] : [255, 110, 70, 0.2 + ((k - 0.85) / 0.15) * 0.08];
+    if (G.cfg.evening) c.splice(0, 4, 20, 20, 60, 0.05 + k * 0.12);
     el.style.background = `rgba(${c[0]},${c[1]},${c[2]},${c[3].toFixed(3)})`;
     const hh = Math.floor(h), mm = Math.floor((h - hh) * 60 / 10) * 10;
     const nxl = nextRoutineLabel();
@@ -3547,11 +3553,10 @@
   const ROUTINE = [
     [7.0, 'alarm', 1, '⏰ Wake up'], [7.3, 'ready', 1, '🪥 Toilette'], [8.0, 'brekky', 1, '🍳 Breakfast'], [8.4, 'food', 0, '🐶 Simba’s breakfast'],
     [8.8, 'wake', 1, '😴 Wake Negin'], [9.4, 'walk', 0, '🦮 Morning walk'], [13.0, 'lunch', 1, '🍲 Lunch'], [17.0, 'tea', 1, '🫖 Five o’clock tea'],
-    [18.5, 'walk', 0, '🦮 Evening walk'], [19.2, 'food', 0, '🐶 Simba’s dinner'], [20.0, 'dinner', 1, '🍽️ Dinner'], [21.0, 'nshower', 1, '🛁 Shower'],
-    [21.6, 'blanket', 1, '🧸 Simba’s blankie'], [22.0, 'nteeth', 1, '🪥 Teeth'],
+    [17.9, 'walk', 0, '🦮 Evening walk'], [18.5, 'food', 0, '🐶 Simba’s dinner'], [18.8, 'ready', 1, '💄 Get ready for CLAP'],
   ];
   const RTYPES = new Set(['snoop', 'snoop2', 'aunt', 'alarm', 'lunch', 'dinner', 'nshower', 'nteeth', 'brekky', 'boil', 'leak', 'neighbor']);
-  const hourAt = (h, dur) => ((h - 7) / 15.5) * dur;
+  const hourAt = (h, dur) => ((h - 7) / 12) * dur;
   function planDay(F, dur) {
     const plan = [];
     ROUTINE.forEach(([h, t, opt, label]) => {
@@ -3598,7 +3603,7 @@
   function nextRoutineLabel() {
     const nx = G.plan && G.plan.find((p) => p.label);
     if (!nx) return '';
-    const h = nx.h || 7 + (nx.at / G.cfg.dur) * 15.5, hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+    const h = nx.h || 7 + (nx.at / G.cfg.dur) * 12, hh = Math.floor(h), mm = Math.round((h - hh) * 60);
     return `${nx.label} · ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
   }
   const SKIP_LINES = {
@@ -3958,7 +3963,7 @@
     if (cur) cur.scrollIntoView({ block: 'center' });
   }
   const PLACE_LABEL = { home: '🏠 Home', street: '🌳 Tehran street', clap: '🏮 CLAP' };
-  const NAMES = { sepitak: 'Sepitak', leila: 'Leila', courier: 'Delivery', aunt: 'Aunt Tayebeh', pourya: 'Pourya', nena: 'Nena', simba: 'Simba', mohsen: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin' };
+  const NAMES = { sofia: 'Sofia', sepitak: 'Sepitak', leila: 'Leila', courier: 'Delivery', aunt: 'Aunt Tayebeh', pourya: 'Pourya', nena: 'Nena', simba: 'Simba', mohsen: 'Baba', fariba: 'Maman', nasim: 'Nasim', negin: 'Negin' };
   let storyLines = [], storyLevel = 1;
   function playStory(n) {
     CUSTOM = null; storyAfter = null; storyTitle = ''; storyPlace = null;
@@ -4067,13 +4072,31 @@
   const afterScene = (fn) => { if (G.pendingScene) { const ch = G.pendingScene; G.pendingScene = null; playScene(ch.end, ch.title, fn, { home: 'salon', street: 'street', clap: 'clap' }[levelCfg(ch.to).place]); } else fn(); };
   let autoNext = 0;
   function nightScene(n, fn) {
-    const sepi = G && G.fam && G.fam.sepitak;
-    const L = [['nena', 'sleepy', pick(['🌙 22:30… The house is finally quiet. Simba jumps on the bed and curls up in my arms.', '🌙 23:00… Teeth brushed, lights off. Simba snores softly against me.', '🌙 22:45… What a day! Simba puts his big fluffy head on my shoulder. Good night, little lion.'])]];
+    const sepi = (G && G.fam && G.fam.sepitak) || (EVE && EVE.n === n && EVE.sleep);
+    const back = EVE && EVE.n === n;
+    const L = back ? [['nena', 'sleepy', pick(['🌙 22:30… Back from CLAP, smelling of apple hookah 🍏. Quick shower, teeth… and Simba jumps into my arms.', '🌙 22:45… Home from CLAP. Simba was waiting at the door. He only sleeps in my arms, so… bed!'])]] : [['nena', 'sleepy', pick(['🌙 22:30… The house is finally quiet. Simba jumps on the bed and curls up in my arms.', '🌙 23:00… Teeth brushed, lights off. Simba snores softly against me.', '🌙 22:45… What a day! Simba puts his big fluffy head on my shoulder. Good night, little lion.'])]];
+    if (back && EVE.comp === 'sofia') L.push(['nena', 'sleepy', 'Sofia’s gossip is still spinning in my head… 😂']);
     if (sepi) L.push(['sepitak', 'sleepy', pick(['*from her mattress* Nena… are you asleep? …Okay, good night! 😴', 'Psst, Nena… Simba is snoring louder than Amoo Mohsen! 😂', 'Good night, you two. Best sleepover ever. 💛'])]);
     L.push(['simba', 'happy', '*yawns* … zzz … 🐾']);
     playScene(L, `🌙 Night · Day ${n}`, fn, 'bedroom');
   }
-  function goNextDay() { clearInterval(autoNext); autoNext = 0; if (!G) return; const n = G.n + 1, home = levelCfg(G.n).place === 'home' && !G.cfg.party; const cont = () => afterScene(() => (home ? nightScene(G.n, () => playStory(n)) : playStory(n))); if (mkReady()) openMakeover(cont); else cont(); }
+  let EVE = null;
+  function eveningAtClap(n) {
+    const sepiDay = n >= 2 && n % 2 === 0, r = Math.random();
+    const comp = sepiDay ? (r < 0.7 ? 'sepitak' : r < 0.85 ? 'sofia' : null) : (r < 0.3 ? 'sepitak' : r < 0.65 ? 'sofia' : null);
+    EVE = { n, comp, sleep: !!(G && G.fam && G.fam.sepitak) };
+    const base = LEVELS[8], types = ['coals', 'chai', 'matcha', 'doze', 'snack', 'selfie', 'insta', 'phone'].concat(comp === 'sepitak' ? ['sepimatcha'] : comp === 'sofia' ? ['sofimatcha', 'sofichat'] : []);
+    const cfg = Object.assign({}, base, { n: 903, evening: true, dayN: n, comp, title: `Evening at CLAP${comp ? ' with ' + NAMES[comp] : ''}`, dur: 55, types, story: [], obj: null, patience: 1.2, targets: base.targets.map((t) => Math.round(t * 0.6)), every: [4.4, 6] });
+    const L = [['nena', 'happy', pick(['🌇 19:00… Time for CLAP! Hookah, tea and matcha with Negin. 🏮', '🌇 19:00… “Negin, hurry up! Our table at CLAP is waiting!”'])], ['negin', 'happy', pick(['Apple-mint hookah and an iced matcha. Obviously. 💚', 'If Pourya asks for your Instagram again, I’m leaving. 😂', 'Just the two of us tonight? Perfect.'])]];
+    if (comp === 'sepitak') L.push(['sepitak', 'happy', pick(['Wait for me! I’m coming to CLAP too! 🎒', 'Matcha latte for me, please! 🍵'])]);
+    else if (comp === 'sofia') L.push(['sofia', 'happy', pick(['Salam girls! I have SO much gossip for you tonight. 😏', 'Sofia here! Save me a seat and a hookah! 💨'])]);
+    else L.push(['nena', 'happy', 'Just the two of us tonight. Sister time. 💕']);
+    playScene(L, '🏮 Evening at CLAP · 19:00', () => playCustom(cfg), 'clap');
+  }
+  function goNextDay() { clearInterval(autoNext); autoNext = 0; if (!G) return;
+    if (G.cfg.evening) { const d = G.cfg.dayN; afterScene(() => nightScene(d, () => playStory(d + 1))); return; }
+    const n = G.n + 1, home = levelCfg(G.n).place === 'home' && !G.cfg.party, out = G.n < 900 && !G.cfg.party && levelCfg(G.n).place !== 'clap';
+    if (out) { const d = G.n; const go = () => afterScene(() => eveningAtClap(d)); if (mkReady()) openMakeover(go); else go(); return; } const cont = () => afterScene(() => (home ? nightScene(G.n, () => playStory(n)) : playStory(n))); if (mkReady()) openMakeover(cont); else cont(); }
   function armAutoNext() {
     clearInterval(autoNext); if ($('r-next').hidden) return;
     const pend = () => !$('r-myst').hidden && $('r-myst').querySelector('[data-g]');

@@ -77,7 +77,7 @@ window.Art = (function () {
       ${o.fem ? `<path d="M${X(-7.4)} ${Y(-4.2)} l${(-3.8 * s * k).toFixed(1)} ${(-1 * k).toFixed(1)} M${X(-6.6)} ${Y(-6)} l${(-3.2 * s * k).toFixed(1)} ${(-2.6 * k).toFixed(1)} M${X(-4.8)} ${Y(-7.4)} l${(-2 * s * k).toFixed(1)} ${(-3.2 * k).toFixed(1)}" stroke="#24100a" stroke-width="${(1.6 * k).toFixed(1)}" stroke-linecap="round"/>` : ''}
       <path d="M${(cx - 4.6 * k).toFixed(1)} ${(cy + ry * 0.9).toFixed(1)} q${(4.6 * k).toFixed(1)} ${(2 * k).toFixed(1)} ${(9.2 * k).toFixed(1)} 0" stroke="#a0604a" stroke-width="${k.toFixed(1)}" fill="none" opacity=".55"/>`;
   }
-  const FEM = new Set(['sepitak', 'nena', 'fariba', 'nasim', 'negin', 'leila', 'mia', 'guest1', 'guest3', 'aunt', 'witch1', 'witch2', 'shadi']);
+  const FEM = new Set(['sofia', 'sepitak', 'nena', 'fariba', 'nasim', 'negin', 'leila', 'mia', 'guest1', 'guest3', 'aunt', 'witch1', 'witch2', 'shadi']);
 
   /* eyes: 'both' (CSS decides), 'open', 'closed' */
   const HL = 'rgba(255,255,255,.22)', SH = 'rgba(60,20,10,.14)';
@@ -270,6 +270,7 @@ window.Art = (function () {
     guest3:  { skin: '#f4cdb0', hair: '#5a2a16', hair2: '#6e3820', style: 'ponytail', shirt: '#e98aab', collar: '#c9496f', pants: '#2f2b46' },
     leila:   { skin: '#eec3a0', hair: '#1c1612', hair2: '#3a2a22', style: 'ponytail', shirt: '#ef8fb0', collar: '#ffffff', pants: '#2b2b30', earrings: '#ffd36b' },
     courier: { skin: '#e6b68e', hair: '#2b1d16', hair2: '#3e2a20', style: 'short', shirt: '#e05b3b', collar: '#ffd36b', pants: '#2f3a4a' },
+    sofia:   { skin: '#f0c4a0', hair: '#24160f', hair2: '#3a2418', style: 'curly', shirt: '#8e1f3c', collar: '#f2c94c', pants: '#22252e', earrings: '#f2c94c', scale: 0.95 },
     sepitak: { skin: '#e8b48c', hair: '#e6c46e', hair2: '#f3dc96', style: 'mid', shirt: '#2fa39a', collar: '#ffffff', pants: '#3a4a6b', earrings: '#ffffff', scale: 0.96 },
     aunt:    { skin: '#e9bf9e', hair: '#e4e1e6', hair2: '#c9c4cc', style: 'bun', shirt: '#4a2f45', collar: '#c9a24a', pants: '#2e2430', earrings: '#ffd36b', belly: true, glasses: true, scale: 0.9 },
     witch1:  { skin: '#f7ddd0', hair: '#f2d77e', hair2: '#dcbb55', style: 'curly', shirt: '#231a2b', collar: '#7a2d8c', pants: '#1a1420', earrings: '#b98bff' },
